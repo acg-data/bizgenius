@@ -13,8 +13,8 @@ class AIService:
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://bizgenius.app",
-            "X-Title": "BizGenius"
+            "HTTP-Referer": "https://myceo.app",
+            "X-Title": "myCEO"
         }
     
     async def generate_business_plan(self, idea_title: str, idea_description: str, industry: str = None) -> dict:
@@ -191,26 +191,49 @@ class AIService:
         
         return await self._call_ai(prompt)
     
+    def _extract_json(self, content: str) -> dict:
+        content = content.strip()
+        
+        if content.startswith("```json"):
+            content = content[7:]
+        elif content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+        
+        json_start = content.find('{')
+        json_end = content.rfind('}')
+        if json_start != -1 and json_end != -1:
+            content = content[json_start:json_end + 1]
+        
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            content = content.replace('\n', ' ').replace('\r', '')
+            content = ' '.join(content.split())
+            return json.loads(content)
+    
     async def _call_ai(self, prompt: str) -> dict:
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=180.0) as client:
                 response = await client.post(
                     f"{self.base_url}/chat/completions",
                     headers=self.headers,
                     json={
-                        "model": "anthropic/claude-3-haiku",
+                        "model": "minimax/minimax-m2.1",
                         "messages": [
                             {
                                 "role": "system",
-                                "content": "You are a business expert and consultant. Generate comprehensive, professional business plans, financial models, and analyses. Always return valid JSON."
+                                "content": "You are a business expert. Return ONLY valid JSON with no markdown formatting, no code blocks, and no additional text. Ensure all strings are properly escaped."
                             },
                             {
                                 "role": "user",
                                 "content": prompt
                             }
                         ],
-                        "temperature": 0.7,
-                        "max_tokens": 4000
+                        "temperature": 0.5,
+                        "max_tokens": 8000
                     }
                 )
                 
@@ -218,15 +241,11 @@ class AIService:
                 result = response.json()
                 
                 content = result["choices"][0]["message"]["content"]
-                content = content.strip()
+                return self._extract_json(content)
                 
-                if content.startswith("```json"):
-                    content = content[7:]
-                if content.endswith("```"):
-                    content = content[:-3]
-                
-                return json.loads(content)
-                
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error: {e}")
+            raise Exception(f"Failed to parse AI response as JSON: {str(e)}")
         except Exception as e:
             logger.error(f"AI generation error: {e}")
             raise Exception(f"Failed to generate content: {str(e)}")

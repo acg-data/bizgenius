@@ -3,21 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
   const [businessIdea, setBusinessIdea] = useState('');
 
-  const triggerReceipt = () => {
+  const handleSubmit = () => {
     if (!businessIdea.trim()) return;
-    
-    setIsThinking(true);
-    setTimeout(() => {
-      setIsThinking(false);
-      setShowReceipt(true);
-      setTimeout(() => {
-        setShowReceipt(false);
-      }, 5000);
-    }, 2500);
+    navigate('/generate', { state: { businessIdea: businessIdea.trim() } });
   };
 
   return (
@@ -77,7 +67,7 @@ export default function Landing() {
           </div>
 
           <div className="bg-paper border-2 border-ink shadow-brutal p-8 md:p-10 rounded-xl rounded-tl-none relative z-20">
-            <form onSubmit={(e) => { e.preventDefault(); triggerReceipt(); }} className="space-y-6">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
               <div>
                 <label className="block text-sm font-black uppercase tracking-wide text-gray-500 mb-3">
                   Describe your business idea
@@ -87,99 +77,22 @@ export default function Landing() {
                   onChange={(e) => setBusinessIdea(e.target.value)}
                   placeholder="I want to build a mobile app that connects dog walkers with busy pet owners in Austin, TX. Think Uber but for dog walking..."
                   className="w-full h-32 p-4 bg-white border-2 border-ink text-ink font-medium text-lg resize-none focus:outline-none focus:border-cyan transition-colors placeholder-gray-400"
-                  disabled={isThinking}
                 />
               </div>
 
               <button 
                 type="submit"
-                disabled={isThinking || !businessIdea.trim()}
-                className={`btn-cyan w-full group relative overflow-hidden ${isThinking ? 'cursor-wait' : ''} ${!businessIdea.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!businessIdea.trim()}
+                className={`btn-cyan w-full group relative overflow-hidden ${!businessIdea.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {isThinking ? (
-                  <span className="relative z-10 flex items-center gap-3">
-                    <svg className="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    ANALYZING YOUR EMPIRE...
-                  </span>
-                ) : (
-                  <span className="relative z-10 flex items-center gap-2">
-                    GENERATE BUSINESS
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </span>
-                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  GENERATE BUSINESS
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </span>
               </button>
             </form>
-          </div>
-
-          {isThinking && (
-            <div className="absolute top-[95%] left-4 right-4 z-10">
-              <div className="bg-white border-x-2 border-ink p-6 space-y-3 font-mono text-xs uppercase">
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 border-2 border-ink rounded-full animate-pulse bg-cyan"></div>
-                  <span className="animate-pulse">Analyzing market opportunity...</span>
-                </div>
-                <div className="flex items-center gap-3 opacity-60">
-                  <div className="w-4 h-4 border-2 border-ink rounded-full"></div>
-                  <span>Building financial projections...</span>
-                </div>
-                <div className="flex items-center gap-3 opacity-40">
-                  <div className="w-4 h-4 border-2 border-ink rounded-full"></div>
-                  <span>Designing pitch deck...</span>
-                </div>
-                <div className="flex items-center gap-3 opacity-20">
-                  <div className="w-4 h-4 border-2 border-ink rounded-full"></div>
-                  <span>Researching competitors...</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className={`absolute top-[95%] left-4 right-4 z-10 pointer-events-none transition-all duration-500 ${showReceipt ? 'opacity-100' : 'opacity-0'}`}>
-            <div className={`bg-white border-x-2 border-ink relative w-full flex flex-col items-center overflow-hidden ${showReceipt ? 'h-[380px]' : 'h-0'}`}>
-              <div className="p-6 w-full font-mono text-xs uppercase space-y-3 opacity-75">
-                <div className="text-center border-b-2 border-dashed border-gray-300 pb-2 mb-2">
-                  <h3 className="font-black text-lg">myCEO Output</h3>
-                  <p>Transaction: #8821-X</p>
-                  <p className="text-[10px] mt-1 text-gray-400">Date: TODAY</p>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>01. Market Research</span>
-                  <span className="font-bold text-green-600">DONE</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>02. 5-Yr Financials</span>
-                  <span className="font-bold text-green-600">DONE</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>03. Pitch Deck.ppt</span>
-                  <span className="font-bold text-green-600">DONE</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>04. Competitor Tear</span>
-                  <span className="font-bold text-green-600">DONE</span>
-                </div>
-                
-                <div className="border-t-2 border-ink pt-2 mt-4 flex justify-between text-sm font-black text-ink">
-                  <span>EST. VALUATION</span>
-                  <span>$2.5M</span>
-                </div>
-                
-                <div className="pt-4">
-                  <button 
-                    onClick={() => navigate('/dashboard')} 
-                    className="w-full bg-ink text-white py-2 font-bold hover:bg-cyan hover:text-ink transition-colors pointer-events-auto"
-                  >
-                    OPEN DASHBOARD
-                  </button>
-                </div>
-              </div>
-              <div className="receipt-edge"></div>
-            </div>
           </div>
         </div>
       </section>
