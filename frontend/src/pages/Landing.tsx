@@ -1,330 +1,395 @@
-import { Link } from 'react-router-dom';
-import { Button, Card, CardBody, CardFooter } from '@heroui/react';
-import {
-  SparklesIcon,
-  DocumentTextIcon,
-  ChartBarIcon,
-  UsersIcon,
-  ArrowRightIcon,
-  CheckCircleIcon,
-  StarIcon,
-} from '@heroicons/react/24/outline';
-
-const features = [
-  {
-    icon: DocumentTextIcon,
-    title: 'Business Plans',
-    description: 'Comprehensive business plans generated in minutes with executive summaries, marketing strategies, and operations plans.',
-  },
-  {
-    icon: ChartBarIcon,
-    title: 'Financial Models',
-    description: 'Detailed financial projections, break-even analysis, funding requirements, and key metrics forecasting.',
-  },
-  {
-    icon: UsersIcon,
-    title: 'Market Research',
-    description: 'In-depth market analysis including TAM/SAM/SOM, competitor landscape, and customer segmentation.',
-  },
-  {
-    icon: SparklesIcon,
-    title: 'Pitch Decks',
-    description: 'Professional investor-ready pitch decks with compelling narratives and data visualizations.',
-  },
-];
-
-const testimonials = [
-  {
-    name: 'Sarah Chen',
-    role: 'Founder, TechStart',
-    content: 'BizGenius saved me weeks of research. The financial model helped me secure seed funding!',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-  },
-  {
-    name: 'Marcus Johnson',
-    role: 'CEO, Green Solutions',
-    content: 'The competitor analysis was incredibly thorough. Best business planning tool I\'ve used.',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-  },
-  {
-    name: 'Emily Rodriguez',
-    role: 'Founder, EduTech Inc',
-    content: 'Generated a complete business plan in under an hour. The quality is remarkable.',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
-  },
-];
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Landing() {
+  const navigate = useNavigate();
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [businessType, setBusinessType] = useState('SaaS Platform');
+  const [targetMarket, setTargetMarket] = useState('');
+  const [location, setLocation] = useState('');
+
+  const triggerReceipt = () => {
+    setShowReceipt(true);
+    setTimeout(() => {
+      setShowReceipt(false);
+    }, 5000);
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-                <SparklesIcon className="w-6 h-6 text-white" />
-              </div>
-              <span className="font-bold text-xl text-gray-900">BizGenius</span>
-            </Link>
-            
-            <div className="hidden md:flex items-center gap-6">
-              <Link to="/pricing" className="text-gray-600 hover:text-gray-900 font-medium">Pricing</Link>
-              <Link to="/about" className="text-gray-600 hover:text-gray-900 font-medium">About</Link>
-              <Link to="/contact" className="text-gray-600 hover:text-gray-900 font-medium">Contact</Link>
+    <div className="bg-[#F2F0E9] text-ink font-sans antialiased overflow-x-hidden relative selection:bg-cyan selection:text-ink min-h-screen">
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 paper-texture"></div>
+        <div className="absolute top-[10%] right-[5%] w-48 h-48 rounded-full border-[12px] border-[#4a3b2a]/10 blur-[2px]"></div>
+        <div className="absolute top-[40%] left-[5%] w-40 h-40 bg-marker shadow-brutal rotate-[-6deg] p-4 hidden md:block">
+          <p className="font-black text-ink text-sm uppercase transform rotate-[-2deg]">To Do:</p>
+          <ul className="list-disc list-inside text-xs font-bold mt-2 leading-loose">
+            <li>Quit job</li>
+            <li>Build Empire</li>
+            <li>Buy Island</li>
+          </ul>
+        </div>
+        <div className="absolute bottom-[20%] right-[10%] w-24 h-24 bg-white border-2 border-ink rounded-full shadow-brutal blur-[0.5px] opacity-80 hidden md:block"></div>
+      </div>
+
+      <div className="bg-ink text-cyan text-xs font-mono py-2 border-b-2 border-ink overflow-hidden whitespace-nowrap z-50 relative">
+        <div className="inline-block animate-marquee">
+          JUST GENERATED: VERTICAL FARMING SAAS (DENVER) - $3.2M PROJ. REV  ///  NEW: D2C SNEAKER BRAND (TOKYO) - PITCH DECK READY  ///  NEW: AI LEGAL AIDE (NYC) - COMPETITOR ANALYSIS COMPLETE  ///  JUST GENERATED: MOBILE PET GROOMING (AUSTIN)
+        </div>
+      </div>
+
+      <nav className="sticky top-0 z-40 bg-paper/90 backdrop-blur-md border-b-2 border-ink px-6 py-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-10 h-10 bg-manilla border-2 border-ink flex items-center justify-center shadow-brutal-sm group-hover:rotate-6 transition-transform">
+              <span className="font-black text-xl">M</span>
             </div>
-            
-            <div className="flex items-center gap-3">
-              <Link to="/login">
-                <Button variant="light" className="font-medium">Sign In</Button>
-              </Link>
-              <Link to="/register">
-                <Button color="primary" className="font-medium">
-                  Get Started Free
-                </Button>
-              </Link>
-            </div>
+            <span className="font-black text-xl tracking-tighter">myCEO</span>
+          </Link>
+          <div className="flex gap-4">
+            <a href="#demo" className="hidden md:flex items-center font-bold text-sm hover:text-cyan transition-colors">How it works</a>
+            <Link to="/register" className="btn-primary">Start Building</Link>
           </div>
         </div>
       </nav>
 
-      <section className="pt-32 pb-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 text-primary-700 text-sm font-medium mb-6">
-            <SparklesIcon className="w-4 h-4" />
-            AI-Powered Business Planning
+      <section className="pt-24 pb-32 px-4 relative z-10 min-h-[90vh] flex flex-col justify-center items-center">
+        <div className="inline-flex items-center gap-2 bg-white border-2 border-ink px-4 py-1 rounded-full shadow-brutal-sm rotate-[-2deg] mb-8 animate-float">
+          <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+          <span className="font-bold text-xs uppercase tracking-wide">Warning: Extremely Addictive</span>
+        </div>
+
+        <h1 className="text-5xl md:text-7xl font-black text-center leading-[0.9] tracking-tight mb-6 max-w-5xl">
+          Turn your napkin sketch <br /> into a <span className="marker-highlight px-2">cash machine.</span>
+        </h1>
+        
+        <p className="text-lg md:text-xl font-medium text-center text-gray-600 mb-12 max-w-2xl">
+          Stop playing house. myCEO generates your financial model, pitch deck, and strategy in <span className="font-black text-ink">seconds</span>.
+        </p>
+
+        <div className="w-full max-w-2xl relative group">
+          <div className="absolute -top-10 left-0 bg-manilla border-2 border-ink border-b-0 px-6 py-2 rounded-t-xl font-bold text-xs uppercase tracking-widest translate-y-1 z-0">
+            Project_Alpha.folder
           </div>
-          
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-            Turn Your Ideas Into
-            <span className="block text-gradient">Complete Businesses</span>
-          </h1>
-          
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-10">
-            Generate comprehensive business plans, financial models, pitch decks, and market research 
-            in minutes with our AI-powered platform.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/register">
-              <Button size="lg" color="primary" className="font-semibold px-8 h-12 text-lg">
-                Start Free Trial
-                <ArrowRightIcon className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
-            <Link to="/demo">
-              <Button size="lg" variant="bordered" className="font-semibold px-8 h-12 text-lg">
-                Watch Demo
-              </Button>
-            </Link>
+
+          <div className="bg-paper border-2 border-ink shadow-brutal p-8 md:p-10 rounded-xl rounded-tl-none relative z-20">
+            <form onSubmit={(e) => { e.preventDefault(); triggerReceipt(); }} className="text-xl md:text-3xl font-bold leading-relaxed text-center">
+              I want to build a 
+              <select 
+                value={businessType}
+                onChange={(e) => setBusinessType(e.target.value)}
+                className="mad-lib-input px-2 bg-transparent appearance-none cursor-pointer hover:text-cyan mx-2"
+              >
+                <option>SaaS Platform</option>
+                <option>Coffee Shop</option>
+                <option>Agency</option>
+                <option>App</option>
+              </select>
+              <br className="hidden md:block" />
+              for 
+              <input 
+                type="text" 
+                placeholder="Dog Walkers" 
+                value={targetMarket}
+                onChange={(e) => setTargetMarket(e.target.value)}
+                className="mad-lib-input w-48 mx-2 focus:placeholder-transparent"
+              />
+              in 
+              <input 
+                type="text" 
+                placeholder="Austin, TX" 
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="mad-lib-input w-40 mx-2 focus:placeholder-transparent"
+              />
+              .
+            </form>
+
+            <div className="mt-8">
+              <button onClick={triggerReceipt} className="btn-cyan w-full group relative overflow-hidden">
+                <span className="relative z-10 flex items-center gap-2">
+                  GENERATE BUSINESS
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </span>
+              </button>
+            </div>
           </div>
-          
-          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <CheckCircleIcon className="w-5 h-5 text-green-500" />
-              No credit card required
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircleIcon className="w-5 h-5 text-green-500" />
-              14-day free trial
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircleIcon className="w-5 h-5 text-green-500" />
-              Cancel anytime
+
+          <div className="absolute top-[95%] left-4 right-4 z-10 pointer-events-none">
+            <div className={`bg-white border-x-2 border-ink relative w-full flex flex-col items-center transition-all duration-500 overflow-hidden ${showReceipt ? 'opacity-100 h-[380px]' : 'opacity-0 h-0'}`}>
+              <div className="p-6 w-full font-mono text-xs uppercase space-y-3 opacity-75">
+                <div className="text-center border-b-2 border-dashed border-gray-300 pb-2 mb-2">
+                  <h3 className="font-black text-lg">myCEO Output</h3>
+                  <p>Transaction: #8821-X</p>
+                  <p className="text-[10px] mt-1 text-gray-400">Date: TODAY</p>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>01. Market Research</span>
+                  <span className="font-bold">DONE</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>02. 5-Yr Financials</span>
+                  <span className="font-bold">DONE</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>03. Pitch Deck.ppt</span>
+                  <span className="font-bold">DONE</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>04. Competitor Tear</span>
+                  <span className="font-bold">DONE</span>
+                </div>
+                
+                <div className="border-t-2 border-ink pt-2 mt-4 flex justify-between text-sm font-black text-ink">
+                  <span>EST. VALUATION</span>
+                  <span>$2.5M</span>
+                </div>
+                
+                <div className="pt-4">
+                  <button 
+                    onClick={() => navigate('/dashboard')} 
+                    className="w-full bg-ink text-white py-2 font-bold hover:bg-cyan hover:text-ink transition-colors pointer-events-auto"
+                  >
+                    OPEN DASHBOARD
+                  </button>
+                </div>
+              </div>
+              <div className="receipt-edge"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20 px-4 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-24 bg-white border-y-2 border-ink" id="demo">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Everything You Need to Launch
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              From idea to investment-ready business plan in minutes
-            </p>
+            <h2 className="text-4xl md:text-5xl font-black mb-4">Why is this usually so <span className="text-alert underline decoration-4 decoration-ink">hard?</span></h2>
+            <p className="text-gray-500 font-bold">You are wasting 90% of your time on "fake work".</p>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature) => (
-              <Card key={feature.title} className="card-hover">
-                <CardBody className="p-6">
-                  <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-primary-600" />
+
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <div className="p-8 md:p-12 border-b-2 md:border-b-0 md:border-r-2 border-ink bg-gray-50 relative overflow-hidden">
+              <div className="absolute -right-4 -top-4 text-9xl opacity-5 select-none">😫</div>
+              <h3 className="font-black text-2xl mb-8 flex items-center gap-3">
+                <span className="bg-ink text-white w-8 h-8 flex items-center justify-center rounded-full text-sm">A</span>
+                The Old Way
+              </h3>
+              
+              <ul className="space-y-6 opacity-60">
+                <li className="flex gap-4">
+                  <span className="text-2xl">📉</span>
+                  <div>
+                    <strong className="block text-ink line-through decoration-alert decoration-2">Excel Hell</strong>
+                    <span className="text-sm">Download a broken template. Cry because "EBITDA" is confusing.</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </CardBody>
-              </Card>
-            ))}
+                </li>
+                <li className="flex gap-4">
+                  <span className="text-2xl">😴</span>
+                  <div>
+                    <strong className="block text-ink line-through decoration-alert decoration-2">PowerPoint Paralysis</strong>
+                    <span className="text-sm">Stare at a blank white slide for 3 days straight.</span>
+                  </div>
+                </li>
+                <li className="flex gap-4">
+                  <span className="text-2xl">💸</span>
+                  <div>
+                    <strong className="block text-ink line-through decoration-alert decoration-2">Expensive Consultants</strong>
+                    <span className="text-sm">Pay $5k for a PDF that tells you "customer service is key."</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div className="p-8 md:p-12 bg-cyan/5 relative">
+              <div className="absolute -right-4 -top-4 text-9xl opacity-10 select-none">🚀</div>
+              <div className="absolute top-0 right-0 bg-cyan text-ink text-xs font-black px-3 py-1 border-b-2 border-l-2 border-ink">CHEAT CODE ACTIVE</div>
+              
+              <h3 className="font-black text-2xl mb-8 flex items-center gap-3">
+                <span className="bg-cyan text-ink border-2 border-ink w-8 h-8 flex items-center justify-center rounded-full text-sm">B</span>
+                The myCEO Way
+              </h3>
+
+              <ul className="space-y-6">
+                <li className="card-base p-4 bg-white flex gap-4 items-center">
+                  <div className="w-10 h-10 bg-cyan border-2 border-ink flex items-center justify-center font-black rounded text-lg">✓</div>
+                  <div>
+                    <strong className="block text-ink">Instant Financials</strong>
+                    <span className="text-sm text-gray-600">5-Year P&L generated with industry benchmarks.</span>
+                  </div>
+                </li>
+                <li className="card-base p-4 bg-white flex gap-4 items-center">
+                  <div className="w-10 h-10 bg-cyan border-2 border-ink flex items-center justify-center font-black rounded text-lg">✓</div>
+                  <div>
+                    <strong className="block text-ink">Deck Designer</strong>
+                    <span className="text-sm text-gray-600">We write the story and design the slides.</span>
+                  </div>
+                </li>
+                <li className="card-base p-4 bg-white flex gap-4 items-center">
+                  <div className="w-10 h-10 bg-cyan border-2 border-ink flex items-center justify-center font-black rounded text-lg">✓</div>
+                  <div>
+                    <strong className="block text-ink">Execution Dashboard</strong>
+                    <span className="text-sm text-gray-600">Your daily to-do list to reach $1M ARR.</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="py-24 bg-manilla px-4 border-b-2 border-ink">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-                Why Choose BizGenius?
-              </h2>
-              <div className="space-y-6">
-                {[
-                  { title: 'AI-Powered Accuracy', desc: 'Advanced AI generates accurate, data-driven business plans based on your industry and market.' },
-                  { title: 'Save Weeks of Research', desc: 'Skip the hours of market research and competitor analysis. Our AI does it all for you.' },
-                  { title: 'Investor-Ready Documents', desc: 'Create professional pitch decks and financial models that impress investors.' },
-                  { title: 'Always Up-to-Date', desc: 'Our AI uses the latest market data and trends to provide current insights.' },
-                ].map((item) => (
-                  <div key={item.title} className="flex gap-4">
-                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-1">
-                      <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                      <p className="text-gray-600">{item.desc}</p>
+              <h2 className="text-4xl font-black mb-2">Everything in one folder.</h2>
+              <p className="font-medium opacity-70">No more loose Google Docs.</p>
+            </div>
+            <div className="flex items-center gap-3 bg-paper border-2 border-ink rounded-full px-2 py-2">
+              <span className="bg-ink text-white px-4 py-1 rounded-full text-xs font-bold uppercase">Manilla View</span>
+              <span className="text-gray-400 px-4 py-1 text-xs font-bold uppercase cursor-not-allowed">Blueprint View</span>
+            </div>
+          </div>
+
+          <div className="relative mt-8 group">
+            <div className="absolute -top-10 left-0 w-64 h-12 bg-manilla-dark border-2 border-ink border-b-0 rounded-t-xl z-0"></div>
+            
+            <div className="bg-paper border-2 border-ink rounded-xl rounded-tl-none shadow-brutal-lg min-h-[600px] flex flex-col md:flex-row relative z-10 overflow-hidden">
+              <div className="w-full md:w-64 bg-gray-50 border-r-2 border-ink p-6 flex flex-col gap-2">
+                <div className="text-xs font-black uppercase text-gray-400 mb-2">My Startups</div>
+                <div className="p-3 bg-cyan border-2 border-ink font-bold text-sm shadow-brutal-sm cursor-pointer">
+                  🐶 Dog Walker App
+                </div>
+                <div className="p-3 bg-white border-2 border-transparent hover:border-ink hover:bg-gray-100 font-bold text-sm text-gray-500 cursor-pointer transition-all">
+                  ☕️ Coffee Shop
+                </div>
+                
+                <div className="mt-8 text-xs font-black uppercase text-gray-400 mb-2">Files</div>
+                <div className="flex items-center gap-2 p-2 hover:bg-gray-200 cursor-pointer rounded">
+                  <span className="text-lg">📊</span> <span className="font-bold text-sm">Financials.xls</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 hover:bg-gray-200 cursor-pointer rounded">
+                  <span className="text-lg">🎨</span> <span className="font-bold text-sm">PitchDeck.ppt</span>
+                </div>
+              </div>
+
+              <div className="flex-1 p-8">
+                <div className="flex justify-between items-center mb-8 pb-4 border-b-2 border-ink/10">
+                  <div>
+                    <h3 className="text-2xl font-black">Startup Overview</h3>
+                    <p className="text-xs font-mono text-gray-500">LAST UPDATED: JUST NOW</p>
+                  </div>
+                  <button className="bg-ink text-white px-4 py-2 text-xs font-bold uppercase border-2 border-ink hover:bg-white hover:text-ink transition-colors">Export Report</button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="col-span-2 bg-white border-2 border-ink shadow-brutal p-6">
+                    <div className="text-xs font-black uppercase text-gray-400 mb-2">Projected Revenue (Y1)</div>
+                    <div className="text-5xl font-black text-ink mb-6">$420,000</div>
+                    <div className="flex items-end gap-2 h-24 border-b-2 border-ink pb-0">
+                      <div className="w-full bg-cyan/20 h-[30%] border-t-2 border-x-2 border-ink relative group">
+                        <div className="absolute -top-8 left-0 bg-ink text-white text-[10px] px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">Q1</div>
+                      </div>
+                      <div className="w-full bg-cyan/40 h-[50%] border-t-2 border-x-2 border-ink relative group">
+                        <div className="absolute -top-8 left-0 bg-ink text-white text-[10px] px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">Q2</div>
+                      </div>
+                      <div className="w-full bg-cyan/60 h-[70%] border-t-2 border-x-2 border-ink relative group">
+                        <div className="absolute -top-8 left-0 bg-ink text-white text-[10px] px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">Q3</div>
+                      </div>
+                      <div className="w-full bg-cyan h-[90%] border-t-2 border-x-2 border-ink relative group">
+                        <div className="absolute -top-8 left-0 bg-ink text-white text-[10px] px-2 py-1 opacity-100">Q4</div>
+                      </div>
                     </div>
                   </div>
-                ))}
+
+                  <div className="bg-white border-2 border-ink shadow-brutal p-6">
+                    <div className="text-xs font-black uppercase text-gray-400 mb-4">Immediate Actions</div>
+                    <div className="space-y-3">
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="w-5 h-5 border-2 border-ink rounded bg-cyan flex items-center justify-center text-xs">✓</div>
+                        <span className="text-sm font-bold line-through opacity-50">Generate Name</span>
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="w-5 h-5 border-2 border-ink rounded bg-white group-hover:bg-gray-100"></div>
+                        <span className="text-sm font-bold">Register LLC</span>
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="w-5 h-5 border-2 border-ink rounded bg-white group-hover:bg-gray-100"></div>
+                        <span className="text-sm font-bold">Open Bank Account</span>
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="w-5 h-5 border-2 border-ink rounded bg-white group-hover:bg-gray-100"></div>
+                        <span className="text-sm font-bold">Build MVP</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-3xl transform rotate-3 opacity-10"></div>
-              <Card className="relative">
-                <CardBody className="p-8">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                        <SparklesIcon className="w-5 h-5 text-primary-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">Business Plan Generated</p>
-                        <p className="text-sm text-gray-500">Just now</p>
-                      </div>
-                    </div>
-                    <div className="h-px bg-gray-200" />
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <p className="text-2xl font-bold text-gray-900">5</p>
-                        <p className="text-xs text-gray-500">Year Plan</p>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-gray-900">$2.5M</p>
-                        <p className="text-xs text-gray-500">Revenue Target</p>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-gray-900">18mo</p>
-                        <p className="text-xs text-gray-500">Break-even</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
-            </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20 px-4 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Trusted by Entrepreneurs
-            </h2>
-            <p className="text-lg text-gray-600">
-              Join thousands of founders who trust BizGenius
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial) => (
-              <Card key={testimonial.name} className="card-hover">
-                <CardBody className="p-6">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <StarIcon key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-gray-600 mb-6">"{testimonial.content}"</p>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                      <p className="text-sm text-gray-500">{testimonial.role}</p>
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 px-4">
+      <section className="py-24 px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-            Ready to Turn Your Idea Into Reality?
+          <h2 className="text-4xl md:text-5xl font-black mb-6">
+            Ready to stop dreaming and <span className="marker-highlight px-2">start building?</span>
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            Start your free 14-day trial today. No credit card required.
+          <p className="text-lg text-gray-600 mb-8 font-medium">
+            Join thousands of founders who went from idea to launch in record time.
           </p>
-          <Link to="/register">
-            <Button size="lg" color="primary" className="font-semibold px-12 h-14 text-lg">
-              Get Started Free
-            </Button>
+          <Link to="/register" className="btn-cyan inline-flex">
+            START BUILDING NOW
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
           </Link>
         </div>
       </section>
 
-      <footer className="bg-gray-900 text-white py-16 px-4">
+      <footer className="bg-ink text-white py-16 px-4 border-t-2 border-ink">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-                  <SparklesIcon className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 bg-manilla border-2 border-ink flex items-center justify-center">
+                  <span className="font-black text-xl text-ink">M</span>
                 </div>
-                <span className="font-bold text-xl">BizGenius</span>
+                <span className="font-bold text-xl">myCEO</span>
               </div>
               <p className="text-gray-400 text-sm">
-                AI-powered business planning for entrepreneurs and startups.
+                The cheat code for founders. Build your empire faster.
               </p>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Product</h3>
+              <h3 className="font-bold mb-4">Product</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="/pricing" className="hover:text-white">Pricing</Link></li>
-                <li><Link to="/features" className="hover:text-white">Features</Link></li>
-                <li><Link to="/about" className="hover:text-white">About</Link></li>
+                <li><Link to="/pricing" className="hover:text-cyan transition-colors">Pricing</Link></li>
+                <li><a href="#demo" className="hover:text-cyan transition-colors">How it Works</a></li>
+                <li><Link to="/about" className="hover:text-cyan transition-colors">About</Link></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Resources</h3>
+              <h3 className="font-bold mb-4">Resources</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="/help" className="hover:text-white">Help Center</Link></li>
-                <li><Link to="/blog" className="hover:text-white">Blog</Link></li>
-                <li><Link to="/docs" className="hover:text-white">API Docs</Link></li>
+                <li><Link to="/help" className="hover:text-cyan transition-colors">Help Center</Link></li>
+                <li><Link to="/contact" className="hover:text-cyan transition-colors">Contact</Link></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Legal</h3>
+              <h3 className="font-bold mb-4">Legal</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="/privacy" className="hover:text-white">Privacy</Link></li>
-                <li><Link to="/terms" className="hover:text-white">Terms</Link></li>
-                <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
+                <li><Link to="/privacy" className="hover:text-cyan transition-colors">Privacy</Link></li>
+                <li><Link to="/terms" className="hover:text-cyan transition-colors">Terms</Link></li>
               </ul>
             </div>
           </div>
           
           <div className="pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
-            © 2024 BizGenius. All rights reserved.
+            © 2024 myCEO. All rights reserved.
           </div>
         </div>
       </footer>

@@ -6,7 +6,7 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #213547;
+  color: #18181b;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -16,11 +16,55 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #F2F0E9;
 }
 
 #root {
   min-height: 100vh;
+}
+
+@layer utilities {
+  .card-base {
+    @apply bg-paper border-2 border-ink shadow-brutal transition-all duration-200;
+  }
+  
+  .card-base:hover {
+    @apply translate-x-[-2px] translate-y-[-2px] shadow-brutal-lg;
+  }
+  
+  .btn-primary {
+    @apply bg-ink text-white font-black px-6 py-3 border-2 border-ink shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-ink/90 transition-all uppercase tracking-wide text-sm;
+  }
+  
+  .btn-cyan {
+    @apply bg-cyan text-ink font-black px-6 py-4 border-2 border-ink shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-cyan-hover transition-all text-lg flex items-center justify-center gap-2;
+  }
+
+  .marker-highlight {
+    background: linear-gradient(180deg, transparent 60%, #00F0FF 60%);
+  }
+  
+  .paper-texture {
+    background-image: radial-gradient(#18181b 0.5px, transparent 0.5px);
+    background-size: 20px 20px;
+    opacity: 0.1;
+  }
+  
+  .receipt-edge {
+    background: linear-gradient(-45deg, transparent 16px, #ffffff 0), linear-gradient(45deg, transparent 16px, #ffffff 0);
+    background-repeat: repeat-x;
+    background-position: left bottom;
+    background-size: 24px 32px;
+    height: 32px;
+    width: 100%;
+    position: absolute;
+    bottom: -32px;
+    left: 0;
+  }
+  
+  .mad-lib-input {
+    @apply bg-transparent border-b-4 border-ink/20 text-ink font-black text-center focus:outline-none focus:border-cyan transition-colors placeholder-gray-300;
+  }
 }
 
 .gradient-bg {
@@ -58,15 +102,6 @@ body {
   animation: fadeIn 0.5s ease-out forwards;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
 .pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
@@ -76,7 +111,6 @@ body {
   50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
 }
 
-/* Toast animations */
 @keyframes slide-in-right {
   from {
     transform: translateX(100%);
@@ -92,7 +126,6 @@ body {
   animation: slide-in-right 0.3s ease-out forwards;
 }
 
-/* Skeleton loading animation */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
