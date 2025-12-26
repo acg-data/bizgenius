@@ -1,7 +1,7 @@
 import secrets
 from pydantic_settings import BaseSettings
 from pydantic import field_validator, model_validator
-from typing import List, Optional
+from typing import List
 from functools import lru_cache
 
 
@@ -27,13 +27,8 @@ class Settings(BaseSettings):
     STRIPE_PRICE_ID_PRO: str = "price_pro_monthly"
     STRIPE_PRICE_ID_COACH: str = "price_coach_monthly"
 
-    # Database
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = ""
-    POSTGRES_DB: str = "bizgenius"
-    POSTGRES_PORT: int = 5432
-    DATABASE_URL: Optional[str] = None
+    # Database (Supabase)
+    DATABASE_URL: str
 
     # CORS - Default to localhost for development
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
@@ -55,15 +50,6 @@ class Settings(BaseSettings):
         if len(v) < 32:
             raise ValueError("SECRET_KEY must be at least 32 characters")
         return v
-
-    @model_validator(mode="after")
-    def build_database_url(self) -> "Settings":
-        if not self.DATABASE_URL:
-            self.DATABASE_URL = (
-                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-                f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-            )
-        return self
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":

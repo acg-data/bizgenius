@@ -4,25 +4,6 @@
 version: "3.8"
 
 services:
-  # PostgreSQL Database
-  db:
-    image: postgres:15-alpine
-    container_name: bizgenius-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-bizgenius}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Redis Cache & Queue
   redis:
     image: redis:7-alpine
@@ -47,19 +28,13 @@ services:
     container_name: bizgenius-backend
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
       - ENVIRONMENT=development
       - DEBUG=true
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
-      - POSTGRES_SERVER=db
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-bizgenius}
-      - POSTGRES_PORT=5432
+      - DATABASE_URL=${DATABASE_URL}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
@@ -89,7 +64,6 @@ services:
     command: npm run dev -- --host
 
 volumes:
-  postgres_data:
   redis_data:
 
 networks:
