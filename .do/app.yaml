@@ -76,9 +76,6 @@ services:
     routes:
       - path: /
 
-    build_command: npm run build
-    environment_slug: node-js
-
     envs:
       - key: VITE_API_BASE_URL
         value: ${APP_URL}/api/v1
