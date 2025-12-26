@@ -1,5 +1,6 @@
 import stripe
 import logging
+from typing import Any
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -10,7 +11,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class StripeService:
     
     @staticmethod
-    def create_customer(email: str, name: str = None) -> stripe.Customer:
+    def create_customer(email: str, name: str = None) -> Any:
         try:
             customer = stripe.Customer.create(
                 email=email,
@@ -29,9 +30,9 @@ class StripeService:
         success_url: str,
         cancel_url: str,
         customer_email: str = None
-    ) -> stripe.Checkout.Session:
+    ) -> Any:
         try:
-            session = stripe.Checkout.Session.create(
+            session = stripe.checkout.Session.create(
                 customer=customer_id,
                 payment_method_types=["card"],
                 line_items=[{
@@ -50,9 +51,9 @@ class StripeService:
             raise
     
     @staticmethod
-    def create_portal_session(customer_id: str, return_url: str) -> stripe.BillingPortal.Session:
+    def create_portal_session(customer_id: str, return_url: str) -> Any:
         try:
-            session = stripe.BillingPortal.Session.create(
+            session = stripe.billing_portal.Session.create(
                 customer=customer_id,
                 return_url=return_url
             )
@@ -62,7 +63,7 @@ class StripeService:
             raise
     
     @staticmethod
-    def cancel_subscription(subscription_id: str) -> stripe.Subscription:
+    def cancel_subscription(subscription_id: str) -> Any:
         try:
             subscription = stripe.Subscription.cancel(subscription_id)
             return subscription
@@ -71,7 +72,7 @@ class StripeService:
             raise
     
     @staticmethod
-    def get_subscription(subscription_id: str) -> stripe.Subscription:
+    def get_subscription(subscription_id: str) -> Any:
         try:
             subscription = stripe.Subscription.retrieve(subscription_id)
             return subscription
@@ -80,7 +81,7 @@ class StripeService:
             raise
     
     @staticmethod
-    def handle_webhook(payload: bytes, signature: str) -> stripe.Event:
+    def handle_webhook(payload: bytes, signature: str) -> Any:
         try:
             event = stripe.Webhook.construct_event(
                 payload,
@@ -93,7 +94,7 @@ class StripeService:
             raise
     
     @staticmethod
-    def get_customer_by_id(customer_id: str) -> stripe.Customer:
+    def get_customer_by_id(customer_id: str) -> Any:
         try:
             customer = stripe.Customer.retrieve(customer_id)
             return customer
