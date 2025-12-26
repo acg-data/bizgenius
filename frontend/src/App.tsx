@@ -24,6 +24,7 @@ import NotFound from './pages/NotFound';
 import AccessDenied from './pages/AccessDenied';
 import Loading from './pages/Loading';
 import Generate from './pages/Generate';
+import Results from './pages/Results';
 
 function App() {
   const { setUser, setToken, isAuthenticated, isLoading } = useAuthStore();
@@ -51,6 +52,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/generate" element={<Generate />} />
+      <Route path="/results" element={<Results />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

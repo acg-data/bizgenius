@@ -48,7 +48,27 @@ Optional for production:
 - `STRIPE_SECRET_KEY` - For payment processing
 - `STRIPE_WEBHOOK_SECRET` - For Stripe webhooks
 
+## AI Analysis Sections
+The platform generates 10 comprehensive analysis sections:
+1. **Executive Summary** - One-liner pitch, problem/solution, value proposition, unfair advantage, success metrics
+2. **Market Research** - TAM/SAM/SOM with calculations, market trends, customer segments, regulatory landscape
+3. **Business Plan** - Mission/vision, pricing strategy, unit economics, SWOT analysis, product roadmap
+4. **Financial Model** - 5-year projections, break-even analysis, funding strategy, scenario analysis
+5. **Competitor Analysis** - Detailed profiles, differentiation strategy, battle cards, market gaps
+6. **Go-to-Market** - Launch phases, acquisition channels, first 100 customers strategy, viral loops
+7. **Team Plan** - Founding team composition, hiring roadmap with salaries/equity, culture
+8. **Risk Assessment** - Risk scores, critical risks with mitigations, kill conditions
+9. **90-Day Action Plan** - Week-by-week tasks, milestones, resources/budget needed
+10. **Pitch Deck** - Slide-by-slide breakdown with speaker notes, investor FAQs
+
 ## Recent Changes
+- 2025-12-26: Comprehensive Business Operating System
+  - Created 10 hyper-detailed AI generation prompts for comprehensive business analysis
+  - Built `/results` page with tabbed interface displaying all 10 analysis sections
+  - Enhanced `/generate` page with 10-step progress indicators
+  - Added executive summary, go-to-market, team plan, risk assessment, and 90-day action plan sections
+  - All AI generations run in parallel for speed
+  
 - 2025-12-26: Implemented Generate page and AI generation flow
   - Created `/generate` page with real-time progress indicators
   - Updated AI service to use `minimax/minimax-m2.1` model via OpenRouter
