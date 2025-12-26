@@ -1,0 +1,25 @@
+# BizGenius Backend Development Dependencies
+
+# Include production dependencies
+-r requirements.txt
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+pytest-env>=1.1.0
+httpx>=0.26.0  # For TestClient
+
+# Code Quality
+black>=24.1.0
+isort>=5.13.0
+flake8>=7.0.0
+mypy>=1.8.0
+
+# Type Stubs
+types-passlib>=1.7.7
+types-python-jose>=3.3.4
+
+# Factories for Testing
+factory-boy>=3.3.0
+faker>=22.0.0
