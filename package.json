@@ -1,0 +1,39 @@
+{
+  "name": "bizgenius",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BizGenius - AI-powered business planning platform",
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && pip install -r requirements.txt",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "build:frontend": "cd frontend && npm run build",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && pytest",
+    "lint:frontend": "cd frontend && npm run lint",
+    "docker:dev": "docker-compose up",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/bizgenius"
+  },
+  "keywords": [
+    "ai",
+    "business-planning",
+    "saas",
+    "react",
+    "fastapi"
+  ],
+  "author": "BizGenius Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
