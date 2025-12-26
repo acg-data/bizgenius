@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import time
 import uuid
+import os
+from pathlib import Path
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
@@ -85,10 +88,14 @@ async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
 
 
-@app.get("/")
-async def root():
+@app.get("/api")
+async def api_root():
     return {
-        "name": "BizGenius API",
+        "name": "myCEO API",
         "version": "1.0.0",
         "description": "AI-powered business planning SaaS"
     }
+
+frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="static")
