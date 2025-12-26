@@ -36,7 +36,7 @@ import {
   Bars3Icon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { useAuthStore } from '../../store';
+import { useAuthStore } from '../store';
 
 interface LayoutProps {
   children: React.ReactNode;

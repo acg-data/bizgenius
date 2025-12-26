@@ -1,19 +1,23 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-import logging
+import time
+import uuid
 
 from app.core.config import settings
+from app.core.logging import setup_logging, get_logger
+from app.core.exceptions import register_exception_handlers
 from app.api import auth, users, ideas, subscriptions, payments, documents
 from app.db.init_db import init_db
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Initialize structured logging
+setup_logging()
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting up BizGenius API...")
+    logger.info("Starting up BizGenius API...", extra={"environment": settings.ENVIRONMENT})
     await init_db()
     logger.info("Startup complete!")
     yield
@@ -34,6 +38,39 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register custom exception handlers
+register_exception_handlers(app)
+
+
+@app.middleware("http")
+async def request_logging_middleware(request: Request, call_next):
+    """Log all requests with timing and request ID."""
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())[:8])
+    start_time = time.time()
+
+    # Add request ID to response headers
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+
+    # Calculate duration
+    duration_ms = round((time.time() - start_time) * 1000, 2)
+
+    # Log the request (skip health checks to reduce noise)
+    if request.url.path != "/health":
+        logger.info(
+            f"{request.method} {request.url.path} - {response.status_code}",
+            extra={
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": duration_ms
+            }
+        )
+
+    return response
+
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
