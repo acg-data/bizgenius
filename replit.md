@@ -1,7 +1,7 @@
-# BizGenius - AI-Powered Business Planning Platform
+# myCEO - AI-Powered Business Planning Platform
 
 ## Overview
-BizGenius is a fullstack SaaS application that helps users turn their business ideas into complete business plans using AI.
+myCEO is a fullstack SaaS application that helps users turn their business ideas into complete business plans using AI. It features a neobrutalist design aesthetic with cyan accent colors and thick borders.
 
 ## Project Structure
 ```
@@ -49,6 +49,14 @@ Optional for production:
 - `STRIPE_WEBHOOK_SECRET` - For Stripe webhooks
 
 ## Recent Changes
+- 2025-12-26: Implemented Generate page and AI generation flow
+  - Created `/generate` page with real-time progress indicators
+  - Updated AI service to use `minimax/minimax-m2.1` model via OpenRouter
+  - Created public `/api/v1/generate` endpoint for unauthenticated business analysis
+  - Updated Landing page with open-ended textarea for business ideas
+  - Added robust JSON parsing for AI responses
+  - Implemented local storage fallback for page reloads
+  
 - 2025-12-26: Initial Replit environment setup
   - Configured Vite for port 5000 with host 0.0.0.0 and allowedHosts: true
   - Set up API proxy from frontend to backend
