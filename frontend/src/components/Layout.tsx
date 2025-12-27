@@ -15,26 +15,16 @@ import {
   DropdownItem,
   Avatar,
   useDisclosure,
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerBody,
-  DrawerFooter,
-  Chip,
 } from '@heroui/react';
 import {
   HomeIcon,
   DocumentTextIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  UserIcon,
   CreditCardIcon,
   QuestionMarkCircleIcon,
   SparklesIcon,
-  ChartBarIcon,
   BellIcon,
-  Bars3Icon,
-  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../store';
 
@@ -53,7 +43,7 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { } = useDisclosure();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {

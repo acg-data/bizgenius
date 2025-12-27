@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Card, CardBody, CardHeader, Button, Switch, Input, Divider, Select, SelectItem } from '@heroui/react';
+import { Card, CardBody, CardHeader, Button, Switch, Divider, Select, SelectItem } from '@heroui/react';
 import {
   BellIcon,
   ShieldCheckIcon,
-  PaintBrushIcon,
   GlobeAltIcon,
   TrashIcon,
   ArrowRightOnRectangleIcon,
@@ -120,10 +119,10 @@ export default function Settings() {
               onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
               classNames={{ base: 'max-w-xs' }}
             >
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="es">Español</SelectItem>
-              <SelectItem value="fr">Français</SelectItem>
-              <SelectItem value="de">Deutsch</SelectItem>
+              <SelectItem key="en">English</SelectItem>
+              <SelectItem key="es">Español</SelectItem>
+              <SelectItem key="fr">Français</SelectItem>
+              <SelectItem key="de">Deutsch</SelectItem>
             </Select>
             
             <Select
@@ -132,12 +131,12 @@ export default function Settings() {
               onChange={(e) => setPreferences({ ...preferences, timezone: e.target.value })}
               classNames={{ base: 'max-w-xs' }}
             >
-              <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
-              <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
-              <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
-              <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
-              <SelectItem value="Europe/London">London (GMT)</SelectItem>
-              <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
+              <SelectItem key="America/New_York">Eastern Time (ET)</SelectItem>
+              <SelectItem key="America/Chicago">Central Time (CT)</SelectItem>
+              <SelectItem key="America/Denver">Mountain Time (MT)</SelectItem>
+              <SelectItem key="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+              <SelectItem key="Europe/London">London (GMT)</SelectItem>
+              <SelectItem key="Europe/Paris">Paris (CET)</SelectItem>
             </Select>
             
             <Select
@@ -146,10 +145,10 @@ export default function Settings() {
               onChange={(e) => setPreferences({ ...preferences, currency: e.target.value })}
               classNames={{ base: 'max-w-xs' }}
             >
-              <SelectItem value="USD">USD ($)</SelectItem>
-              <SelectItem value="EUR">EUR (€)</SelectItem>
-              <SelectItem value="GBP">GBP (£)</SelectItem>
-              <SelectItem value="JPY">JPY (¥)</SelectItem>
+              <SelectItem key="USD">USD ($)</SelectItem>
+              <SelectItem key="EUR">EUR (€)</SelectItem>
+              <SelectItem key="GBP">GBP (£)</SelectItem>
+              <SelectItem key="JPY">JPY (¥)</SelectItem>
             </Select>
           </CardBody>
         </Card>

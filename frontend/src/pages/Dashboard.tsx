@@ -5,10 +5,7 @@ import {
   CardBody,
   CardHeader,
   Button,
-  Progress,
   Chip,
-  Avatar,
-  Badge,
   Table,
   TableHeader,
   TableColumn,
@@ -48,7 +45,7 @@ const recentActivity = [
 export default function Dashboard() {
   const { user } = useAuthStore();
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Load ideas (mock data for now)

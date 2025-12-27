@@ -8,10 +8,7 @@ import {
   Tabs,
   Tab,
   Chip,
-  Progress,
   Divider,
-  Accordion,
-  AccordionItem,
   Table,
   TableHeader,
   TableColumn,
@@ -148,7 +145,7 @@ const tabs = [
 ];
 
 export default function IdeaDetail() {
-  const { id } = useParams();
+  const { } = useParams();
   const [idea] = useState<Idea>(mockIdea);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');

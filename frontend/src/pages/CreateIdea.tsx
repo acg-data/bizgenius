@@ -106,7 +106,7 @@ export default function CreateIdea() {
                 size="lg"
               >
                 {industries.map((industry) => (
-                  <SelectItem key={industry.value} value={industry.value}>
+                  <SelectItem key={industry.value}>
                     {industry.emoji} {industry.label}
                   </SelectItem>
                 ))}

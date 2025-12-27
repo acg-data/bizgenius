@@ -100,7 +100,6 @@ export default function Profile() {
               onValueChange={(value) => setFormData({ ...formData, bio: value })}
               isReadOnly={!isEditing}
               size="lg"
-              minRows={3}
             />
           </div>
 

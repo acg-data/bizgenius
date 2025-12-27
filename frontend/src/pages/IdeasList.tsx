@@ -10,7 +10,6 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Avatar,
   Progress,
 } from '@heroui/react';
 import {
@@ -26,7 +25,7 @@ import {
 } from '@heroicons/react/24/outline';
 import type { Idea } from '../types';
 
-const mockIdeas: Idea[] = [
+const mockIdeas = [
   {
     id: 1,
     title: 'AI-Powered Tutoring Platform',
@@ -34,7 +33,7 @@ const mockIdeas: Idea[] = [
     industry: 'EdTech',
     target_market: 'K-12 students, Parents, Schools',
     user_id: 1,
-    business_plan: { executive_summary: 'Test' },
+    business_plan: { executive_summary: 'Test' } as any,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -55,7 +54,7 @@ const mockIdeas: Idea[] = [
     industry: 'Healthcare',
     target_market: 'Patients, Healthcare providers, Insurance companies',
     user_id: 1,
-    financial_model: { assumptions: { market_size: 'Test' } },
+    financial_model: { assumptions: { market_size: 'Test' } } as any,
     created_at: new Date(Date.now() - 172800000).toISOString(),
     updated_at: new Date(Date.now() - 172800000).toISOString(),
   },
@@ -66,18 +65,18 @@ const mockIdeas: Idea[] = [
     industry: 'Health & Fitness',
     target_market: 'Fitness enthusiasts, Gyms, Corporate wellness programs',
     user_id: 1,
-    pitch_deck: { slides: [] },
+    pitch_deck: { slides: [] } as any,
     created_at: new Date(Date.now() - 259200000).toISOString(),
     updated_at: new Date(Date.now() - 259200000).toISOString(),
   },
-];
+] as Idea[];
 
 const industries = ['All', 'EdTech', 'Healthcare', 'Sustainability', 'Health & Fitness', 'Finance', 'E-commerce'];
 
 export default function IdeasList() {
   const [search, setSearch] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('All');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [_viewMode, _setViewMode] = useState<'grid' | 'list'>('grid');
 
   const filteredIdeas = mockIdeas.filter((idea) => {
     const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -156,8 +155,7 @@ export default function IdeasList() {
                       <DropdownItem
                         key="view"
                         startContent={<EyeIcon className="w-4 h-4" />}
-                        as={Link}
-                        to={`/ideas/${idea.id}`}
+                        href={`/ideas/${idea.id}`}
                       >
                         View Details
                       </DropdownItem>
