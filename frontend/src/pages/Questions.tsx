@@ -2,12 +2,19 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 
+interface QuestionOption {
+  value: string;
+  label: string;
+}
+
 interface Question {
   id: string;
   question: string;
   why_important: string;
   category: string;
-  example_answer: string;
+  options?: QuestionOption[];
+  allow_custom_input?: boolean;
+  example_answer?: string;
 }
 
 interface QuestionsData {
@@ -15,12 +22,17 @@ interface QuestionsData {
   questions: Question[];
 }
 
+interface AnswerState {
+  selectedOption: string;
+  customText: string;
+}
+
 export default function Questions() {
   const navigate = useNavigate();
   const location = useLocation();
   const [businessIdea, setBusinessIdea] = useState('');
   const [questionsData, setQuestionsData] = useState<QuestionsData | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,9 +58,9 @@ export default function Questions() {
       const response = await api.post('/generate/questions', { idea });
       setQuestionsData(response.data);
       
-      const initialAnswers: Record<string, string> = {};
+      const initialAnswers: Record<string, AnswerState> = {};
       response.data.questions?.forEach((q: Question) => {
-        initialAnswers[q.id] = '';
+        initialAnswers[q.id] = { selectedOption: '', customText: '' };
       });
       setAnswers(initialAnswers);
     } catch (err: unknown) {
@@ -59,20 +71,47 @@ export default function Questions() {
     }
   };
 
-  const handleAnswerChange = (questionId: string, value: string) => {
+  const handleOptionSelect = (questionId: string, optionValue: string) => {
     setAnswers(prev => ({
       ...prev,
-      [questionId]: value
+      [questionId]: { 
+        ...prev[questionId],
+        selectedOption: optionValue,
+        customText: optionValue === 'other' ? prev[questionId]?.customText || '' : ''
+      }
     }));
+  };
+
+  const handleCustomTextChange = (questionId: string, text: string) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: { 
+        ...prev[questionId],
+        customText: text
+      }
+    }));
+  };
+
+  const getAnswerText = (questionId: string, question: Question): string => {
+    const answer = answers[questionId];
+    if (!answer?.selectedOption) return '';
+    
+    if (answer.selectedOption === 'other') {
+      return answer.customText || '';
+    }
+    
+    const option = question.options?.find(o => o.value === answer.selectedOption);
+    return option?.label || answer.selectedOption;
   };
 
   const handleSubmit = () => {
     const answersWithContext: Record<string, { question: string; answer: string }> = {};
     questionsData?.questions?.forEach((q: Question) => {
-      if (answers[q.id] && answers[q.id].trim()) {
+      const answerText = getAnswerText(q.id, q);
+      if (answerText.trim()) {
         answersWithContext[q.id] = {
           question: q.question,
-          answer: answers[q.id].trim()
+          answer: answerText.trim()
         };
       }
     });
@@ -123,7 +162,11 @@ export default function Questions() {
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
 
-  const answeredCount = Object.values(answers).filter(a => a.trim()).length;
+  const answeredCount = Object.entries(answers).filter(([qId, a]) => {
+    const question = questionsData?.questions?.find(q => q.id === qId);
+    if (!question) return false;
+    return a.selectedOption && (a.selectedOption !== 'other' || a.customText.trim());
+  }).length;
   const totalQuestions = questionsData?.questions?.length || 0;
 
   return (
@@ -210,12 +253,52 @@ export default function Questions() {
                     </div>
                   </div>
                   
-                  <textarea
-                    value={answers[q.id] || ''}
-                    onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                    placeholder={q.example_answer}
-                    className="w-full h-24 p-4 bg-gray-50 border-2 border-gray-200 focus:border-cyan text-ink font-medium resize-none focus:outline-none transition-colors rounded-lg"
-                  />
+                  {q.options && q.options.length > 0 ? (
+                    <div className="space-y-2">
+                      {q.options.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => handleOptionSelect(q.id, option.value)}
+                          className={`w-full text-left p-4 border-2 transition-all rounded-lg flex items-center gap-3 ${
+                            answers[q.id]?.selectedOption === option.value
+                              ? 'border-cyan bg-cyan/10 shadow-brutal-sm'
+                              : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            answers[q.id]?.selectedOption === option.value
+                              ? 'border-cyan bg-cyan'
+                              : 'border-gray-300'
+                          }`}>
+                            {answers[q.id]?.selectedOption === option.value && (
+                              <div className="w-2 h-2 bg-ink rounded-full" />
+                            )}
+                          </div>
+                          <span className="font-medium">{option.label}</span>
+                        </button>
+                      ))}
+                      
+                      {answers[q.id]?.selectedOption === 'other' && (
+                        <div className="mt-3 ml-8">
+                          <input
+                            type="text"
+                            value={answers[q.id]?.customText || ''}
+                            onChange={(e) => handleCustomTextChange(q.id, e.target.value)}
+                            placeholder="Please specify..."
+                            className="w-full p-3 bg-white border-2 border-cyan focus:border-ink text-ink font-medium focus:outline-none transition-colors rounded-lg"
+                            autoFocus
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <textarea
+                      value={answers[q.id]?.customText || ''}
+                      onChange={(e) => handleCustomTextChange(q.id, e.target.value)}
+                      placeholder={q.example_answer || 'Enter your answer...'}
+                      className="w-full h-24 p-4 bg-gray-50 border-2 border-gray-200 focus:border-cyan text-ink font-medium resize-none focus:outline-none transition-colors rounded-lg"
+                    />
+                  )}
                 </div>
               ))}
             </div>

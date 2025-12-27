@@ -12,11 +12,11 @@ interface Tab {
 }
 
 const baseTabs: Tab[] = [
-  { id: 'summary', label: 'Executive Summary', icon: '📋' },
   { id: 'market', label: 'Market Research', icon: '📊' },
+  { id: 'competitors', label: 'Competitors', icon: '⚔️' },
+  { id: 'summary', label: 'Executive Summary', icon: '📋' },
   { id: 'business', label: 'Business Plan', icon: '🏢' },
   { id: 'financials', label: 'Financials', icon: '💰' },
-  { id: 'competitors', label: 'Competitors', icon: '⚔️' },
   { id: 'gtm', label: 'Go-to-Market', icon: '🚀' },
   { id: 'team', label: 'Team Plan', icon: '👥' },
   { id: 'risks', label: 'Risks', icon: '⚠️' },
@@ -29,7 +29,7 @@ const localTab: Tab = { id: 'local', label: 'Local Market', icon: '📍' };
 export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabId>('summary');
+  const [activeTab, setActiveTab] = useState<TabId>('market');
   const [result, setResult] = useState<any>(null);
   const [businessIdea, setBusinessIdea] = useState<string>('');
 

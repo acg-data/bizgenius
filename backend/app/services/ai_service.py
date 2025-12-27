@@ -962,11 +962,19 @@ class AIService:
 
         BUSINESS IDEA: {idea}
 
-        Analyze this idea and identify 3-5 questions that would help create a more comprehensive business plan. Focus on:
-        1. Gaps in the description (missing target customer, pricing, location, competition info)
-        2. Critical assumptions that need validation
-        3. Strategic decisions that affect the business model
-        4. Market-specific details that would improve analysis accuracy
+        CRITICAL: Your FIRST question MUST always be about LOCATION:
+        - If this seems like a local/regional business (service, retail, restaurant, etc.): Ask for the specific CITY and STATE (e.g., "Austin, TX" or "Miami, FL")
+        - If this is an online/global business: Ask for the COUNTRY of primary operations and target market
+
+        After the location question, identify 2-4 additional questions to fill gaps. Focus on:
+        1. Target customer specifics
+        2. Pricing strategy  
+        3. Competition awareness
+        4. Business model decisions
+        5. Go-to-market approach
+
+        IMPORTANT: Each question must be MULTIPLE CHOICE with 3-5 options plus an "Other" option.
+        Make the options specific and realistic based on the business type.
 
         Return a JSON object with this EXACT structure:
         {{
@@ -974,15 +982,28 @@ class AIService:
             "questions": [
                 {{
                     "id": "q1",
-                    "question": "The actual question to ask the founder",
-                    "why_important": "Why this question matters for the business plan",
-                    "category": "One of: target_customer, pricing, competition, location, business_model, go_to_market, team, funding",
-                    "example_answer": "Example of a good answer to guide the founder"
+                    "question": "The question text",
+                    "why_important": "Why this matters for the business plan",
+                    "category": "One of: location, target_customer, pricing, competition, business_model, go_to_market, team, funding",
+                    "options": [
+                        {{"value": "option_1", "label": "First choice with specific detail"}},
+                        {{"value": "option_2", "label": "Second choice with specific detail"}},
+                        {{"value": "option_3", "label": "Third choice with specific detail"}},
+                        {{"value": "other", "label": "Other (please specify)"}}
+                    ],
+                    "allow_custom_input": true
                 }}
             ]
         }}
 
-        Generate 3-5 highly specific questions. Avoid generic questions like "Who is your target customer?" - instead ask "Are you targeting busy professionals ages 25-40 in urban areas, or a different demographic?"
+        EXAMPLE for a dog walking app in Texas:
+        Question 1 (LOCATION - REQUIRED FIRST): "Where will you primarily operate this business?"
+        Options: ["Austin, TX", "Houston, TX", "Dallas, TX", "San Antonio, TX", "Other (please specify)"]
+
+        Question 2 (PRICING): "What price point are you considering per walk?"
+        Options: ["$15-20 per 30-min walk (budget-friendly)", "$25-35 per 30-min walk (mid-market)", "$40-50+ per 30-min walk (premium)", "Other (please specify)"]
+
+        Generate 3-5 questions total. The first MUST be location. Make options specific to this business type.
         
         Only return valid JSON, no additional text.
         """

@@ -47,11 +47,12 @@ export default function Generate() {
   }, [location.state]);
   
   const [steps, setSteps] = useState<GenerationStep[]>([
-    { id: 'executive', label: 'Crafting Executive Summary', status: 'pending' },
     { id: 'market', label: 'Analyzing Market Opportunity', status: 'pending' },
-    { id: 'business', label: 'Building Business Strategy', status: 'pending' },
-    { id: 'financial', label: 'Creating Financial Projections', status: 'pending' },
     { id: 'competitors', label: 'Researching Competitors', status: 'pending' },
+    { id: 'icp', label: 'Defining Ideal Customer Profile', status: 'pending' },
+    { id: 'business', label: 'Building Business Strategy', status: 'pending' },
+    { id: 'executive', label: 'Crafting Executive Summary', status: 'pending' },
+    { id: 'financial', label: 'Creating Financial Projections', status: 'pending' },
     { id: 'gtm', label: 'Designing Go-to-Market Plan', status: 'pending' },
     { id: 'team', label: 'Planning Team & Hiring', status: 'pending' },
     { id: 'risk', label: 'Assessing Risks & Mitigations', status: 'pending' },
