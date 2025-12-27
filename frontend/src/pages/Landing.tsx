@@ -54,11 +54,11 @@ export default function Landing() {
         </div>
 
         <h1 className="text-5xl md:text-7xl font-black text-center leading-[0.9] tracking-tight mb-6 max-w-5xl">
-          Turn your napkin sketch <br /> into a <span className="marker-highlight px-2">cash machine.</span>
+          Every empire started with an idea. <br /> <span className="marker-highlight px-2">Start yours now.</span>
         </h1>
         
         <p className="text-lg md:text-xl font-medium text-center text-gray-600 mb-12 max-w-2xl">
-          Stop playing house. myCEO generates your financial model, pitch deck, and strategy in <span className="font-black text-ink">seconds</span>.
+          AI-powered business plans that would take consultants <span className="font-black text-ink">weeks</span>.
         </p>
 
         <div className="w-full max-w-2xl relative group">
