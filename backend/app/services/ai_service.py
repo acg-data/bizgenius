@@ -1007,7 +1007,7 @@ class AIService:
         
         Only return valid JSON, no additional text.
         """
-        return await self._call_ai(prompt)
+        return await self._call_ai_fast(prompt)
 
     def _extract_json(self, content: str) -> dict:
         content = content.strip()
@@ -1031,6 +1031,43 @@ class AIService:
             content = content.replace('\n', ' ').replace('\r', '')
             content = ' '.join(content.split())
             return json.loads(content)
+    
+    async def _call_ai_fast(self, prompt: str) -> dict:
+        """Use GPT-4o-mini for faster responses on simpler tasks like question generation."""
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=self.headers,
+                    json={
+                        "model": "openai/gpt-4o-mini",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a startup advisor. Return ONLY valid JSON with no markdown formatting or code blocks. Be specific and actionable."
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        "temperature": 0.7,
+                        "max_tokens": 2000
+                    }
+                )
+                
+                response.raise_for_status()
+                result = response.json()
+                
+                content = result["choices"][0]["message"]["content"]
+                return self._extract_json(content)
+                
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error (fast): {e}")
+            raise Exception(f"Failed to parse AI response as JSON: {str(e)}")
+        except Exception as e:
+            logger.error(f"AI generation error (fast): {e}")
+            raise Exception(f"Failed to generate content: {str(e)}")
     
     async def _call_ai(self, prompt: str) -> dict:
         try:
