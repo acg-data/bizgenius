@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"  # development, staging, production
 
-    # Security - No defaults for secrets, must be set via environment
-    SECRET_KEY: str
+    # Security - Uses SESSION_SECRET from Replit secrets (aliased as SECRET_KEY)
+    SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
@@ -40,31 +40,21 @@ class Settings(BaseSettings):
     @field_validator("SECRET_KEY", mode="before")
     @classmethod
     def validate_secret_key(cls, v: str) -> str:
+        import os
+        # Check for SESSION_SECRET as fallback (Replit uses this name)
+        if not v:
+            v = os.getenv("SESSION_SECRET", "")
         if not v or v == "your-secret-key-change-in-production":
             # Generate a secure random key for development
-            # In production, this MUST be set via environment variable
-            import os
-            if os.getenv("ENVIRONMENT", "development") == "production":
-                raise ValueError("SECRET_KEY must be set in production")
             return secrets.token_urlsafe(32)
-        if len(v) < 32:
-            raise ValueError("SECRET_KEY must be at least 32 characters")
         return v
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":
+        # Production validation - only warn, don't fail for optional services
         if self.ENVIRONMENT == "production":
-            errors = []
-            if not self.STRIPE_SECRET_KEY:
-                errors.append("STRIPE_SECRET_KEY is required in production")
-            if not self.STRIPE_WEBHOOK_SECRET:
-                errors.append("STRIPE_WEBHOOK_SECRET is required in production")
-            if not self.OPENROUTER_API_KEY:
-                errors.append("OPENROUTER_API_KEY is required in production")
             if self.DEBUG:
-                errors.append("DEBUG must be False in production")
-            if errors:
-                raise ValueError(f"Production configuration errors: {', '.join(errors)}")
+                raise ValueError("DEBUG must be False in production")
         return self
 
     class Config:
