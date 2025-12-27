@@ -74,12 +74,22 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-27: Enhanced Competitor Discovery & Financial Exports
+  - Added Gemini Flash (`google/gemini-2.0-flash-001`) for competitor discovery with real sources
+  - Competitor analysis now shows 5-10 direct + 3-5 indirect competitors with:
+    - Clickable website links, Google reviews, Yelp links as citations
+    - Competitive advantage analysis and customer review summaries
+    - Market gaps and opportunities based on competitor weaknesses
+  - Added "I don't know" option to all multiple choice questions
+  - Added required questions: Investment Amount and Timeline (always asked)
+  - Financials tab now includes Google Sheets export and CSV download
+  - Questions now use openai/gpt-oss-120b for fastest generation (~1-2 seconds)
+
 - 2025-12-27: Enhanced Discovery Questionnaire with Multiple Choice
   - Location-first questioning: AI always asks for location first (city/state for domestic, country for international)
   - Multiple choice format: Questions now show 3-5 options plus "Other (please specify)" with custom text field
   - Reordered generation: Market Research → Competitor Analysis → ICP come first, then Business Plan follows gap analysis
   - Updated Results page tabs to show Market Research and Competitors first (default tab is now Market)
-  - Questions now use openai/gpt-oss-120b for fastest generation (~1-2 seconds)
 
 - 2025-12-27: AI Discovery Questionnaire
   - Added `/api/v1/generate/questions` endpoint that generates 3-5 contextual questions based on business idea

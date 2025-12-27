@@ -1,6 +1,7 @@
 import httpx
 import json
 import logging
+import asyncio
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,154 @@ class AIService:
             "HTTP-Referer": "https://myceo.app",
             "X-Title": "myCEO"
         }
+    
+    async def discover_competitors_with_gemini(self, idea: str, location: dict | None = None) -> dict:
+        """Use Gemini Flash to discover direct and indirect competitors with real sources."""
+        location_context = ""
+        if location:
+            location_context = f"""
+            LOCATION CONTEXT: This is a LOCAL business in {location.get('city', '')}, {location.get('state', '')}.
+            Focus on finding REAL local competitors in this specific area.
+            Include their actual business names, addresses, websites, and Google/Yelp review information.
+            """
+        
+        prompt = f"""
+        You are a competitive intelligence researcher. Find REAL competitors for this business idea.
+
+        BUSINESS IDEA: {idea}
+        {location_context}
+
+        IMPORTANT: Provide REAL businesses that actually exist. Include verifiable information with sources.
+
+        Return a JSON object with this EXACT structure:
+        {{
+            "direct_competitors": [
+                {{
+                    "name": "Actual Business Name",
+                    "type": "direct",
+                    "website": "https://their-actual-website.com",
+                    "description": "What they do and how they compete directly",
+                    "location": "City, State (if local) or 'National/Online'",
+                    "competitive_advantage": "What makes them strong",
+                    "weaknesses": "Where they fall short",
+                    "pricing": "Their pricing model or range if known",
+                    "reviews_summary": "Summary of customer reviews if available",
+                    "review_rating": "X.X/5 stars (source: Google/Yelp)",
+                    "sources": [
+                        {{"type": "website", "url": "https://their-website.com"}},
+                        {{"type": "google_reviews", "url": "https://www.google.com/maps/place/BUSINESS+NAME"}},
+                        {{"type": "yelp", "url": "https://www.yelp.com/biz/business-name-city"}}
+                    ]
+                }}
+            ],
+            "indirect_competitors": [
+                {{
+                    "name": "Actual Business Name",
+                    "type": "indirect",
+                    "website": "https://their-actual-website.com",
+                    "description": "What they do and how they indirectly compete",
+                    "location": "City, State or 'National/Online'",
+                    "how_they_compete": "How customers might choose them instead",
+                    "competitive_advantage": "What makes them strong",
+                    "weaknesses": "Where they fall short",
+                    "sources": [
+                        {{"type": "website", "url": "https://their-website.com"}}
+                    ]
+                }}
+            ],
+            "market_gaps": [
+                {{
+                    "gap": "Specific unmet need in the market",
+                    "evidence": "Why this gap exists based on competitor analysis",
+                    "opportunity": "How the new business can exploit this"
+                }}
+            ],
+            "competitive_insights": {{
+                "total_competitors_found": 0,
+                "market_saturation": "Low/Medium/High",
+                "average_rating": "X.X/5",
+                "common_complaints": ["Complaint 1", "Complaint 2"],
+                "underserved_segments": ["Segment 1", "Segment 2"]
+            }}
+        }}
+
+        Find 5-10 DIRECT competitors and 3-5 INDIRECT competitors.
+        All sources must be real, verifiable URLs.
+        Only return valid JSON, no additional text.
+        """
+        try:
+            result = await self._call_ai_gemini(prompt)
+            
+            if not isinstance(result, dict):
+                result = {"direct_competitors": [], "indirect_competitors": [], "market_gaps": []}
+            if "direct_competitors" not in result:
+                result["direct_competitors"] = []
+            if "indirect_competitors" not in result:
+                result["indirect_competitors"] = []
+            if "market_gaps" not in result:
+                result["market_gaps"] = []
+            if "competitive_insights" not in result:
+                result["competitive_insights"] = {
+                    "total_competitors_found": len(result.get("direct_competitors", [])) + len(result.get("indirect_competitors", [])),
+                    "market_saturation": "Unknown",
+                    "average_rating": "N/A",
+                    "common_complaints": [],
+                    "underserved_segments": []
+                }
+            
+            return result
+        except Exception as e:
+            logger.error(f"Competitor discovery failed: {e}")
+            return {
+                "direct_competitors": [],
+                "indirect_competitors": [],
+                "market_gaps": [],
+                "competitive_insights": {
+                    "total_competitors_found": 0,
+                    "market_saturation": "Unknown",
+                    "average_rating": "N/A",
+                    "common_complaints": [],
+                    "underserved_segments": []
+                },
+                "error": str(e)
+            }
+    
+    async def _call_ai_gemini(self, prompt: str) -> dict:
+        """Use Gemini Flash for competitor discovery - fast and grounded."""
+        try:
+            async with httpx.AsyncClient(timeout=90.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=self.headers,
+                    json={
+                        "model": "google/gemini-2.0-flash-001",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a competitive intelligence researcher. Return ONLY valid JSON with real business information and verifiable sources. Be accurate and factual."
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        "temperature": 0.3,
+                        "max_tokens": 8000
+                    }
+                )
+                
+                response.raise_for_status()
+                result = response.json()
+                
+                content = result["choices"][0]["message"]["content"]
+                return self._extract_json(content)
+                
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error (Gemini): {e}")
+            raise Exception(f"Failed to parse AI response as JSON: {str(e)}")
+        except Exception as e:
+            logger.error(f"AI generation error (Gemini): {e}")
+            raise Exception(f"Failed to generate content: {str(e)}")
     
     async def generate_executive_summary(self, idea: str) -> dict:
         prompt = f"""
@@ -962,19 +1111,28 @@ class AIService:
 
         BUSINESS IDEA: {idea}
 
-        CRITICAL: Your FIRST question MUST always be about LOCATION:
-        - If this seems like a local/regional business (service, retail, restaurant, etc.): Ask for the specific CITY and STATE (e.g., "Austin, TX" or "Miami, FL")
-        - If this is an online/global business: Ask for the COUNTRY of primary operations and target market
+        REQUIRED QUESTIONS (always include these in order):
+        
+        1. LOCATION (FIRST): 
+           - If local/regional business: Ask for specific CITY and STATE (e.g., "Austin, TX")
+           - If online/global business: Ask for COUNTRY of primary operations
+        
+        2. INVESTMENT AMOUNT (REQUIRED):
+           - Ask how much capital they have available to invest in this business
+           - Options should range from bootstrapping to significant investment amounts
+        
+        3. TIMELINE (REQUIRED):
+           - Ask when they want to launch or how quickly they want to move
 
-        After the location question, identify 2-4 additional questions to fill gaps. Focus on:
-        1. Target customer specifics
-        2. Pricing strategy  
-        3. Competition awareness
-        4. Business model decisions
-        5. Go-to-market approach
+        After these 3 required questions, add 1-2 additional questions based on gaps. Focus on:
+        - Target customer specifics
+        - Pricing strategy  
+        - Competition awareness
+        - Business model decisions
 
-        IMPORTANT: Each question must be MULTIPLE CHOICE with 3-5 options plus an "Other" option.
-        Make the options specific and realistic based on the business type.
+        CRITICAL: Every question must include these TWO special options at the END:
+        1. "Other (please specify)" - for custom answers
+        2. "I don't know" - for founders who are unsure
 
         Return a JSON object with this EXACT structure:
         {{
@@ -984,12 +1142,13 @@ class AIService:
                     "id": "q1",
                     "question": "The question text",
                     "why_important": "Why this matters for the business plan",
-                    "category": "One of: location, target_customer, pricing, competition, business_model, go_to_market, team, funding",
+                    "category": "One of: location, target_customer, pricing, competition, business_model, go_to_market, team, funding, investment, timeline",
                     "options": [
                         {{"value": "option_1", "label": "First choice with specific detail"}},
                         {{"value": "option_2", "label": "Second choice with specific detail"}},
                         {{"value": "option_3", "label": "Third choice with specific detail"}},
-                        {{"value": "other", "label": "Other (please specify)"}}
+                        {{"value": "other", "label": "Other (please specify)"}},
+                        {{"value": "unknown", "label": "I don't know"}}
                     ],
                     "allow_custom_input": true
                 }}
@@ -997,17 +1156,37 @@ class AIService:
         }}
 
         EXAMPLE for a dog walking app in Texas:
-        Question 1 (LOCATION - REQUIRED FIRST): "Where will you primarily operate this business?"
-        Options: ["Austin, TX", "Houston, TX", "Dallas, TX", "San Antonio, TX", "Other (please specify)"]
+        
+        Question 1 (LOCATION - REQUIRED): "Where will you primarily operate this business?"
+        Options: ["Austin, TX", "Houston, TX", "Dallas, TX", "San Antonio, TX", "Other (please specify)", "I don't know"]
 
-        Question 2 (PRICING): "What price point are you considering per walk?"
-        Options: ["$15-20 per 30-min walk (budget-friendly)", "$25-35 per 30-min walk (mid-market)", "$40-50+ per 30-min walk (premium)", "Other (please specify)"]
+        Question 2 (INVESTMENT - REQUIRED): "How much capital do you have available to invest in this business?"
+        Options: ["Under $5,000 (bootstrapping)", "$5,000 - $25,000", "$25,000 - $100,000", "$100,000+", "Other (please specify)", "I don't know"]
 
-        Generate 3-5 questions total. The first MUST be location. Make options specific to this business type.
+        Question 3 (TIMELINE - REQUIRED): "When do you want to launch?"
+        Options: ["Within 1 month", "1-3 months", "3-6 months", "6-12 months", "Other (please specify)", "I don't know"]
+
+        Question 4 (PRICING): "What price point are you considering per walk?"
+        Options: ["$15-20 per 30-min walk (budget-friendly)", "$25-35 per 30-min walk (mid-market)", "$40-50+ per 30-min walk (premium)", "Other (please specify)", "I don't know"]
+
+        Generate 4-6 questions total. First 3 MUST be location, investment, and timeline. All options must end with "Other (please specify)" and "I don't know".
         
         Only return valid JSON, no additional text.
         """
-        return await self._call_ai_fast(prompt)
+        result = await self._call_ai_fast(prompt)
+        
+        if "questions" in result:
+            for question in result["questions"]:
+                if "options" in question and isinstance(question["options"], list):
+                    has_other = any(opt.get("value") == "other" for opt in question["options"] if isinstance(opt, dict))
+                    has_unknown = any(opt.get("value") == "unknown" for opt in question["options"] if isinstance(opt, dict))
+                    
+                    if not has_other:
+                        question["options"].append({"value": "other", "label": "Other (please specify)"})
+                    if not has_unknown:
+                        question["options"].append({"value": "unknown", "label": "I don't know"})
+        
+        return result
 
     def _extract_json(self, content: str) -> dict:
         content = content.strip()

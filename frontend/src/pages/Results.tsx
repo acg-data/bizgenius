@@ -31,7 +31,7 @@ export default function Results() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>('market');
   const [result, setResult] = useState<any>(null);
-  const [businessIdea, setBusinessIdea] = useState<string>('');
+  const [_businessIdea, setBusinessIdea] = useState<string>('');
 
   useEffect(() => {
     if (location.state?.result) {
@@ -443,12 +443,137 @@ export default function Results() {
     );
   };
 
+  const generateFinancialsCSV = () => {
+    const data = result.financial_model;
+    if (!data) return;
+    
+    const rows: string[][] = [];
+    
+    rows.push(['myCEO Financial Model']);
+    rows.push([]);
+    
+    if (data.assumptions) {
+      rows.push(['KEY ASSUMPTIONS']);
+      Object.entries(data.assumptions).forEach(([key, value]) => {
+        rows.push([key.replace(/_/g, ' ').toUpperCase(), String(value)]);
+      });
+      rows.push([]);
+    }
+    
+    if (data.projections && data.projections.length > 0) {
+      rows.push(['5-YEAR FINANCIAL PROJECTIONS']);
+      rows.push(['Metric', ...data.projections.map((p: any) => `Year ${p.year}`)]);
+      rows.push(['Revenue', ...data.projections.map((p: any) => p.revenue)]);
+      rows.push(['Customers', ...data.projections.map((p: any) => p.customers)]);
+      rows.push(['Gross Profit', ...data.projections.map((p: any) => p.gross_profit)]);
+      rows.push(['EBITDA', ...data.projections.map((p: any) => p.ebitda)]);
+      rows.push(['Headcount', ...data.projections.map((p: any) => p.headcount)]);
+      rows.push([]);
+    }
+    
+    if (data.break_even) {
+      rows.push(['BREAK-EVEN ANALYSIS']);
+      rows.push(['Months to Break-Even', data.break_even.month]);
+      rows.push(['Customers Needed', data.break_even.customers_needed]);
+      rows.push(['Revenue Needed', data.break_even.revenue_needed]);
+      rows.push([]);
+    }
+
+    if (data.unit_economics) {
+      rows.push(['UNIT ECONOMICS']);
+      Object.entries(data.unit_economics).forEach(([key, value]) => {
+        rows.push([key.replace(/_/g, ' ').toUpperCase(), String(value)]);
+      });
+      rows.push([]);
+    }
+    
+    const csvContent = rows.map(row => 
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'myceo_financial_model.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const openGoogleSheets = () => {
+    const data = result.financial_model;
+    if (!data) return;
+    
+    let content = 'myCEO Financial Model\n\n';
+    
+    if (data.assumptions) {
+      content += 'KEY ASSUMPTIONS\n';
+      Object.entries(data.assumptions).forEach(([key, value]) => {
+        content += `${key.replace(/_/g, ' ').toUpperCase()}\t${value}\n`;
+      });
+      content += '\n';
+    }
+    
+    if (data.projections && data.projections.length > 0) {
+      content += '5-YEAR PROJECTIONS\n';
+      content += 'Metric\t' + data.projections.map((p: any) => `Year ${p.year}`).join('\t') + '\n';
+      content += 'Revenue\t' + data.projections.map((p: any) => p.revenue).join('\t') + '\n';
+      content += 'Customers\t' + data.projections.map((p: any) => p.customers).join('\t') + '\n';
+      content += 'Gross Profit\t' + data.projections.map((p: any) => p.gross_profit).join('\t') + '\n';
+      content += 'EBITDA\t' + data.projections.map((p: any) => p.ebitda).join('\t') + '\n';
+      content += 'Headcount\t' + data.projections.map((p: any) => p.headcount).join('\t') + '\n';
+    }
+    
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(content).then(() => {
+        window.open(`https://docs.google.com/spreadsheets/create?title=myCEO_Financial_Model`, '_blank');
+        alert('Financial data copied to clipboard! Paste it into the new Google Sheet (Ctrl+V or Cmd+V)');
+      }).catch(() => {
+        generateFinancialsCSV();
+        alert('Could not copy to clipboard. A CSV file has been downloaded instead - import it into Google Sheets.');
+      });
+    } else {
+      generateFinancialsCSV();
+      alert('Opening Google Sheets... Import the downloaded CSV file to populate your financial model.');
+      window.open('https://docs.google.com/spreadsheets/create', '_blank');
+    }
+  };
+
   const renderFinancials = () => {
     const data = result.financial_model;
     if (!data) return <div className="text-gray-500">Financial model not available</div>;
     
     return (
       <div className="space-y-6">
+        <div className="bg-manilla border-2 border-ink p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div>
+            <h3 className="font-black text-lg">Export Your Financial Model</h3>
+            <p className="text-sm text-gray-600">Open in Google Sheets or download as CSV to customize</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={openGoogleSheets}
+              className="bg-green-500 text-white font-bold px-4 py-2 border-2 border-ink shadow-brutal-sm hover:shadow-none transition-all flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+              Open in Google Sheets
+            </button>
+            <button
+              onClick={generateFinancialsCSV}
+              className="bg-white text-ink font-bold px-4 py-2 border-2 border-ink shadow-brutal-sm hover:shadow-none transition-all flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              Download CSV
+            </button>
+          </div>
+        </div>
+
         {data.assumptions && (
           <div className="bg-white border-2 border-ink p-6">
             <h3 className="font-black text-lg mb-4">Key Assumptions</h3>
@@ -603,85 +728,230 @@ export default function Results() {
 
   const renderCompetitors = () => {
     const data = result.competitor_analysis;
-    if (!data) return <div className="text-gray-500">Competitor analysis not available</div>;
+    const discovery = result.competitor_discovery;
+    
+    if (!data && !discovery) return <div className="text-gray-500">Competitor analysis not available</div>;
     
     return (
       <div className="space-y-6">
-        {data.competitive_landscape && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Competitive Landscape</h3>
-            <p className="text-gray-700">{data.competitive_landscape}</p>
+        {discovery?.competitive_insights && (
+          <div className="bg-cyan/20 border-2 border-ink p-6">
+            <h3 className="font-black text-lg mb-4">Market Intelligence Summary</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-black">{discovery.competitive_insights.total_competitors_found || '?'}</div>
+                <div className="text-sm text-gray-600">Competitors Found</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-black">{discovery.competitive_insights.average_rating || 'N/A'}</div>
+                <div className="text-sm text-gray-600">Avg Rating</div>
+              </div>
+              <div className="text-center">
+                <div className={`text-xl font-black px-3 py-1 inline-block ${
+                  discovery.competitive_insights.market_saturation === 'High' ? 'bg-red-100 text-red-700' :
+                  discovery.competitive_insights.market_saturation === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-green-100 text-green-700'
+                }`}>{discovery.competitive_insights.market_saturation}</div>
+                <div className="text-sm text-gray-600 mt-1">Saturation</div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-bold">{discovery.competitive_insights.underserved_segments?.length || 0} gaps</div>
+                <div className="text-sm text-gray-600">Opportunities</div>
+              </div>
+            </div>
+            {discovery.competitive_insights.common_complaints?.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-ink/20">
+                <div className="text-sm font-bold mb-2">Common Customer Complaints:</div>
+                <div className="flex flex-wrap gap-2">
+                  {discovery.competitive_insights.common_complaints.map((c: string, i: number) => (
+                    <span key={i} className="bg-red-100 text-red-700 px-2 py-1 text-sm">{c}</span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {data.competitors && data.competitors.length > 0 && (
+        {discovery?.direct_competitors && discovery.direct_competitors.length > 0 && (
           <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Key Competitors</h3>
+            <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+              <span className="text-red-500">🎯</span> Direct Competitors ({discovery.direct_competitors.length})
+            </h3>
             <div className="space-y-4">
-              {data.competitors.map((comp: any, idx: number) => (
-                <div key={idx} className="border-2 border-ink p-4">
-                  <div className="flex justify-between items-start mb-2">
+              {discovery.direct_competitors.map((comp: any, idx: number) => (
+                <div key={idx} className="border-2 border-ink p-4 hover:shadow-brutal-sm transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
                     <div>
-                      <div className="font-black text-lg">{comp.name}</div>
-                      <span className={`text-xs font-bold px-2 py-1 ${
-                        comp.type === 'Direct' ? 'bg-red-100 text-red-700' : 
-                        comp.type === 'Indirect' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100'
-                      }`}>{comp.type}</span>
+                      <div className="font-black text-lg flex items-center gap-2">
+                        {comp.name}
+                        {comp.website && (
+                          <a href={comp.website} target="_blank" rel="noopener noreferrer" 
+                             className="text-cyan hover:underline text-sm font-normal">
+                            🔗 Visit Site
+                          </a>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500">{comp.location}</div>
                     </div>
-                    <span className={`text-xs font-bold px-2 py-1 ${
-                      comp.threat_level === 'High' ? 'bg-red-500 text-white' : 
-                      comp.threat_level === 'Medium' ? 'bg-yellow-400 text-ink' :
-                      'bg-green-100 text-green-700'
-                    }`}>Threat: {comp.threat_level}</span>
+                    {comp.review_rating && (
+                      <div className="bg-yellow-100 px-3 py-1 text-sm font-bold">
+                        ⭐ {comp.review_rating}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">{comp.description}</p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                    {comp.funding && <div><span className="font-bold">Funding:</span> {comp.funding}</div>}
-                    {comp.estimated_revenue && <div><span className="font-bold">Revenue:</span> {comp.estimated_revenue}</div>}
-                    {comp.team_size && <div><span className="font-bold">Team:</span> {comp.team_size}</div>}
-                    {comp.market_share && <div><span className="font-bold">Share:</span> {comp.market_share}</div>}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mt-3">
+                  <p className="text-gray-700 mb-3">{comp.description}</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                     <div>
-                      <div className="text-xs font-bold text-green-600">Strengths</div>
-                      <ul className="text-sm">
-                        {comp.strengths?.map((s: string, i: number) => (
-                          <li key={i}>• {s}</li>
-                        ))}
-                      </ul>
+                      <div className="text-xs font-bold text-green-600 mb-1">Their Advantage</div>
+                      <p className="text-sm text-gray-600">{comp.competitive_advantage}</p>
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-red-600">Weaknesses</div>
-                      <ul className="text-sm">
-                        {comp.weaknesses?.map((w: string, i: number) => (
-                          <li key={i}>• {w}</li>
-                        ))}
-                      </ul>
+                      <div className="text-xs font-bold text-red-600 mb-1">Their Weakness</div>
+                      <p className="text-sm text-gray-600">{comp.weaknesses}</p>
                     </div>
                   </div>
+
+                  {comp.pricing && (
+                    <div className="bg-gray-50 p-2 mb-3">
+                      <span className="font-bold text-sm">Pricing:</span> {comp.pricing}
+                    </div>
+                  )}
+
+                  {comp.reviews_summary && (
+                    <div className="text-sm text-gray-600 italic mb-3">
+                      "{comp.reviews_summary}"
+                    </div>
+                  )}
+
+                  {comp.sources && comp.sources.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+                      <span className="text-xs text-gray-500">Sources:</span>
+                      {comp.sources.map((source: any, i: number) => (
+                        <a key={i} href={source.url} target="_blank" rel="noopener noreferrer"
+                           className={`text-xs px-2 py-1 hover:opacity-80 ${
+                             source.type === 'google_reviews' ? 'bg-blue-100 text-blue-700' :
+                             source.type === 'yelp' ? 'bg-red-100 text-red-700' :
+                             'bg-gray-100 text-gray-700'
+                           }`}>
+                          {source.type === 'google_reviews' ? '📍 Google' : 
+                           source.type === 'yelp' ? '🍽️ Yelp' : '🌐 Website'}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {data.differentiation && (
+        {discovery?.indirect_competitors && discovery.indirect_competitors.length > 0 && (
+          <div className="bg-white border-2 border-ink p-6">
+            <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+              <span className="text-yellow-500">🔄</span> Indirect Competitors ({discovery.indirect_competitors.length})
+            </h3>
+            <div className="space-y-4">
+              {discovery.indirect_competitors.map((comp: any, idx: number) => (
+                <div key={idx} className="border-2 border-yellow-200 bg-yellow-50/50 p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="font-black text-lg flex items-center gap-2">
+                        {comp.name}
+                        {comp.website && (
+                          <a href={comp.website} target="_blank" rel="noopener noreferrer" 
+                             className="text-cyan hover:underline text-sm font-normal">
+                            🔗 Visit
+                          </a>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500">{comp.location}</div>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 mb-2">{comp.description}</p>
+                  {comp.how_they_compete && (
+                    <div className="bg-white p-2 text-sm mb-2">
+                      <span className="font-bold">How they compete:</span> {comp.how_they_compete}
+                    </div>
+                  )}
+                  {comp.sources && comp.sources.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-yellow-200">
+                      {comp.sources.map((source: any, i: number) => (
+                        <a key={i} href={source.url} target="_blank" rel="noopener noreferrer"
+                           className="text-xs bg-gray-100 text-gray-700 px-2 py-1 hover:opacity-80">
+                          🔗 {source.type}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {discovery?.market_gaps && discovery.market_gaps.length > 0 && (
+          <div className="bg-manilla border-2 border-ink p-6">
+            <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+              <span className="text-green-500">💎</span> Market Gaps & Opportunities
+            </h3>
+            <div className="space-y-4">
+              {discovery.market_gaps.map((gap: any, idx: number) => (
+                <div key={idx} className="bg-white border border-ink p-4">
+                  <div className="font-bold text-lg text-green-700 mb-2">{gap.gap}</div>
+                  <p className="text-sm text-gray-600 mb-2"><span className="font-bold">Evidence:</span> {gap.evidence}</p>
+                  <p className="text-sm text-cyan font-bold">→ {gap.opportunity}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {data?.competitive_landscape && (
+          <div className="bg-white border-2 border-ink p-6">
+            <h3 className="font-black text-lg mb-3">Strategic Analysis</h3>
+            <p className="text-gray-700">{data.competitive_landscape}</p>
+          </div>
+        )}
+
+        {data?.differentiation && (
           <div className="bg-cyan/10 border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Your Differentiation</h3>
+            <h3 className="font-black text-lg mb-3">Your Differentiation Strategy</h3>
             <div className="font-bold text-lg mb-2">{data.differentiation.primary_differentiator}</div>
             {data.differentiation.positioning_statement && (
               <p className="text-gray-700 italic">"{data.differentiation.positioning_statement}"</p>
             )}
+            {data.differentiation.messaging_angles && (
+              <div className="mt-4">
+                <div className="text-sm font-bold mb-2">Messaging Angles:</div>
+                <div className="flex flex-wrap gap-2">
+                  {data.differentiation.messaging_angles.map((angle: string, idx: number) => (
+                    <span key={idx} className="bg-white border border-ink px-3 py-1 text-sm">{angle}</span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {data.market_gaps && data.market_gaps.length > 0 && (
+        {data?.battle_cards && data.battle_cards.length > 0 && (
           <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Market Gaps to Exploit</h3>
-            <div className="flex flex-wrap gap-2">
-              {data.market_gaps.map((gap: string, idx: number) => (
-                <span key={idx} className="bg-cyan text-ink px-3 py-1 font-bold">{gap}</span>
+            <h3 className="font-black text-lg mb-4">Battle Cards</h3>
+            <div className="space-y-4">
+              {data.battle_cards.map((card: any, idx: number) => (
+                <div key={idx} className="border-2 border-ink p-4">
+                  <div className="font-black mb-3">vs. {card.competitor}</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-green-50 p-3">
+                      <div className="text-xs font-bold text-green-700 mb-1">When You Win</div>
+                      <p className="text-sm">{card.when_you_win}</p>
+                    </div>
+                    <div className="bg-red-50 p-3">
+                      <div className="text-xs font-bold text-red-700 mb-1">When They Win</div>
+                      <p className="text-sm">{card.when_they_win}</p>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>

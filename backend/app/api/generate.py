@@ -29,6 +29,7 @@ class GenerateResponse(BaseModel):
     business_plan: dict | None = None
     financial_model: dict | None = None
     competitor_analysis: dict | None = None
+    competitor_discovery: dict | None = None
     go_to_market: dict | None = None
     team_plan: dict | None = None
     risk_assessment: dict | None = None
@@ -133,12 +134,15 @@ COMPETITOR SUMMARY:
 - Market Gaps Identified: {', '.join(summary.get('market_gaps', [])) or 'None identified'}
 """
         
+        location = local_data.get("location") if local_data.get("is_local_business") else None
+        
         results = await asyncio.gather(
             ai_service.generate_executive_summary(enriched_idea),
             ai_service.generate_market_research(enriched_idea),
             ai_service.generate_business_plan(enriched_idea),
             ai_service.generate_financial_model(enriched_idea),
             ai_service.generate_competitor_analysis(enriched_idea),
+            ai_service.discover_competitors_with_gemini(enriched_idea, location),
             ai_service.generate_go_to_market(enriched_idea),
             ai_service.generate_team_plan(enriched_idea),
             ai_service.generate_risk_assessment(enriched_idea),
@@ -155,11 +159,12 @@ COMPETITOR SUMMARY:
         business_plan = safe_result(results[2])
         financial_model = safe_result(results[3])
         competitor_analysis = safe_result(results[4])
-        go_to_market = safe_result(results[5])
-        team_plan = safe_result(results[6])
-        risk_assessment = safe_result(results[7])
-        action_plan = safe_result(results[8])
-        pitch_deck = safe_result(results[9])
+        competitor_discovery = safe_result(results[5])
+        go_to_market = safe_result(results[6])
+        team_plan = safe_result(results[7])
+        risk_assessment = safe_result(results[8])
+        action_plan = safe_result(results[9])
+        pitch_deck = safe_result(results[10])
         
         for i, result in enumerate(results):
             if isinstance(result, Exception):
@@ -179,6 +184,7 @@ COMPETITOR SUMMARY:
             business_plan=business_plan,
             financial_model=financial_model,
             competitor_analysis=competitor_analysis,
+            competitor_discovery=competitor_discovery,
             go_to_market=go_to_market,
             team_plan=team_plan,
             risk_assessment=risk_assessment,
