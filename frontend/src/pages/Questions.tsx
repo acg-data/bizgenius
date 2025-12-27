@@ -43,7 +43,7 @@ export default function Questions() {
     setError(null);
     
     try {
-      const response = await api.post('/api/v1/generate/questions', { idea });
+      const response = await api.post('/generate/questions', { idea });
       setQuestionsData(response.data);
       
       const initialAnswers: Record<string, string> = {};
