@@ -74,6 +74,12 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-27: AI Discovery Questionnaire
+  - Added `/api/v1/generate/questions` endpoint that generates 3-5 contextual questions based on business idea
+  - Created `/questions` page with neobrutalist UI to display and collect answers
+  - Updated generate flow: Landing → Questions → Generate → Results
+  - AI now incorporates founder's Q&A responses into the enriched prompt for better analysis
+
 - 2025-12-27: Local Business Intelligence
   - Added competitor website scraping service (BeautifulSoup + httpx)
   - Integrated US city population database (200+ major cities)

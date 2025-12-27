@@ -7,7 +7,7 @@ export default function Landing() {
 
   const handleSubmit = () => {
     if (!businessIdea.trim()) return;
-    navigate('/generate', { state: { businessIdea: businessIdea.trim() } });
+    navigate('/questions', { state: { businessIdea: businessIdea.trim() } });
   };
 
   return (

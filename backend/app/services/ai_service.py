@@ -956,6 +956,38 @@ class AIService:
         """
         return await self._call_ai(prompt)
     
+    async def generate_discovery_questions(self, idea: str) -> dict:
+        prompt = f"""
+        You are a seasoned startup advisor conducting an initial discovery call with a founder. Your goal is to ask the RIGHT questions that will uncover critical information missing from their pitch.
+
+        BUSINESS IDEA: {idea}
+
+        Analyze this idea and identify 3-5 questions that would help create a more comprehensive business plan. Focus on:
+        1. Gaps in the description (missing target customer, pricing, location, competition info)
+        2. Critical assumptions that need validation
+        3. Strategic decisions that affect the business model
+        4. Market-specific details that would improve analysis accuracy
+
+        Return a JSON object with this EXACT structure:
+        {{
+            "analysis": "Brief 1-2 sentence analysis of what's provided and what's missing",
+            "questions": [
+                {{
+                    "id": "q1",
+                    "question": "The actual question to ask the founder",
+                    "why_important": "Why this question matters for the business plan",
+                    "category": "One of: target_customer, pricing, competition, location, business_model, go_to_market, team, funding",
+                    "example_answer": "Example of a good answer to guide the founder"
+                }}
+            ]
+        }}
+
+        Generate 3-5 highly specific questions. Avoid generic questions like "Who is your target customer?" - instead ask "Are you targeting busy professionals ages 25-40 in urban areas, or a different demographic?"
+        
+        Only return valid JSON, no additional text.
+        """
+        return await self._call_ai(prompt)
+
     def _extract_json(self, content: str) -> dict:
         content = content.strip()
         

@@ -10,6 +10,7 @@ interface GenerationStep {
 
 const STORAGE_KEY = 'myceo_pending_idea';
 const RESULT_KEY = 'myceo_analysis_result';
+const ANSWERS_KEY = 'myceo_answers';
 
 export default function Generate() {
   const location = useLocation();
@@ -26,8 +27,24 @@ export default function Generate() {
       localStorage.setItem(STORAGE_KEY, fromParams);
       return fromParams;
     }
-    return localStorage.getItem(STORAGE_KEY) || '';
+    return localStorage.getItem(STORAGE_KEY) || localStorage.getItem('myceo_business_idea') || '';
   }, [location.state, searchParams]);
+
+  const answers = useMemo(() => {
+    if (location.state?.answers) {
+      localStorage.setItem(ANSWERS_KEY, JSON.stringify(location.state.answers));
+      return location.state.answers;
+    }
+    const stored = localStorage.getItem(ANSWERS_KEY);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  }, [location.state]);
   
   const [steps, setSteps] = useState<GenerationStep[]>([
     { id: 'executive', label: 'Crafting Executive Summary', status: 'pending' },
@@ -71,7 +88,8 @@ export default function Generate() {
 
       try {
         const response = await axios.post('/api/v1/generate/', {
-          idea: businessIdea
+          idea: businessIdea,
+          answers: Object.keys(answers).length > 0 ? answers : null
         });
         
         clearInterval(stepInterval);

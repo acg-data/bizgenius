@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.services.ai_service import ai_service
 from app.services.local_business_service import local_business_service
 import asyncio
@@ -11,6 +11,16 @@ logger = logging.getLogger(__name__)
 
 class GenerateRequest(BaseModel):
     idea: str
+    answers: dict | None = None
+
+
+class QuestionsRequest(BaseModel):
+    idea: str
+
+
+class QuestionsResponse(BaseModel):
+    analysis: str | None = None
+    questions: list = Field(default_factory=list)
 
 
 class GenerateResponse(BaseModel):
@@ -25,6 +35,32 @@ class GenerateResponse(BaseModel):
     action_plan: dict | None = None
     pitch_deck: dict | None = None
     local_business_data: dict | None = None
+
+
+@router.post("/questions", response_model=QuestionsResponse)
+async def generate_discovery_questions(request: QuestionsRequest):
+    if not request.idea or len(request.idea.strip()) < 10:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide a more detailed business idea (at least 10 characters)"
+        )
+    
+    idea_text = request.idea.strip()
+    logger.info(f"Generating discovery questions for idea: {idea_text[:100]}...")
+    
+    try:
+        result = await ai_service.generate_discovery_questions(idea_text)
+        
+        return QuestionsResponse(
+            analysis=result.get("analysis"),
+            questions=result.get("questions", [])
+        )
+    except Exception as e:
+        logger.error(f"Error generating questions: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating questions: {str(e)}"
+        )
 
 
 @router.post("/", response_model=GenerateResponse)
@@ -42,6 +78,17 @@ async def generate_business_analysis(request: GenerateRequest):
         local_data = await local_business_service.analyze_local_business(idea_text)
         
         enriched_idea = idea_text
+        
+        if request.answers:
+            enriched_idea += "\n\nFOUNDER'S RESPONSES TO DISCOVERY QUESTIONS:\n"
+            for q_id, answer_data in request.answers.items():
+                if isinstance(answer_data, dict):
+                    question = answer_data.get("question", "")
+                    answer = answer_data.get("answer", "")
+                    if question and answer:
+                        enriched_idea += f"Q: {question}\nA: {answer}\n\n"
+                elif isinstance(answer_data, str) and answer_data.strip():
+                    enriched_idea += f"- {answer_data.strip()}\n"
         if local_data.get("is_local_business") and local_data.get("population_data"):
             pop_data = local_data["population_data"]
             enriched_idea += f"""
