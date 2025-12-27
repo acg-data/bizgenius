@@ -1,8 +1,9 @@
 import axios from 'axios';
 import type { User, Idea } from '../types';
 
-// Use environment variable for API URL, fallback to localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+// Use relative URL in production, localhost for development
+const isDevelopment = import.meta.env.DEV;
+const API_BASE_URL = isDevelopment ? 'http://localhost:8000/api/v1' : '/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
