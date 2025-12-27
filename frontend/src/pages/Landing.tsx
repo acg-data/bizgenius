@@ -76,7 +76,8 @@ export default function Landing() {
                   value={businessIdea}
                   onChange={(e) => setBusinessIdea(e.target.value)}
                   placeholder="I want to build a mobile app that connects dog walkers with busy pet owners in Austin, TX. Think Uber but for dog walking..."
-                  className="w-full h-32 p-4 bg-white border-2 border-ink text-ink font-medium text-lg resize-none focus:outline-none focus:border-cyan transition-colors placeholder-gray-400"
+                  className="w-full h-32 p-4 bg-white border-2 border-ink text-ink font-medium text-lg resize-none focus:outline-none focus:border-cyan transition-colors placeholder-gray-400 relative z-50"
+                  style={{ pointerEvents: 'auto' }}
                 />
               </div>
 
