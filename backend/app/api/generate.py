@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from app.services.ai_service import ai_service
+from app.services.local_business_service import local_business_service
 import asyncio
 import logging
 
@@ -23,6 +24,7 @@ class GenerateResponse(BaseModel):
     risk_assessment: dict | None = None
     action_plan: dict | None = None
     pitch_deck: dict | None = None
+    local_business_data: dict | None = None
 
 
 @router.post("/", response_model=GenerateResponse)
@@ -37,21 +39,68 @@ async def generate_business_analysis(request: GenerateRequest):
     logger.info(f"Starting comprehensive business analysis for idea: {idea_text[:100]}...")
     
     try:
+        local_data = await local_business_service.analyze_local_business(idea_text)
+        
+        enriched_idea = idea_text
+        if local_data.get("is_local_business") and local_data.get("population_data"):
+            pop_data = local_data["population_data"]
+            enriched_idea += f"""
+
+LOCAL MARKET DATA (USE THIS FOR TAM/SAM/SOM):
+- Location: {pop_data.get('city')}, {pop_data.get('state')}
+- City Population: {pop_data.get('city_population', 0):,}
+- Metro Area Population: {int(pop_data.get('metro_population', 0)):,}
+- State Population: {pop_data.get('state_population', 0):,}
+- Estimated Households: {int(pop_data.get('city_population', 75000) / 2.5):,}
+- Working Adults (estimated): {int(pop_data.get('city_population', 75000) * 0.65):,}
+"""
+        
+        if local_data.get("competitors_analyzed"):
+            enriched_idea += "\n\nCOMPETITOR WEBSITE ANALYSIS:\n"
+            for comp in local_data["competitors_analyzed"]:
+                if comp.get("error"):
+                    continue
+                enriched_idea += f"""
+- {comp.get('domain', 'Unknown')}:
+  Title: {comp.get('title', 'N/A')}
+  Description: {comp.get('description', 'N/A')[:200] if comp.get('description') else 'N/A'}
+  Prices Found: {comp.get('prices_found', [])}
+  Has Online Booking: {comp.get('features', {}).get('has_online_booking', False)}
+  Shows Reviews: {comp.get('features', {}).get('shows_reviews', False)}
+  Has Pricing Page: {comp.get('features', {}).get('has_pricing_page', False)}
+"""
+            
+            if local_data.get("competitor_summary"):
+                summary = local_data["competitor_summary"]
+                avg_price = summary.get('avg_price')
+                price_range = summary.get('price_range')
+                price_str = f"${avg_price:.2f}" if avg_price else "Unknown"
+                range_str = f"${price_range.get('min', 0):.2f} - ${price_range.get('max', 0):.2f}" if price_range else "Unknown"
+                enriched_idea += f"""
+COMPETITOR SUMMARY:
+- Number of Competitors Analyzed: {summary.get('count', 0)}
+- Average Price: {price_str}
+- Price Range: {range_str}
+- % with Online Booking: {summary.get('pct_with_online_booking', 0):.0f}%
+- % Showing Reviews: {summary.get('pct_showing_reviews', 0):.0f}%
+- Market Gaps Identified: {', '.join(summary.get('market_gaps', [])) or 'None identified'}
+"""
+        
         results = await asyncio.gather(
-            ai_service.generate_executive_summary(idea_text),
-            ai_service.generate_market_research(idea_text),
-            ai_service.generate_business_plan(idea_text),
-            ai_service.generate_financial_model(idea_text),
-            ai_service.generate_competitor_analysis(idea_text),
-            ai_service.generate_go_to_market(idea_text),
-            ai_service.generate_team_plan(idea_text),
-            ai_service.generate_risk_assessment(idea_text),
-            ai_service.generate_action_plan(idea_text),
-            ai_service.generate_pitch_deck(idea_text),
+            ai_service.generate_executive_summary(enriched_idea),
+            ai_service.generate_market_research(enriched_idea),
+            ai_service.generate_business_plan(enriched_idea),
+            ai_service.generate_financial_model(enriched_idea),
+            ai_service.generate_competitor_analysis(enriched_idea),
+            ai_service.generate_go_to_market(enriched_idea),
+            ai_service.generate_team_plan(enriched_idea),
+            ai_service.generate_risk_assessment(enriched_idea),
+            ai_service.generate_action_plan(enriched_idea),
+            ai_service.generate_pitch_deck(enriched_idea),
             return_exceptions=True
         )
         
-        def safe_result(r: any) -> dict | None:
+        def safe_result(r) -> dict | None:
             return r if isinstance(r, dict) else None
         
         executive_summary = safe_result(results[0])
@@ -87,7 +136,8 @@ async def generate_business_analysis(request: GenerateRequest):
             team_plan=team_plan,
             risk_assessment=risk_assessment,
             action_plan=action_plan,
-            pitch_deck=pitch_deck
+            pitch_deck=pitch_deck,
+            local_business_data=local_data if local_data.get("is_local_business") else None
         )
     
     except HTTPException:

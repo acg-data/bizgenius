@@ -61,7 +61,27 @@ The platform generates 10 comprehensive analysis sections:
 9. **90-Day Action Plan** - Week-by-week tasks, milestones, resources/budget needed
 10. **Pitch Deck** - Slide-by-slide breakdown with speaker notes, investor FAQs
 
+## Local Business Features
+For local/service businesses, the platform automatically:
+- **Extracts location** from the business description (city, state)
+- **Fetches population data** for accurate TAM/SAM/SOM calculations
+- **Scrapes competitor websites** to analyze:
+  - Pricing information
+  - Services offered
+  - Online booking availability
+  - Reviews/testimonials presence
+- **Identifies market gaps** based on competitor analysis
+- **Enriches AI prompts** with real local market data
+
 ## Recent Changes
+- 2025-12-27: Local Business Intelligence
+  - Added competitor website scraping service (BeautifulSoup + httpx)
+  - Integrated US city population database (200+ major cities)
+  - Created local_business_service.py for location extraction and market analysis
+  - Updated generate API to enrich prompts with population and competitor data
+  - Added "Local Market" tab to Results page showing scraped competitor data
+  - AI now uses real population figures for TAM/SAM/SOM calculations
+  
 - 2025-12-26: Comprehensive Business Operating System
   - Created 10 hyper-detailed AI generation prompts for comprehensive business analysis
   - Built `/results` page with tabbed interface displaying all 10 analysis sections

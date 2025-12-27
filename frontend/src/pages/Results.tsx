@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 
 const RESULT_KEY = 'myceo_analysis_result';
 
-type TabId = 'summary' | 'market' | 'business' | 'financials' | 'competitors' | 'gtm' | 'team' | 'risks' | 'action' | 'pitch';
+type TabId = 'summary' | 'market' | 'business' | 'financials' | 'competitors' | 'gtm' | 'team' | 'risks' | 'action' | 'pitch' | 'local';
 
 interface Tab {
   id: TabId;
@@ -11,7 +11,7 @@ interface Tab {
   icon: string;
 }
 
-const tabs: Tab[] = [
+const baseTabs: Tab[] = [
   { id: 'summary', label: 'Executive Summary', icon: '📋' },
   { id: 'market', label: 'Market Research', icon: '📊' },
   { id: 'business', label: 'Business Plan', icon: '🏢' },
@@ -23,6 +23,8 @@ const tabs: Tab[] = [
   { id: 'action', label: '90-Day Plan', icon: '📅' },
   { id: 'pitch', label: 'Pitch Deck', icon: '🎯' },
 ];
+
+const localTab: Tab = { id: 'local', label: 'Local Market', icon: '📍' };
 
 export default function Results() {
   const location = useLocation();
@@ -1162,6 +1164,140 @@ export default function Results() {
     );
   };
 
+  const renderLocalMarket = () => {
+    const data = result.local_business_data;
+    if (!data) return <div className="text-gray-500">Local market data not available</div>;
+    
+    return (
+      <div className="space-y-6">
+        {data.location && (
+          <div className="bg-cyan/20 border-2 border-ink p-6">
+            <h3 className="font-black text-sm text-gray-500 mb-2">TARGET LOCATION</h3>
+            <p className="text-3xl font-black">{data.location.city}, {data.location.state}</p>
+          </div>
+        )}
+
+        {data.population_data && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white border-2 border-ink p-6 text-center">
+              <div className="font-black text-xs text-gray-500 mb-1">CITY POPULATION</div>
+              <div className="text-3xl font-black">{data.population_data.city_population?.toLocaleString()}</div>
+            </div>
+            <div className="bg-white border-2 border-ink p-6 text-center">
+              <div className="font-black text-xs text-gray-500 mb-1">METRO AREA</div>
+              <div className="text-3xl font-black">{Math.round(data.population_data.metro_population || 0).toLocaleString()}</div>
+            </div>
+            <div className="bg-white border-2 border-ink p-6 text-center">
+              <div className="font-black text-xs text-gray-500 mb-1">STATE POPULATION</div>
+              <div className="text-3xl font-black">{data.population_data.state_population?.toLocaleString()}</div>
+            </div>
+          </div>
+        )}
+
+        {data.market_insights && (
+          <div className="bg-white border-2 border-ink p-6">
+            <h3 className="font-black text-lg mb-4">Market Size Calculations</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-gray-50 p-4 border border-ink">
+                <div className="text-xs text-gray-500 font-bold">Households</div>
+                <div className="text-xl font-black">{data.market_insights.total_households?.toLocaleString()}</div>
+              </div>
+              <div className="bg-gray-50 p-4 border border-ink">
+                <div className="text-xs text-gray-500 font-bold">Metro Households</div>
+                <div className="text-xl font-black">{data.market_insights.metro_households?.toLocaleString()}</div>
+              </div>
+              <div className="bg-gray-50 p-4 border border-ink">
+                <div className="text-xs text-gray-500 font-bold">Working Adults</div>
+                <div className="text-xl font-black">{data.market_insights.tam_calculation_base?.working_adults?.toLocaleString()}</div>
+              </div>
+              <div className="bg-gray-50 p-4 border border-ink">
+                <div className="text-xs text-gray-500 font-bold">Est. HH Income</div>
+                <div className="text-xl font-black">${data.market_insights.tam_calculation_base?.median_household_income_estimate?.toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {data.competitors_analyzed && data.competitors_analyzed.length > 0 && (
+          <div className="bg-white border-2 border-ink p-6">
+            <h3 className="font-black text-lg mb-4">Competitors Scraped ({data.competitors_analyzed.length})</h3>
+            <div className="space-y-4">
+              {data.competitors_analyzed.map((comp: any, idx: number) => (
+                <div key={idx} className="border-2 border-ink p-4 bg-gray-50">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="font-black">{comp.domain}</div>
+                      {comp.title && <div className="text-sm text-gray-600">{comp.title}</div>}
+                    </div>
+                    {comp.error && <span className="text-red-500 text-xs">Error: {comp.error}</span>}
+                  </div>
+                  {comp.description && <p className="text-sm text-gray-600 mb-2">{comp.description}</p>}
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {comp.prices_found && comp.prices_found.length > 0 && (
+                      <span className="bg-green-100 px-2 py-1 border border-green-300">
+                        Prices: ${Math.min(...comp.prices_found)} - ${Math.max(...comp.prices_found)}
+                      </span>
+                    )}
+                    {comp.features?.has_online_booking && (
+                      <span className="bg-blue-100 px-2 py-1 border border-blue-300">Online Booking</span>
+                    )}
+                    {comp.features?.shows_reviews && (
+                      <span className="bg-yellow-100 px-2 py-1 border border-yellow-300">Shows Reviews</span>
+                    )}
+                    {comp.features?.has_pricing_page && (
+                      <span className="bg-purple-100 px-2 py-1 border border-purple-300">Pricing Page</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {data.competitor_summary && (
+          <div className="bg-manilla border-2 border-ink p-6">
+            <h3 className="font-black text-lg mb-4">Competitor Summary</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              {data.competitor_summary.avg_price && (
+                <div className="text-center">
+                  <div className="text-2xl font-black">${data.competitor_summary.avg_price.toFixed(0)}</div>
+                  <div className="text-xs text-gray-600">Avg Price</div>
+                </div>
+              )}
+              <div className="text-center">
+                <div className="text-2xl font-black">{data.competitor_summary.pct_with_online_booking?.toFixed(0)}%</div>
+                <div className="text-xs text-gray-600">Online Booking</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-black">{data.competitor_summary.pct_showing_reviews?.toFixed(0)}%</div>
+                <div className="text-xs text-gray-600">Show Reviews</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-black">{data.competitor_summary.pct_with_pricing?.toFixed(0)}%</div>
+                <div className="text-xs text-gray-600">Show Pricing</div>
+              </div>
+            </div>
+            {data.competitor_summary.market_gaps && data.competitor_summary.market_gaps.length > 0 && (
+              <div>
+                <h4 className="font-bold mb-2">Market Gaps Identified:</h4>
+                <ul className="space-y-1">
+                  {data.competitor_summary.market_gaps.map((gap: string, idx: number) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-green-500">✓</span>
+                      <span>{gap}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const tabs = result.local_business_data ? [...baseTabs, localTab] : baseTabs;
+
   const renderContent = () => {
     switch (activeTab) {
       case 'summary': return renderSummary();
@@ -1174,6 +1310,7 @@ export default function Results() {
       case 'risks': return renderRisks();
       case 'action': return renderAction();
       case 'pitch': return renderPitch();
+      case 'local': return renderLocalMarket();
       default: return null;
     }
   };
