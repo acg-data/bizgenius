@@ -1040,7 +1040,7 @@ class AIService:
                     f"{self.base_url}/chat/completions",
                     headers=self.headers,
                     json={
-                        "model": "openai/gpt-4o-mini",
+                        "model": "openai/gpt-oss-120b",
                         "messages": [
                             {
                                 "role": "system",
