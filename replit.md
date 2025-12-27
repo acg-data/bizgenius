@@ -74,6 +74,12 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-27: Enhanced Discovery Questionnaire with Multiple Choice
+  - Location-first questioning: AI always asks for location first (city/state for domestic, country for international)
+  - Multiple choice format: Questions now show 3-5 options plus "Other (please specify)" with custom text field
+  - Reordered generation: Market Research → Competitor Analysis → ICP come first, then Business Plan follows gap analysis
+  - Updated Results page tabs to show Market Research and Competitors first (default tab is now Market)
+
 - 2025-12-27: AI Discovery Questionnaire
   - Added `/api/v1/generate/questions` endpoint that generates 3-5 contextual questions based on business idea
   - Created `/questions` page with neobrutalist UI to display and collect answers
