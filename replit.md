@@ -30,7 +30,7 @@ myCEO is a fullstack SaaS application that helps users turn their business ideas
 - **Backend**: FastAPI, SQLAlchemy, Alembic, PostgreSQL
 - **Authentication**: JWT tokens with passlib/bcrypt
 - **Payments**: Stripe integration
-- **AI**: OpenRouter API for AI-powered features
+- **AI**: Replit Gemini AI Integrations (google.genai SDK) for AI-powered features
 
 ## Running the Application
 - **Frontend**: Runs on port 5000 via Vite dev server with proxy to backend
@@ -74,6 +74,18 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-28: Phased Gemini Generation Pipeline
+  - Switched from parallel OpenRouter calls to phased Gemini execution via Replit AI Integrations
+  - New GeminiService using google.genai SDK with automatic retry (5 attempts, exponential backoff)
+  - 4-phase pipeline to prevent context window overflow:
+    - Phase 1 (parallel): Market Research + Competitor Discovery
+    - Phase 2 (sequential): Executive Summary → Business Plan → Financial Model + Competitor Analysis
+    - Phase 3 (parallel pairs): GTM + Team Plan, then Risk + Action Plan
+    - Phase 4: Pitch Deck with accumulated context
+  - Context summarization: Only key insights (TAM/SAM values, positioning) passed between phases
+  - Each phase saves intermediate results to database for real-time progress tracking
+  - Mobile users see progress updates even if they background the browser
+
 - 2025-12-28: Faster Questions, Location-First, Retry Logic
   - Switched question generation from slow `openai/gpt-oss-120b` to fast `google/gemini-2.0-flash-001`
   - First question now loads in ~2-3 seconds instead of 10+ seconds
