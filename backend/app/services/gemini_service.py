@@ -42,6 +42,8 @@ class GeminiService:
             logger.warning("Gemini service disabled - missing API key or base URL")
     
     def _extract_json(self, content: str) -> dict:
+        import re
+        
         content = content.strip()
         if content.startswith("```json"):
             content = content[7:]
@@ -58,10 +60,29 @@ class GeminiService:
         
         try:
             return json.loads(content)
-        except json.JSONDecodeError:
-            content = content.replace('\n', ' ').replace('\r', '')
-            content = ' '.join(content.split())
-            return json.loads(content)
+        except json.JSONDecodeError as first_error:
+            try:
+                content = content.replace('\n', ' ').replace('\r', '').replace('\t', ' ')
+                content = ' '.join(content.split())
+                return json.loads(content)
+            except json.JSONDecodeError:
+                pass
+            
+            try:
+                content = re.sub(r'(?<!\\)"(?=[^"]*"[^"]*":)', '\\"', content)
+                return json.loads(content)
+            except json.JSONDecodeError:
+                pass
+            
+            try:
+                content = re.sub(r',\s*}', '}', content)
+                content = re.sub(r',\s*]', ']', content)
+                return json.loads(content)
+            except json.JSONDecodeError:
+                pass
+            
+            logger.error(f"JSON extraction failed: {first_error}. Content preview: {content[:500]}...")
+            return {"error": "JSON parsing failed", "raw_preview": content[:1000]}
     
     @retry(
         stop=stop_after_attempt(5),
