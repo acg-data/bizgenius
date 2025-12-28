@@ -1,6 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { CommandLineIcon } from '@heroicons/react/24/outline';
+import { 
+  CommandLineIcon, 
+  ArrowDownTrayIcon, 
+  ArrowPathIcon, 
+  ShareIcon,
+  ChevronRightIcon,
+  SparklesIcon,
+  ChartBarIcon,
+  DocumentTextIcon,
+  CurrencyDollarIcon,
+  UserGroupIcon,
+  RocketLaunchIcon,
+  ShieldExclamationIcon,
+  CalendarDaysIcon,
+  PresentationChartLineIcon,
+  MapPinIcon,
+  BuildingOfficeIcon,
+  CheckCircleIcon
+} from '@heroicons/react/24/outline';
 
 const RESULT_KEY = 'myceo_analysis_result';
 
@@ -9,445 +27,258 @@ type TabId = 'summary' | 'market' | 'business' | 'financials' | 'competitors' | 
 interface Tab {
   id: TabId;
   label: string;
-  icon: string;
+  shortLabel: string;
+  icon: React.ElementType;
+  color: string;
 }
 
 const baseTabs: Tab[] = [
-  { id: 'market', label: 'Market Research', icon: '📊' },
-  { id: 'competitors', label: 'Competitors', icon: '⚔️' },
-  { id: 'summary', label: 'Executive Summary', icon: '📋' },
-  { id: 'business', label: 'Business Plan', icon: '🏢' },
-  { id: 'financials', label: 'Financials', icon: '💰' },
-  { id: 'gtm', label: 'Go-to-Market', icon: '🚀' },
-  { id: 'team', label: 'Team Plan', icon: '👥' },
-  { id: 'risks', label: 'Risks', icon: '⚠️' },
-  { id: 'action', label: '90-Day Plan', icon: '📅' },
-  { id: 'pitch', label: 'Pitch Deck', icon: '🎯' },
+  { id: 'summary', label: 'Executive Summary', shortLabel: 'Summary', icon: SparklesIcon, color: 'from-violet-500 to-purple-600' },
+  { id: 'market', label: 'Market Research', shortLabel: 'Market', icon: ChartBarIcon, color: 'from-blue-500 to-cyan-500' },
+  { id: 'competitors', label: 'Competitor Analysis', shortLabel: 'Competitors', icon: BuildingOfficeIcon, color: 'from-orange-500 to-red-500' },
+  { id: 'business', label: 'Business Plan', shortLabel: 'Business', icon: DocumentTextIcon, color: 'from-emerald-500 to-teal-500' },
+  { id: 'financials', label: 'Financial Model', shortLabel: 'Financials', icon: CurrencyDollarIcon, color: 'from-green-500 to-emerald-500' },
+  { id: 'gtm', label: 'Go-to-Market', shortLabel: 'GTM', icon: RocketLaunchIcon, color: 'from-pink-500 to-rose-500' },
+  { id: 'team', label: 'Team Plan', shortLabel: 'Team', icon: UserGroupIcon, color: 'from-indigo-500 to-blue-500' },
+  { id: 'risks', label: 'Risk Assessment', shortLabel: 'Risks', icon: ShieldExclamationIcon, color: 'from-amber-500 to-orange-500' },
+  { id: 'action', label: '90-Day Action Plan', shortLabel: '90 Days', icon: CalendarDaysIcon, color: 'from-cyan-500 to-blue-500' },
+  { id: 'pitch', label: 'Pitch Deck', shortLabel: 'Pitch', icon: PresentationChartLineIcon, color: 'from-fuchsia-500 to-pink-500' },
 ];
 
-const localTab: Tab = { id: 'local', label: 'Local Market', icon: '📍' };
+const localTab: Tab = { id: 'local', label: 'Local Market', shortLabel: 'Local', icon: MapPinIcon, color: 'from-lime-500 to-green-500' };
+
+const GlassCard = ({ children, className = '', hover = true, gradient = false }: { children: React.ReactNode; className?: string; hover?: boolean; gradient?: boolean }) => (
+  <div className={`
+    relative overflow-hidden rounded-2xl
+    ${gradient ? 'bg-gradient-to-br from-white/80 to-white/60' : 'bg-white/70'}
+    backdrop-blur-xl border border-white/20
+    shadow-[0_8px_32px_rgba(0,0,0,0.08)]
+    ${hover ? 'hover:shadow-[0_16px_48px_rgba(0,0,0,0.12)] hover:scale-[1.01] hover:border-white/30' : ''}
+    transition-all duration-300 ease-out
+    ${className}
+  `}>
+    <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
+    <div className="relative z-10">{children}</div>
+  </div>
+);
+
+const KPICard = ({ label, value, subtext, icon: Icon, color }: { label: string; value: string; subtext?: string; icon: React.ElementType; color: string }) => (
+  <GlassCard className="p-5">
+    <div className="flex items-start justify-between mb-3">
+      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
+        <Icon className="w-5 h-5 text-white" />
+      </div>
+      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{label}</span>
+    </div>
+    <div className="text-2xl font-bold text-gray-900 tracking-tight">{value}</div>
+    {subtext && <div className="text-sm text-gray-500 mt-1">{subtext}</div>}
+  </GlassCard>
+);
+
+const ProgressRing = ({ progress, size = 120, strokeWidth = 8 }: { progress: number; size?: number; strokeWidth?: number }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+  
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        stroke="rgba(0,0,0,0.05)"
+        strokeWidth={strokeWidth}
+        fill="none"
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        stroke="url(#gradient)"
+        strokeWidth={strokeWidth}
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        className="transition-all duration-1000 ease-out"
+      />
+      <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#8B5CF6" />
+          <stop offset="100%" stopColor="#06B6D4" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+};
+
+const MarketSizeChart = ({ tam, sam, som }: { tam: string; sam: string; som: string }) => {
+  const extractNumber = (str: string) => {
+    const match = str?.match(/[\d.]+/);
+    return match ? parseFloat(match[0]) : 0;
+  };
+  
+  const tamVal = extractNumber(tam);
+  const samVal = extractNumber(sam);
+  const somVal = extractNumber(som);
+  const maxVal = Math.max(tamVal, 1);
+  
+  return (
+    <div className="flex items-end justify-center gap-6 h-48 px-4">
+      <div className="flex flex-col items-center">
+        <div 
+          className="w-20 rounded-t-xl bg-gradient-to-t from-violet-600 to-violet-400 shadow-lg transition-all duration-500"
+          style={{ height: `${(tamVal / maxVal) * 140}px`, minHeight: '40px' }}
+        />
+        <div className="mt-3 text-center">
+          <div className="text-lg font-bold text-gray-900">{tam}</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">TAM</div>
+        </div>
+      </div>
+      <div className="flex flex-col items-center">
+        <div 
+          className="w-20 rounded-t-xl bg-gradient-to-t from-blue-600 to-cyan-400 shadow-lg transition-all duration-500"
+          style={{ height: `${(samVal / maxVal) * 140}px`, minHeight: '40px' }}
+        />
+        <div className="mt-3 text-center">
+          <div className="text-lg font-bold text-gray-900">{sam}</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">SAM</div>
+        </div>
+      </div>
+      <div className="flex flex-col items-center">
+        <div 
+          className="w-20 rounded-t-xl bg-gradient-to-t from-emerald-600 to-teal-400 shadow-lg transition-all duration-500"
+          style={{ height: `${(somVal / maxVal) * 140}px`, minHeight: '40px' }}
+        />
+        <div className="mt-3 text-center">
+          <div className="text-lg font-bold text-gray-900">{som}</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider">SOM</div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabId>('market');
+  const [activeTab, setActiveTab] = useState<TabId>('summary');
   const [result, setResult] = useState<any>(null);
   const [_businessIdea, setBusinessIdea] = useState<string>('');
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [branding, setBranding] = useState<any>(null);
 
   useEffect(() => {
     if (location.state?.result) {
       setResult(location.state.result);
       setBusinessIdea(location.state.businessIdea || '');
+      setBranding(location.state.branding || null);
     } else {
       const savedResult = localStorage.getItem(RESULT_KEY);
       if (savedResult) {
         setResult(JSON.parse(savedResult));
       }
+      const savedBranding = localStorage.getItem('myceo_branding');
+      if (savedBranding) {
+        setBranding(JSON.parse(savedBranding));
+      }
     }
   }, [location.state]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
+      }
+      if (e.key === 'Escape') {
+        setShowCommandPalette(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const tabs = useMemo(() => 
+    result?.local_business_data ? [...baseTabs, localTab] : baseTabs,
+    [result?.local_business_data]
+  );
+
+  const kpiMetrics = useMemo(() => {
+    if (!result) return [];
+    const metrics: { label: string; value: string; subtext?: string; icon: React.ElementType; color: string }[] = [];
+    
+    if (result.market_research?.tam?.value) {
+      metrics.push({ label: 'TAM', value: result.market_research.tam.value, icon: ChartBarIcon, color: 'from-violet-500 to-purple-600' });
+    }
+    if (result.financial_model?.break_even?.month) {
+      metrics.push({ label: 'Break-even', value: `${result.financial_model.break_even.month} months`, icon: CalendarDaysIcon, color: 'from-emerald-500 to-teal-500' });
+    }
+    if (result.financial_model?.funding?.total_raise) {
+      metrics.push({ label: 'Funding', value: result.financial_model.funding.total_raise, icon: CurrencyDollarIcon, color: 'from-blue-500 to-cyan-500' });
+    }
+    if (result.team_plan?.founding_team?.roles?.length) {
+      metrics.push({ label: 'Team Size', value: `${result.team_plan.founding_team.roles.length} roles`, icon: UserGroupIcon, color: 'from-pink-500 to-rose-500' });
+    }
+    
+    return metrics.slice(0, 4);
+  }, [result]);
+
+  const completedSections = useMemo(() => {
+    if (!result) return 0;
+    let count = 0;
+    if (result.executive_summary) count++;
+    if (result.market_research) count++;
+    if (result.competitor_analysis) count++;
+    if (result.business_plan) count++;
+    if (result.financial_model) count++;
+    if (result.go_to_market) count++;
+    if (result.team_plan) count++;
+    if (result.risk_assessment) count++;
+    if (result.action_plan) count++;
+    if (result.pitch_deck) count++;
+    return count;
+  }, [result]);
+
   if (!result) {
     return (
-      <div className="bg-apple-bg min-h-screen font-sans antialiased">
-        <nav className="fixed top-0 w-full z-50 glass-panel">
-          <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
-              <CommandLineIcon className="w-5 h-5 text-apple-text" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
+        <nav className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl border-b border-gray-200/50">
+          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2.5 font-semibold">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
+                <CommandLineIcon className="w-4 h-4 text-white" />
+              </div>
               <span className="text-lg tracking-tight">myCEO</span>
             </Link>
           </div>
         </nav>
         
-        <div className="max-w-2xl mx-auto px-6 pt-32 pb-16">
-          <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-12 text-center">
-            <h1 className="text-2xl font-semibold text-apple-text mb-4">No Analysis Found</h1>
-            <p className="text-apple-gray mb-8">Generate a business analysis first to view results.</p>
+        <div className="max-w-lg mx-auto px-6 pt-40 pb-16 text-center">
+          <GlassCard className="p-12">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center mx-auto mb-6">
+              <DocumentTextIcon className="w-10 h-10 text-violet-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-3">No Analysis Found</h1>
+            <p className="text-gray-500 mb-8">Generate a business analysis first to view your results.</p>
             <Link 
               to="/"
-              className="inline-flex items-center gap-2 bg-apple-text text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-all"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-3 rounded-full font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all"
             >
+              <SparklesIcon className="w-5 h-5" />
               Start New Analysis
             </Link>
-          </div>
+          </GlassCard>
         </div>
       </div>
     );
   }
-
-  const renderSummary = () => {
-    const data = result.executive_summary;
-    if (!data) return <div className="text-gray-500">Executive summary not available</div>;
-    
-    return (
-      <div className="space-y-6">
-        {data.one_liner && (
-          <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
-            <h3 className="font-medium text-sm text-gray-500 mb-2">YOUR ONE-LINER PITCH</h3>
-            <p className="text-2xl font-semibold">"{data.one_liner}"</p>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {data.problem_statement && (
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-              <h3 className="font-semibold text-lg text-apple-text mb-3 flex items-center gap-2">
-                <span className="text-red-500">🔥</span> The Problem
-              </h3>
-              <p className="text-gray-700">{data.problem_statement}</p>
-            </div>
-          )}
-          
-          {data.solution_overview && (
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-              <h3 className="font-semibold text-lg text-apple-text mb-3 flex items-center gap-2">
-                <span className="text-green-500">💡</span> The Solution
-              </h3>
-              <p className="text-gray-700">{data.solution_overview}</p>
-            </div>
-          )}
-        </div>
-
-        {data.value_proposition && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Value Proposition</h3>
-            <p className="text-gray-700">{data.value_proposition}</p>
-          </div>
-        )}
-
-        {data.target_customer && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Target Customer</h3>
-            <p className="text-gray-700">{data.target_customer}</p>
-          </div>
-        )}
-
-        {data.business_model && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Business Model</h3>
-            <p className="text-gray-700">{data.business_model}</p>
-          </div>
-        )}
-
-        {data.unfair_advantage && (
-          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Unfair Advantage</h3>
-            <p className="text-gray-700">{data.unfair_advantage}</p>
-          </div>
-        )}
-
-        {data.why_now && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Why Now?</h3>
-            <p className="text-gray-700">{data.why_now}</p>
-          </div>
-        )}
-
-        {data.key_risks && data.key_risks.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Key Risks & Mitigations</h3>
-            <ul className="space-y-2">
-              {data.key_risks.map((risk: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-orange-500 mt-1">⚠️</span>
-                  <span>{risk}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {data.success_metrics && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Success Metrics Timeline</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Object.entries(data.success_metrics).map(([period, metrics]: [string, any]) => (
-                <div key={period} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <div className="font-medium text-sm text-gray-500 mb-2">{period.replace('_', ' ').toUpperCase()}</div>
-                  <ul className="text-sm space-y-1">
-                    {Array.isArray(metrics) && metrics.map((m: string, idx: number) => (
-                      <li key={idx} className="text-gray-700">• {m}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderMarket = () => {
-    const data = result.market_research;
-    if (!data) return <div className="text-gray-500">Market research not available</div>;
-    
-    return (
-      <div className="space-y-6">
-        {data.market_overview && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Market Overview</h3>
-            <p className="text-gray-700">{data.market_overview}</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {data.tam && (
-            <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6 text-center">
-              <div className="font-medium text-xs text-gray-500 mb-1">TAM</div>
-              <div className="text-3xl font-semibold">{data.tam.value}</div>
-              <div className="text-sm text-gray-600 mt-2">{data.tam.calculation || data.tam.description}</div>
-              {data.tam.growth_rate && (
-                <div className="text-sm font-bold text-green-600 mt-1">{data.tam.growth_rate} CAGR</div>
-              )}
-              {data.tam.key_drivers && (
-                <div className="text-xs text-gray-500 mt-2">
-                  Drivers: {data.tam.key_drivers.slice(0, 2).join(', ')}
-                </div>
-              )}
-            </div>
-          )}
-          {data.sam && (
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6 text-center">
-              <div className="font-medium text-xs text-gray-500 mb-1">SAM</div>
-              <div className="text-3xl font-semibold">{data.sam.value}</div>
-              <div className="text-sm text-gray-600 mt-2">{data.sam.calculation || data.sam.description}</div>
-              {data.sam.penetration_strategy && (
-                <div className="text-xs text-gray-500 mt-2">{data.sam.penetration_strategy}</div>
-              )}
-            </div>
-          )}
-          {data.som && (
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm text-center">
-              <div className="font-medium text-xs text-gray-500 mb-1">SOM</div>
-              <div className="text-3xl font-semibold">{data.som.value}</div>
-              <div className="text-sm text-gray-600 mt-2">{data.som.year_1_target}</div>
-              {data.som.assumptions && (
-                <div className="text-xs text-gray-500 mt-2">
-                  {data.som.assumptions.slice(0, 1).join(', ')}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {data.market_trends && data.market_trends.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Market Trends</h3>
-            <div className="space-y-4">
-              {data.market_trends.map((trend: any, idx: number) => (
-                <div key={idx} className="border-l-4 border-primary-500 pl-4">
-                  <div className="font-semibold">{trend.trend || trend}</div>
-                  {trend.description && <p className="text-gray-600 text-sm mt-1">{trend.description}</p>}
-                  {trend.impact && <p className="text-sm text-green-600 mt-1">Impact: {trend.impact}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {data.customer_segments && data.customer_segments.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Customer Segments</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {data.customer_segments.map((segment: any, idx: number) => (
-                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-semibold">{segment.segment_name}</div>
-                    <span className={`text-xs font-bold px-2 py-1 ${
-                      segment.priority === 'High' ? 'bg-primary-500 text-ink' : 'bg-gray-200'
-                    }`}>{segment.priority}</span>
-                  </div>
-                  <div className="text-sm text-gray-600">{segment.size}</div>
-                  {segment.pain_points && (
-                    <div className="mt-2">
-                      <div className="text-xs font-bold text-gray-500">Pain Points:</div>
-                      <ul className="text-sm">
-                        {segment.pain_points.map((p: string, i: number) => (
-                          <li key={i}>• {p}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {data.regulatory_landscape && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Regulatory Landscape</h3>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm">Risk Level:</span>
-              <span className={`font-bold px-2 py-1 text-sm ${
-                data.regulatory_landscape.risk_level === 'High' ? 'bg-red-100 text-red-700' :
-                data.regulatory_landscape.risk_level === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                'bg-green-100 text-green-700'
-              }`}>{data.regulatory_landscape.risk_level}</span>
-            </div>
-            {data.regulatory_landscape.compliance_requirements && (
-              <ul className="text-sm space-y-1">
-                {data.regulatory_landscape.compliance_requirements.map((req: string, idx: number) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span>📋</span>
-                    <span>{req}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderBusiness = () => {
-    const data = result.business_plan;
-    if (!data) return <div className="text-gray-500">Business plan not available</div>;
-    
-    return (
-      <div className="space-y-6">
-        {data.executive_summary && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Executive Summary</h3>
-            <p className="text-gray-700">{data.executive_summary}</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {data.mission && (
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-              <h3 className="font-semibold text-lg text-apple-text mb-3">Mission</h3>
-              <p className="text-gray-700">{data.mission}</p>
-            </div>
-          )}
-          {data.vision && (
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-              <h3 className="font-semibold text-lg text-apple-text mb-3">Vision</h3>
-              <p className="text-gray-700">{data.vision}</p>
-            </div>
-          )}
-        </div>
-
-        {data.business_model && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Business Model</h3>
-            {data.business_model.type && (
-              <div className="inline-block bg-primary-500 text-ink font-bold px-3 py-1 mb-4">{data.business_model.type}</div>
-            )}
-            
-            {data.business_model.pricing_strategy && (
-              <div className="mb-4">
-                <h4 className="font-bold mb-2">Pricing Strategy</h4>
-                <p className="text-sm text-gray-600 mb-3">{data.business_model.pricing_strategy.model}</p>
-                {data.business_model.pricing_strategy.tiers && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {data.business_model.pricing_strategy.tiers.map((tier: any, idx: number) => (
-                      <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                        <div className="font-semibold">{tier.name}</div>
-                        <div className="text-xl font-semibold text-primary-500">{tier.price}</div>
-                        <ul className="text-sm mt-2">
-                          {tier.features?.map((f: string, i: number) => (
-                            <li key={i} className="text-gray-600">✓ {f}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {data.business_model.unit_economics && (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
-                {Object.entries(data.business_model.unit_economics).map(([key, value]: [string, any]) => (
-                  <div key={key} className="text-center p-2 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className="text-xs font-bold text-gray-500">{key.toUpperCase().replace('_', ' ')}</div>
-                    <div className="font-semibold">{value}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {data.product_roadmap && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Product Roadmap</h3>
-            <div className="space-y-4">
-              {data.product_roadmap.mvp_features && (
-                <div>
-                  <div className="font-bold text-sm text-gray-500 mb-2">MVP FEATURES</div>
-                  <div className="flex flex-wrap gap-2">
-                    {data.product_roadmap.mvp_features.map((f: string, idx: number) => (
-                      <span key={idx} className="bg-primary-500/20 px-3 py-1 text-sm font-medium">{f}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {data.product_roadmap.phase_2 && (
-                <div>
-                  <div className="font-bold text-sm text-gray-500 mb-2">PHASE 2</div>
-                  <div className="flex flex-wrap gap-2">
-                    {data.product_roadmap.phase_2.map((f: string, idx: number) => (
-                      <span key={idx} className="bg-gray-100 px-3 py-1 text-sm font-medium">{f}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {data.swot_analysis && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">SWOT Analysis</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-green-50 p-4 border border-green-200">
-                <div className="font-semibold text-green-700 mb-2">Strengths</div>
-                <ul className="text-sm space-y-1">
-                  {data.swot_analysis.strengths?.map((s: string, idx: number) => (
-                    <li key={idx}>✓ {s}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bg-red-50 p-4 border border-red-200">
-                <div className="font-semibold text-red-700 mb-2">Weaknesses</div>
-                <ul className="text-sm space-y-1">
-                  {data.swot_analysis.weaknesses?.map((w: string, idx: number) => (
-                    <li key={idx}>• {w}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bg-blue-50 p-4 border border-blue-200">
-                <div className="font-semibold text-blue-700 mb-2">Opportunities</div>
-                <ul className="text-sm space-y-1">
-                  {data.swot_analysis.opportunities?.map((o: string, idx: number) => (
-                    <li key={idx}>↗ {o}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bg-orange-50 p-4 border border-orange-200">
-                <div className="font-semibold text-orange-700 mb-2">Threats</div>
-                <ul className="text-sm space-y-1">
-                  {data.swot_analysis.threats?.map((t: string, idx: number) => (
-                    <li key={idx}>⚠ {t}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   const generateFinancialsCSV = () => {
     const data = result.financial_model;
     if (!data) return;
     
     const rows: string[][] = [];
-    
     rows.push(['myCEO Financial Model']);
     rows.push([]);
     
@@ -466,23 +297,6 @@ export default function Results() {
       rows.push(['Customers', ...data.projections.map((p: any) => p.customers)]);
       rows.push(['Gross Profit', ...data.projections.map((p: any) => p.gross_profit)]);
       rows.push(['EBITDA', ...data.projections.map((p: any) => p.ebitda)]);
-      rows.push(['Headcount', ...data.projections.map((p: any) => p.headcount)]);
-      rows.push([]);
-    }
-    
-    if (data.break_even) {
-      rows.push(['BREAK-EVEN ANALYSIS']);
-      rows.push(['Months to Break-Even', data.break_even.month]);
-      rows.push(['Customers Needed', data.break_even.customers_needed]);
-      rows.push(['Revenue Needed', data.break_even.revenue_needed]);
-      rows.push([]);
-    }
-
-    if (data.unit_economics) {
-      rows.push(['UNIT ECONOMICS']);
-      Object.entries(data.unit_economics).forEach(([key, value]) => {
-        rows.push([key.replace(/_/g, ' ').toUpperCase(), String(value)]);
-      });
       rows.push([]);
     }
     
@@ -495,49 +309,414 @@ export default function Results() {
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', 'myceo_financial_model.csv');
-    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const openGoogleSheets = () => {
-    const data = result.financial_model;
-    if (!data) return;
+  const renderSummary = () => {
+    const data = result.executive_summary;
+    if (!data) return <div className="text-gray-500">Executive summary not available</div>;
     
-    let content = 'myCEO Financial Model\n\n';
+    return (
+      <div className="space-y-6">
+        {data.one_liner && (
+          <GlassCard className="p-8" gradient>
+            <div className="flex items-center gap-2 mb-3">
+              <SparklesIcon className="w-5 h-5 text-violet-600" />
+              <span className="text-sm font-medium text-violet-600 uppercase tracking-wider">Your One-Liner Pitch</span>
+            </div>
+            <p className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">"{data.one_liner}"</p>
+          </GlassCard>
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {data.problem_statement && (
+            <GlassCard className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
+                  <span className="text-red-600">🔥</span>
+                </div>
+                <h3 className="font-semibold text-gray-900">The Problem</h3>
+              </div>
+              <p className="text-gray-600 leading-relaxed">{data.problem_statement}</p>
+            </GlassCard>
+          )}
+          
+          {data.solution_overview && (
+            <GlassCard className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <span className="text-emerald-600">💡</span>
+                </div>
+                <h3 className="font-semibold text-gray-900">The Solution</h3>
+              </div>
+              <p className="text-gray-600 leading-relaxed">{data.solution_overview}</p>
+            </GlassCard>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {data.value_proposition && (
+            <GlassCard className="p-6">
+              <h3 className="font-semibold text-gray-900 mb-3">Value Proposition</h3>
+              <p className="text-gray-600 leading-relaxed">{data.value_proposition}</p>
+            </GlassCard>
+          )}
+          
+          {data.target_customer && (
+            <GlassCard className="p-6">
+              <h3 className="font-semibold text-gray-900 mb-3">Target Customer</h3>
+              <p className="text-gray-600 leading-relaxed">{data.target_customer}</p>
+            </GlassCard>
+          )}
+        </div>
+
+        {data.unfair_advantage && (
+          <GlassCard className="p-6 bg-gradient-to-br from-amber-50/80 to-orange-50/60">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                <span>⚡</span>
+              </div>
+              <h3 className="font-semibold text-gray-900">Unfair Advantage</h3>
+            </div>
+            <p className="text-gray-700 leading-relaxed">{data.unfair_advantage}</p>
+          </GlassCard>
+        )}
+
+        {data.why_now && (
+          <GlassCard className="p-6 bg-gradient-to-br from-blue-50/80 to-indigo-50/60">
+            <h3 className="font-semibold text-gray-900 mb-3">Why Now?</h3>
+            <p className="text-gray-700 leading-relaxed">{data.why_now}</p>
+          </GlassCard>
+        )}
+
+        {data.key_risks && data.key_risks.length > 0 && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Key Risks & Mitigations</h3>
+            <div className="space-y-3">
+              {data.key_risks.map((risk: string, idx: number) => (
+                <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-orange-50/50">
+                  <ShieldExclamationIcon className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">{risk}</span>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+
+        {data.success_metrics && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Success Metrics Timeline</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Object.entries(data.success_metrics).map(([period, metrics]: [string, any]) => (
+                <div key={period} className="p-4 rounded-xl bg-gray-50/80 border border-gray-100">
+                  <div className="text-xs font-semibold text-violet-600 uppercase tracking-wider mb-2">
+                    {period.replace('_', ' ')}
+                  </div>
+                  <ul className="text-sm space-y-1">
+                    {Array.isArray(metrics) && metrics.map((m: string, idx: number) => (
+                      <li key={idx} className="text-gray-600 flex items-start gap-1.5">
+                        <CheckCircleIcon className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <span>{m}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+      </div>
+    );
+  };
+
+  const renderMarket = () => {
+    const data = result.market_research;
+    if (!data) return <div className="text-gray-500">Market research not available</div>;
     
-    if (data.assumptions) {
-      content += 'KEY ASSUMPTIONS\n';
-      Object.entries(data.assumptions).forEach(([key, value]) => {
-        content += `${key.replace(/_/g, ' ').toUpperCase()}\t${value}\n`;
-      });
-      content += '\n';
-    }
+    return (
+      <div className="space-y-6">
+        {data.market_overview && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-3">Market Overview</h3>
+            <p className="text-gray-600 leading-relaxed">{data.market_overview}</p>
+          </GlassCard>
+        )}
+
+        {(data.tam || data.sam || data.som) && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-6 text-center">Market Size Analysis</h3>
+            <MarketSizeChart 
+              tam={data.tam?.value || '$0'} 
+              sam={data.sam?.value || '$0'} 
+              som={data.som?.value || '$0'} 
+            />
+            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+              {data.tam && (
+                <div className="text-center">
+                  <div className="text-sm text-gray-600">{data.tam.calculation || data.tam.description}</div>
+                  {data.tam.growth_rate && (
+                    <div className="text-sm font-semibold text-emerald-600 mt-1">{data.tam.growth_rate} CAGR</div>
+                  )}
+                </div>
+              )}
+              {data.sam && (
+                <div className="text-center">
+                  <div className="text-sm text-gray-600">{data.sam.calculation || data.sam.description}</div>
+                </div>
+              )}
+              {data.som && (
+                <div className="text-center">
+                  <div className="text-sm text-gray-600">{data.som.year_1_target}</div>
+                </div>
+              )}
+            </div>
+          </GlassCard>
+        )}
+
+        {data.market_trends && data.market_trends.length > 0 && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Market Trends</h3>
+            <div className="space-y-4">
+              {data.market_trends.map((trend: any, idx: number) => (
+                <div key={idx} className="p-4 rounded-xl bg-gradient-to-r from-blue-50/80 to-indigo-50/40 border-l-4 border-blue-500">
+                  <div className="font-medium text-gray-900">{trend.trend || trend}</div>
+                  {trend.description && <p className="text-gray-600 text-sm mt-1">{trend.description}</p>}
+                  {trend.impact && <p className="text-sm text-emerald-600 font-medium mt-2">Impact: {trend.impact}</p>}
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+
+        {data.customer_segments && data.customer_segments.length > 0 && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Customer Segments</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {data.customer_segments.map((segment: any, idx: number) => (
+                <div key={idx} className="p-4 rounded-xl bg-gray-50/80 border border-gray-100">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-medium text-gray-900">{segment.segment_name}</div>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                      segment.priority === 'High' 
+                        ? 'bg-violet-100 text-violet-700' 
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>{segment.priority}</span>
+                  </div>
+                  <div className="text-sm text-gray-600 mb-2">{segment.size}</div>
+                  {segment.pain_points && (
+                    <div className="mt-3">
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Pain Points</div>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        {segment.pain_points.map((p: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-red-400">•</span>
+                            <span>{p}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+
+        {data.regulatory_landscape && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-3">Regulatory Landscape</h3>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-sm text-gray-600">Risk Level:</span>
+              <span className={`text-sm font-bold px-3 py-1 rounded-full ${
+                data.regulatory_landscape.risk_level === 'High' ? 'bg-red-100 text-red-700' :
+                data.regulatory_landscape.risk_level === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                'bg-emerald-100 text-emerald-700'
+              }`}>{data.regulatory_landscape.risk_level}</span>
+            </div>
+            {data.regulatory_landscape.compliance_requirements && (
+              <ul className="space-y-2">
+                {data.regulatory_landscape.compliance_requirements.map((req: string, idx: number) => (
+                  <li key={idx} className="flex items-start gap-3 text-gray-600">
+                    <DocumentTextIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <span>{req}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </GlassCard>
+        )}
+      </div>
+    );
+  };
+
+  const renderBusiness = () => {
+    const data = result.business_plan;
+    if (!data) return <div className="text-gray-500">Business plan not available</div>;
     
-    if (data.projections && data.projections.length > 0) {
-      content += '5-YEAR PROJECTIONS\n';
-      content += 'Metric\t' + data.projections.map((p: any) => `Year ${p.year}`).join('\t') + '\n';
-      content += 'Revenue\t' + data.projections.map((p: any) => p.revenue).join('\t') + '\n';
-      content += 'Customers\t' + data.projections.map((p: any) => p.customers).join('\t') + '\n';
-      content += 'Gross Profit\t' + data.projections.map((p: any) => p.gross_profit).join('\t') + '\n';
-      content += 'EBITDA\t' + data.projections.map((p: any) => p.ebitda).join('\t') + '\n';
-      content += 'Headcount\t' + data.projections.map((p: any) => p.headcount).join('\t') + '\n';
-    }
-    
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(content).then(() => {
-        window.open(`https://docs.google.com/spreadsheets/create?title=myCEO_Financial_Model`, '_blank');
-        alert('Financial data copied to clipboard! Paste it into the new Google Sheet (Ctrl+V or Cmd+V)');
-      }).catch(() => {
-        generateFinancialsCSV();
-        alert('Could not copy to clipboard. A CSV file has been downloaded instead - import it into Google Sheets.');
-      });
-    } else {
-      generateFinancialsCSV();
-      alert('Opening Google Sheets... Import the downloaded CSV file to populate your financial model.');
-      window.open('https://docs.google.com/spreadsheets/create', '_blank');
-    }
+    return (
+      <div className="space-y-6">
+        {data.executive_summary && (
+          <GlassCard className="p-6 bg-gradient-to-br from-blue-50/80 to-indigo-50/60">
+            <h3 className="font-semibold text-gray-900 mb-3">Executive Summary</h3>
+            <p className="text-gray-700 leading-relaxed">{data.executive_summary}</p>
+          </GlassCard>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {data.mission && (
+            <GlassCard className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <SparklesIcon className="w-4 h-4 text-violet-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Mission</h3>
+              </div>
+              <p className="text-gray-600 leading-relaxed">{data.mission}</p>
+            </GlassCard>
+          )}
+          {data.vision && (
+            <GlassCard className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <RocketLaunchIcon className="w-4 h-4 text-indigo-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Vision</h3>
+              </div>
+              <p className="text-gray-600 leading-relaxed">{data.vision}</p>
+            </GlassCard>
+          )}
+        </div>
+
+        {data.business_model && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Business Model</h3>
+            {data.business_model.type && (
+              <span className="inline-block bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-medium px-4 py-1.5 rounded-full mb-4">
+                {data.business_model.type}
+              </span>
+            )}
+            
+            {data.business_model.pricing_strategy && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Pricing Strategy</h4>
+                <p className="text-sm text-gray-600 mb-4">{data.business_model.pricing_strategy.model}</p>
+                {data.business_model.pricing_strategy.tiers && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {data.business_model.pricing_strategy.tiers.map((tier: any, idx: number) => (
+                      <div key={idx} className={`p-5 rounded-xl border ${idx === 1 ? 'bg-gradient-to-br from-violet-50 to-indigo-50 border-violet-200' : 'bg-gray-50/80 border-gray-100'}`}>
+                        <div className="font-semibold text-gray-900">{tier.name}</div>
+                        <div className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent mt-1">{tier.price}</div>
+                        <ul className="text-sm mt-3 space-y-1.5">
+                          {tier.features?.map((f: string, i: number) => (
+                            <li key={i} className="text-gray-600 flex items-start gap-2">
+                              <CheckCircleIcon className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {data.business_model.unit_economics && (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-4 border-t border-gray-100">
+                {Object.entries(data.business_model.unit_economics).map(([key, value]: [string, any]) => (
+                  <div key={key} className="text-center p-3 rounded-xl bg-gray-50/80">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{key.replace(/_/g, ' ')}</div>
+                    <div className="font-bold text-gray-900 mt-1">{value}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </GlassCard>
+        )}
+
+        {data.swot_analysis && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">SWOT Analysis</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-100">
+                <div className="font-semibold text-emerald-700 mb-3 flex items-center gap-2">
+                  <CheckCircleIcon className="w-5 h-5" />
+                  Strengths
+                </div>
+                <ul className="text-sm space-y-1.5 text-gray-700">
+                  {data.swot_analysis.strengths?.map((s: string, idx: number) => (
+                    <li key={idx}>• {s}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="p-4 rounded-xl bg-red-50/80 border border-red-100">
+                <div className="font-semibold text-red-700 mb-3 flex items-center gap-2">
+                  <ShieldExclamationIcon className="w-5 h-5" />
+                  Weaknesses
+                </div>
+                <ul className="text-sm space-y-1.5 text-gray-700">
+                  {data.swot_analysis.weaknesses?.map((w: string, idx: number) => (
+                    <li key={idx}>• {w}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="p-4 rounded-xl bg-blue-50/80 border border-blue-100">
+                <div className="font-semibold text-blue-700 mb-3 flex items-center gap-2">
+                  <RocketLaunchIcon className="w-5 h-5" />
+                  Opportunities
+                </div>
+                <ul className="text-sm space-y-1.5 text-gray-700">
+                  {data.swot_analysis.opportunities?.map((o: string, idx: number) => (
+                    <li key={idx}>• {o}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-100">
+                <div className="font-semibold text-amber-700 mb-3 flex items-center gap-2">
+                  <ShieldExclamationIcon className="w-5 h-5" />
+                  Threats
+                </div>
+                <ul className="text-sm space-y-1.5 text-gray-700">
+                  {data.swot_analysis.threats?.map((t: string, idx: number) => (
+                    <li key={idx}>• {t}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </GlassCard>
+        )}
+
+        {data.product_roadmap && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Product Roadmap</h3>
+            <div className="space-y-4">
+              {data.product_roadmap.mvp_features && (
+                <div>
+                  <div className="text-xs font-semibold text-violet-600 uppercase tracking-wider mb-2">MVP Features</div>
+                  <div className="flex flex-wrap gap-2">
+                    {data.product_roadmap.mvp_features.map((f: string, idx: number) => (
+                      <span key={idx} className="bg-violet-100 text-violet-700 px-3 py-1.5 rounded-full text-sm font-medium">{f}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {data.product_roadmap.phase_2 && (
+                <div>
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Phase 2</div>
+                  <div className="flex flex-wrap gap-2">
+                    {data.product_roadmap.phase_2.map((f: string, idx: number) => (
+                      <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium">{f}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </GlassCard>
+        )}
+      </div>
+    );
   };
 
   const renderFinancials = () => {
@@ -546,180 +725,120 @@ export default function Results() {
     
     return (
       <div className="space-y-6">
-        <div className="bg-amber-50 border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div>
-            <h3 className="font-semibold text-lg text-apple-text">Export Your Financial Model</h3>
-            <p className="text-sm text-gray-600">Open in Google Sheets or download as CSV to customize</p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={openGoogleSheets}
-              className="bg-green-500 text-white font-bold px-4 py-2 border border-gray-200 rounded-lg shadow-brutal-sm hover:shadow-none transition-all flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-              </svg>
-              Open in Google Sheets
-            </button>
-            <button
-              onClick={generateFinancialsCSV}
-              className="bg-white text-ink font-bold px-4 py-2 border border-gray-200 rounded-lg shadow-brutal-sm hover:shadow-none transition-all flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-              </svg>
-              Download CSV
-            </button>
-          </div>
+        <div className="flex gap-3">
+          <button
+            onClick={generateFinancialsCSV}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-medium text-sm hover:bg-emerald-100 transition-colors"
+          >
+            <ArrowDownTrayIcon className="w-4 h-4" />
+            Download CSV
+          </button>
         </div>
 
         {data.assumptions && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Key Assumptions</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Key Assumptions</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(data.assumptions).map(([key, value]: [string, any]) => (
-                <div key={key} className="bg-gray-50 p-3 border border-gray-200 rounded-lg">
-                  <div className="text-xs font-bold text-gray-500">{key.replace(/_/g, ' ').toUpperCase()}</div>
-                  <div className="font-semibold mt-1">{value}</div>
+                <div key={key} className="p-3 rounded-xl bg-gray-50/80 text-center">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{key.replace(/_/g, ' ')}</div>
+                  <div className="font-bold text-gray-900 mt-1">{String(value)}</div>
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {data.projections && data.projections.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">5-Year Financial Projections</h3>
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">5-Year Financial Projections</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-ink text-white">
-                    <th className="p-2 text-left">Metric</th>
-                    {data.projections.map((p: any) => (
-                      <th key={p.year} className="p-2 text-right">Year {p.year}</th>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-500">Metric</th>
+                    {data.projections.map((p: any, idx: number) => (
+                      <th key={idx} className="text-right py-3 px-4 font-semibold text-gray-900">Year {p.year}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b">
-                    <td className="p-2 font-bold">Revenue</td>
-                    {data.projections.map((p: any) => (
-                      <td key={p.year} className="p-2 text-right font-bold text-green-600">
-                        ${typeof p.revenue === 'number' ? p.revenue.toLocaleString() : p.revenue}
-                      </td>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-4 font-medium text-gray-700">Revenue</td>
+                    {data.projections.map((p: any, idx: number) => (
+                      <td key={idx} className="text-right py-3 px-4 font-semibold text-emerald-600">{p.revenue}</td>
                     ))}
                   </tr>
-                  <tr className="border-b bg-gray-50">
-                    <td className="p-2 font-bold">Customers</td>
-                    {data.projections.map((p: any) => (
-                      <td key={p.year} className="p-2 text-right">
-                        {typeof p.customers === 'number' ? p.customers.toLocaleString() : p.customers}
-                      </td>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-4 font-medium text-gray-700">Customers</td>
+                    {data.projections.map((p: any, idx: number) => (
+                      <td key={idx} className="text-right py-3 px-4 text-gray-900">{p.customers}</td>
                     ))}
                   </tr>
-                  <tr className="border-b">
-                    <td className="p-2 font-bold">Gross Profit</td>
-                    {data.projections.map((p: any) => (
-                      <td key={p.year} className="p-2 text-right">
-                        ${typeof p.gross_profit === 'number' ? p.gross_profit.toLocaleString() : p.gross_profit}
-                      </td>
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-4 font-medium text-gray-700">Gross Profit</td>
+                    {data.projections.map((p: any, idx: number) => (
+                      <td key={idx} className="text-right py-3 px-4 text-gray-900">{p.gross_profit}</td>
                     ))}
                   </tr>
-                  <tr className="border-b bg-gray-50">
-                    <td className="p-2 font-bold">EBITDA</td>
-                    {data.projections.map((p: any) => (
-                      <td key={p.year} className={`p-2 text-right font-bold ${p.ebitda >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        ${typeof p.ebitda === 'number' ? p.ebitda.toLocaleString() : p.ebitda}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-2 font-bold">Headcount</td>
-                    {data.projections.map((p: any) => (
-                      <td key={p.year} className="p-2 text-right">{p.headcount}</td>
+                  <tr>
+                    <td className="py-3 px-4 font-medium text-gray-700">EBITDA</td>
+                    {data.projections.map((p: any, idx: number) => (
+                      <td key={idx} className="text-right py-3 px-4 text-gray-900">{p.ebitda}</td>
                     ))}
                   </tr>
                 </tbody>
               </table>
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {data.break_even && (
-          <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Break-Even Analysis</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <GlassCard className="p-6 bg-gradient-to-br from-emerald-50/80 to-teal-50/60">
+            <h3 className="font-semibold text-gray-900 mb-4">Break-Even Analysis</h3>
+            <div className="grid grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-semibold">Month {data.break_even.month}</div>
-                <div className="text-sm text-gray-600">Time to Break-Even</div>
+                <div className="text-4xl font-bold text-emerald-600">{data.break_even.month}</div>
+                <div className="text-sm text-gray-600 mt-1">Months to Break-Even</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-semibold">{data.break_even.customers_needed}</div>
-                <div className="text-sm text-gray-600">Customers Needed</div>
+                <div className="text-4xl font-bold text-gray-900">{data.break_even.customers_needed}</div>
+                <div className="text-sm text-gray-600 mt-1">Customers Needed</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-semibold">${data.break_even.revenue_needed?.toLocaleString()}</div>
-                <div className="text-sm text-gray-600">Revenue Needed</div>
+                <div className="text-4xl font-bold text-gray-900">{data.break_even.revenue_needed}</div>
+                <div className="text-sm text-gray-600 mt-1">Revenue Needed</div>
               </div>
             </div>
-          </div>
+          </GlassCard>
         )}
 
-        {data.funding_strategy && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Funding Strategy</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {data.funding_strategy.pre_seed && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <div className="font-semibold text-primary-500">Pre-Seed</div>
-                  <div className="text-2xl font-semibold">{data.funding_strategy.pre_seed.amount}</div>
-                  <div className="text-sm text-gray-600 mt-2">{data.funding_strategy.pre_seed.timing}</div>
-                  <ul className="text-sm mt-2">
-                    {data.funding_strategy.pre_seed.use_of_funds?.map((u: string, idx: number) => (
-                      <li key={idx}>• {u}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {data.funding_strategy.seed && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <div className="font-semibold text-primary-500">Seed</div>
-                  <div className="text-2xl font-semibold">{data.funding_strategy.seed.amount}</div>
-                  <div className="text-sm text-gray-600 mt-2">{data.funding_strategy.seed.timing}</div>
-                </div>
-              )}
-              {data.funding_strategy.series_a && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <div className="font-semibold text-primary-500">Series A</div>
-                  <div className="text-2xl font-semibold">{data.funding_strategy.series_a.amount}</div>
-                  <div className="text-sm text-gray-600 mt-2">{data.funding_strategy.series_a.timing}</div>
-                </div>
-              )}
+        {data.funding && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Funding Strategy</h3>
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+                {data.funding.total_raise}
+              </span>
+              <span className="text-gray-500">Total Raise</span>
             </div>
-          </div>
-        )}
-
-        {data.scenario_analysis && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Scenario Analysis (Year 5)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-green-50 border border-green-200 p-4 text-center">
-                <div className="font-semibold text-green-700">Best Case</div>
-                <div className="text-2xl font-semibold">${data.scenario_analysis.best_case?.year_5_revenue?.toLocaleString()}</div>
-                <div className="text-sm text-gray-600 mt-2">{data.scenario_analysis.best_case?.assumptions}</div>
+            {data.funding.rounds && (
+              <div className="space-y-3">
+                {data.funding.rounds.map((round: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-gray-50/80">
+                    <div>
+                      <div className="font-medium text-gray-900">{round.round}</div>
+                      <div className="text-sm text-gray-500">{round.timeline}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-gray-900">{round.amount}</div>
+                      <div className="text-sm text-gray-500">{round.use_of_funds}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-                <div className="font-semibold">Base Case</div>
-                <div className="text-2xl font-semibold">${data.scenario_analysis.base_case?.year_5_revenue?.toLocaleString()}</div>
-                <div className="text-sm text-gray-600 mt-2">{data.scenario_analysis.base_case?.assumptions}</div>
-              </div>
-              <div className="bg-red-50 border border-red-200 p-4 text-center">
-                <div className="font-semibold text-red-700">Worst Case</div>
-                <div className="text-2xl font-semibold">${data.scenario_analysis.worst_case?.year_5_revenue?.toLocaleString()}</div>
-                <div className="text-sm text-gray-600 mt-2">{data.scenario_analysis.worst_case?.assumptions}</div>
-              </div>
-            </div>
-          </div>
+            )}
+          </GlassCard>
         )}
       </div>
     );
@@ -727,233 +846,79 @@ export default function Results() {
 
   const renderCompetitors = () => {
     const data = result.competitor_analysis;
-    const discovery = result.competitor_discovery;
-    
-    if (!data && !discovery) return <div className="text-gray-500">Competitor analysis not available</div>;
+    if (!data) return <div className="text-gray-500">Competitor analysis not available</div>;
     
     return (
       <div className="space-y-6">
-        {discovery?.competitive_insights && (
-          <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Market Intelligence Summary</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-3xl font-semibold">{discovery.competitive_insights.total_competitors_found || '?'}</div>
-                <div className="text-sm text-gray-600">Competitors Found</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-semibold">{discovery.competitive_insights.average_rating || 'N/A'}</div>
-                <div className="text-sm text-gray-600">Avg Rating</div>
-              </div>
-              <div className="text-center">
-                <div className={`text-xl font-semibold px-3 py-1 inline-block ${
-                  discovery.competitive_insights.market_saturation === 'High' ? 'bg-red-100 text-red-700' :
-                  discovery.competitive_insights.market_saturation === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-green-100 text-green-700'
-                }`}>{discovery.competitive_insights.market_saturation}</div>
-                <div className="text-sm text-gray-600 mt-1">Saturation</div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-bold">{discovery.competitive_insights.underserved_segments?.length || 0} gaps</div>
-                <div className="text-sm text-gray-600">Opportunities</div>
-              </div>
-            </div>
-            {discovery.competitive_insights.common_complaints?.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-ink/20">
-                <div className="text-sm font-bold mb-2">Common Customer Complaints:</div>
-                <div className="flex flex-wrap gap-2">
-                  {discovery.competitive_insights.common_complaints.map((c: string, i: number) => (
-                    <span key={i} className="bg-red-100 text-red-700 px-2 py-1 text-sm">{c}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+        {data.market_position && (
+          <GlassCard className="p-6 bg-gradient-to-br from-orange-50/80 to-red-50/60">
+            <h3 className="font-semibold text-gray-900 mb-3">Your Market Position</h3>
+            <p className="text-gray-700 leading-relaxed">{data.market_position}</p>
+          </GlassCard>
         )}
 
-        {discovery?.direct_competitors && discovery.direct_competitors.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4 flex items-center gap-2">
-              <span className="text-red-500">🎯</span> Direct Competitors ({discovery.direct_competitors.length})
-            </h3>
+        {data.direct_competitors && data.direct_competitors.length > 0 && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Direct Competitors</h3>
             <div className="space-y-4">
-              {discovery.direct_competitors.map((comp: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-brutal-sm transition-shadow">
-                  <div className="flex justify-between items-start mb-3">
+              {data.direct_competitors.map((comp: any, idx: number) => (
+                <div key={idx} className="p-5 rounded-xl bg-gray-50/80 border border-gray-100">
+                  <div className="flex items-start justify-between mb-3">
                     <div>
-                      <div className="font-semibold text-lg text-apple-text flex items-center gap-2">
-                        {comp.name}
-                        {comp.website && (
-                          <a href={comp.website} target="_blank" rel="noopener noreferrer" 
-                             className="text-primary-500 hover:underline text-sm font-normal">
-                            🔗 Visit Site
-                          </a>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-500">{comp.location}</div>
+                      <h4 className="font-semibold text-gray-900 text-lg">{comp.name}</h4>
+                      {comp.website && (
+                        <a href={comp.website} target="_blank" rel="noopener noreferrer" className="text-sm text-violet-600 hover:underline">
+                          {comp.website}
+                        </a>
+                      )}
                     </div>
-                    {comp.review_rating && (
-                      <div className="bg-yellow-100 px-3 py-1 text-sm font-bold">
-                        ⭐ {comp.review_rating}
-                      </div>
+                    {comp.funding && (
+                      <span className="text-sm font-medium px-3 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                        {comp.funding}
+                      </span>
                     )}
                   </div>
-                  <p className="text-gray-700 mb-3">{comp.description}</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                    <div>
-                      <div className="text-xs font-bold text-green-600 mb-1">Their Advantage</div>
-                      <p className="text-sm text-gray-600">{comp.competitive_advantage}</p>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-red-600 mb-1">Their Weakness</div>
-                      <p className="text-sm text-gray-600">{comp.weaknesses}</p>
-                    </div>
-                  </div>
-
-                  {comp.pricing && (
-                    <div className="bg-gray-50 p-2 mb-3">
-                      <span className="font-bold text-sm">Pricing:</span> {comp.pricing}
-                    </div>
-                  )}
-
-                  {comp.reviews_summary && (
-                    <div className="text-sm text-gray-600 italic mb-3">
-                      "{comp.reviews_summary}"
-                    </div>
-                  )}
-
-                  {comp.sources && comp.sources.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
-                      <span className="text-xs text-gray-500">Sources:</span>
-                      {comp.sources.map((source: any, i: number) => (
-                        <a key={i} href={source.url} target="_blank" rel="noopener noreferrer"
-                           className={`text-xs px-2 py-1 hover:opacity-80 ${
-                             source.type === 'google_reviews' ? 'bg-blue-100 text-blue-700' :
-                             source.type === 'yelp' ? 'bg-red-100 text-red-700' :
-                             'bg-gray-100 text-gray-700'
-                           }`}>
-                          {source.type === 'google_reviews' ? '📍 Google' : 
-                           source.type === 'yelp' ? '🍽️ Yelp' : '🌐 Website'}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {discovery?.indirect_competitors && discovery.indirect_competitors.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4 flex items-center gap-2">
-              <span className="text-yellow-500">🔄</span> Indirect Competitors ({discovery.indirect_competitors.length})
-            </h3>
-            <div className="space-y-4">
-              {discovery.indirect_competitors.map((comp: any, idx: number) => (
-                <div key={idx} className="border-2 border-yellow-200 bg-yellow-50/50 p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="font-semibold text-lg text-apple-text flex items-center gap-2">
-                        {comp.name}
-                        {comp.website && (
-                          <a href={comp.website} target="_blank" rel="noopener noreferrer" 
-                             className="text-primary-500 hover:underline text-sm font-normal">
-                            🔗 Visit
-                          </a>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-500">{comp.location}</div>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 mb-2">{comp.description}</p>
-                  {comp.how_they_compete && (
-                    <div className="bg-white p-2 text-sm mb-2">
-                      <span className="font-bold">How they compete:</span> {comp.how_they_compete}
-                    </div>
-                  )}
-                  {comp.sources && comp.sources.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-yellow-200">
-                      {comp.sources.map((source: any, i: number) => (
-                        <a key={i} href={source.url} target="_blank" rel="noopener noreferrer"
-                           className="text-xs bg-gray-100 text-gray-700 px-2 py-1 hover:opacity-80">
-                          🔗 {source.type}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {discovery?.market_gaps && discovery.market_gaps.length > 0 && (
-          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-4 flex items-center gap-2">
-              <span className="text-green-500">💎</span> Market Gaps & Opportunities
-            </h3>
-            <div className="space-y-4">
-              {discovery.market_gaps.map((gap: any, idx: number) => (
-                <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="font-bold text-lg text-green-700 mb-2">{gap.gap}</div>
-                  <p className="text-sm text-gray-600 mb-2"><span className="font-bold">Evidence:</span> {gap.evidence}</p>
-                  <p className="text-sm text-primary-500 font-bold">→ {gap.opportunity}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {data?.competitive_landscape && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Strategic Analysis</h3>
-            <p className="text-gray-700">{data.competitive_landscape}</p>
-          </div>
-        )}
-
-        {data?.differentiation && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Your Differentiation Strategy</h3>
-            <div className="font-bold text-lg mb-2">{data.differentiation.primary_differentiator}</div>
-            {data.differentiation.positioning_statement && (
-              <p className="text-gray-700 italic">"{data.differentiation.positioning_statement}"</p>
-            )}
-            {data.differentiation.messaging_angles && (
-              <div className="mt-4">
-                <div className="text-sm font-bold mb-2">Messaging Angles:</div>
-                <div className="flex flex-wrap gap-2">
-                  {data.differentiation.messaging_angles.map((angle: string, idx: number) => (
-                    <span key={idx} className="bg-white border border-gray-200 rounded-lg px-3 py-1 text-sm">{angle}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {data?.battle_cards && data.battle_cards.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Battle Cards</h3>
-            <div className="space-y-4">
-              {data.battle_cards.map((card: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4">
-                  <div className="font-semibold mb-3">vs. {card.competitor}</div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-green-50 p-3">
-                      <div className="text-xs font-bold text-green-700 mb-1">When You Win</div>
-                      <p className="text-sm">{card.when_you_win}</p>
-                    </div>
-                    <div className="bg-red-50 p-3">
-                      <div className="text-xs font-bold text-red-700 mb-1">When They Win</div>
-                      <p className="text-sm">{card.when_they_win}</p>
-                    </div>
+                  {comp.description && <p className="text-gray-600 text-sm mb-3">{comp.description}</p>}
+                  <div className="flex flex-wrap gap-2">
+                    {comp.strengths?.map((s: string, i: number) => (
+                      <span key={i} className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">{s}</span>
+                    ))}
+                    {comp.weaknesses?.map((w: string, i: number) => (
+                      <span key={i} className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">{w}</span>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
+        )}
+
+        {data.competitive_advantages && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Your Competitive Advantages</h3>
+            <div className="space-y-3">
+              {data.competitive_advantages.map((adv: string, idx: number) => (
+                <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-emerald-50/60">
+                  <CheckCircleIcon className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">{adv}</span>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+
+        {data.market_gaps && data.market_gaps.length > 0 && (
+          <GlassCard className="p-6 bg-gradient-to-br from-violet-50/80 to-indigo-50/60">
+            <h3 className="font-semibold text-gray-900 mb-4">Market Gaps & Opportunities</h3>
+            <div className="space-y-3">
+              {data.market_gaps.map((gap: string, idx: number) => (
+                <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-white/60">
+                  <SparklesIcon className="w-5 h-5 text-violet-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">{gap}</span>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
         )}
       </div>
     );
@@ -961,81 +926,73 @@ export default function Results() {
 
   const renderGTM = () => {
     const data = result.go_to_market;
-    if (!data) return <div className="text-gray-500">Go-to-market plan not available</div>;
+    if (!data) return <div className="text-gray-500">Go-to-market strategy not available</div>;
     
     return (
       <div className="space-y-6">
         {data.strategy_overview && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Strategy Overview</h3>
-            <p className="text-gray-700">{data.strategy_overview}</p>
-          </div>
+          <GlassCard className="p-6 bg-gradient-to-br from-pink-50/80 to-rose-50/60">
+            <h3 className="font-semibold text-gray-900 mb-3">Strategy Overview</h3>
+            <p className="text-gray-700 leading-relaxed">{data.strategy_overview}</p>
+          </GlassCard>
         )}
 
         {data.launch_phases && data.launch_phases.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Launch Phases</h3>
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Launch Phases</h3>
             <div className="space-y-4">
               {data.launch_phases.map((phase: any, idx: number) => (
-                <div key={idx} className="border-l-4 border-primary-500 pl-4">
-                  <div className="font-semibold">{phase.phase}</div>
-                  <div className="text-sm text-gray-500">{phase.duration}</div>
-                  <div className="mt-2">
-                    <span className="text-xs font-bold">Goals:</span>
-                    <ul className="text-sm">
-                      {phase.goals?.map((g: string, i: number) => (
-                        <li key={i}>• {g}</li>
-                      ))}
-                    </ul>
+                <div key={idx} className="flex gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white font-bold">
+                    {idx + 1}
                   </div>
-                  {phase.budget && (
-                    <div className="text-sm font-bold text-primary-500 mt-2">Budget: {phase.budget}</div>
+                  <div className="flex-1 p-4 rounded-xl bg-gray-50/80 border border-gray-100">
+                    <div className="font-semibold text-gray-900">{phase.name}</div>
+                    <div className="text-sm text-gray-500 mb-2">{phase.timeline}</div>
+                    <p className="text-gray-600 text-sm">{phase.description}</p>
+                    {phase.goals && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {phase.goals.map((goal: string, i: number) => (
+                          <span key={i} className="text-xs px-2 py-1 rounded-full bg-pink-100 text-pink-700">{goal}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        )}
+
+        {data.acquisition_channels && data.acquisition_channels.length > 0 && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Acquisition Channels</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {data.acquisition_channels.map((channel: any, idx: number) => (
+                <div key={idx} className="p-4 rounded-xl bg-gray-50/80 border border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-medium text-gray-900">{channel.channel}</div>
+                    {channel.priority && (
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                        channel.priority === 'High' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-600'
+                      }`}>{channel.priority}</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">{channel.strategy}</p>
+                  {channel.expected_cac && (
+                    <div className="text-sm text-emerald-600 font-medium mt-2">CAC: {channel.expected_cac}</div>
                   )}
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {data.first_100_customers && (
-          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">First 100 Customers Strategy</h3>
-            <p className="text-gray-700 mb-4">{data.first_100_customers.strategy}</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {['week_1_actions', 'week_2_actions', 'week_3_actions', 'week_4_actions'].map((week, idx) => (
-                data.first_100_customers[week] && (
-                  <div key={week} className="bg-white border border-gray-200 rounded-lg p-3">
-                    <div className="font-bold text-sm">Week {idx + 1}</div>
-                    <ul className="text-xs mt-1">
-                      {data.first_100_customers[week].map((a: string, i: number) => (
-                        <li key={i}>• {a}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )
-              ))}
-            </div>
-          </div>
-        )}
-
-        {data.acquisition_channels && data.acquisition_channels.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Acquisition Channels</h3>
-            <div className="space-y-3">
-              {data.acquisition_channels.map((channel: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between border-b pb-3">
-                  <div>
-                    <div className="font-bold">{channel.channel}</div>
-                    <div className="text-sm text-gray-500">{channel.type} • {channel.time_to_results}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-primary-500">{channel.expected_cac} CAC</div>
-                    <div className="text-xs text-gray-500">Priority: {channel.priority}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">First 100 Customers Strategy</h3>
+            <p className="text-gray-700 leading-relaxed">{data.first_100_customers}</p>
+          </GlassCard>
         )}
       </div>
     );
@@ -1047,88 +1004,73 @@ export default function Results() {
     
     return (
       <div className="space-y-6">
-        {data.founding_team && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Ideal Founding Team</h3>
+        {data.founding_team && data.founding_team.roles && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Founding Team</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="font-bold text-sm text-gray-500 mb-2">IDEAL COMPOSITION</div>
-                <div className="flex flex-wrap gap-2">
-                  {data.founding_team.ideal_composition?.map((role: string, idx: number) => (
-                    <span key={idx} className="bg-primary-500 text-ink px-3 py-1 font-bold">{role}</span>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <div className="font-bold text-sm text-gray-500 mb-2">CRITICAL SKILLS NEEDED</div>
-                <div className="flex flex-wrap gap-2">
-                  {data.founding_team.critical_skills?.map((skill: string, idx: number) => (
-                    <span key={idx} className="bg-gray-100 px-3 py-1">{skill}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {data.hiring_roadmap && data.hiring_roadmap.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Hiring Roadmap</h3>
-            <div className="space-y-6">
-              {data.hiring_roadmap.map((phase: any, idx: number) => (
-                <div key={idx} className="border-l-4 border-primary-500 pl-4">
-                  <div className="flex justify-between items-start mb-3">
+              {data.founding_team.roles.map((role: any, idx: number) => (
+                <div key={idx} className="p-5 rounded-xl bg-gradient-to-br from-indigo-50/80 to-blue-50/60 border border-indigo-100">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center text-white font-bold">
+                      {role.title?.charAt(0) || 'R'}
+                    </div>
                     <div>
-                      <div className="font-semibold">{phase.phase}</div>
-                      <div className="text-sm text-gray-500">{phase.timeline}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{phase.total_headcount} people</div>
-                      <div className="text-sm text-gray-500">{phase.monthly_burn}/mo burn</div>
+                      <div className="font-semibold text-gray-900">{role.title}</div>
+                      {role.equity && <div className="text-sm text-indigo-600 font-medium">{role.equity} equity</div>}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {phase.hires?.map((hire: any, i: number) => (
-                      <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                        <div className="flex justify-between items-start">
-                          <div className="font-bold">{hire.role}</div>
-                          <span className={`text-xs font-bold px-2 py-1 ${
-                            hire.priority === 'Critical' ? 'bg-red-100 text-red-700' : 
-                            hire.priority === 'Important' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100'
-                          }`}>{hire.priority}</span>
-                        </div>
-                        <div className="text-sm text-gray-600">{hire.salary_range}</div>
-                        {hire.equity_range && (
-                          <div className="text-xs text-primary-500 font-bold">{hire.equity_range} equity</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  {role.responsibilities && (
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {role.responsibilities.map((r: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckCircleIcon className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+                          <span>{r}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
+        )}
+
+        {data.hiring_roadmap && data.hiring_roadmap.length > 0 && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Hiring Roadmap</h3>
+            <div className="space-y-4">
+              {data.hiring_roadmap.map((hire: any, idx: number) => (
+                <div key={idx} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50/80 border border-gray-100">
+                  <div className="flex-shrink-0 w-20 text-center">
+                    <div className="text-sm font-bold text-violet-600">{hire.timeline}</div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">{hire.role}</div>
+                    {hire.salary && <div className="text-sm text-gray-500">{hire.salary}</div>}
+                  </div>
+                  {hire.priority && (
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                      hire.priority === 'Critical' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                    }`}>{hire.priority}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </GlassCard>
         )}
 
         {data.culture && (
-          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Company Culture</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="font-bold text-sm text-gray-500 mb-2">CORE VALUES</div>
-                <ul className="space-y-1">
-                  {data.culture.core_values?.map((v: string, idx: number) => (
-                    <li key={idx} className="font-bold">• {v}</li>
-                  ))}
-                </ul>
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Company Culture</h3>
+            {data.culture.values && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {data.culture.values.map((value: string, idx: number) => (
+                  <span key={idx} className="px-4 py-2 rounded-full bg-violet-100 text-violet-700 font-medium">{value}</span>
+                ))}
               </div>
-              <div>
-                <div className="font-bold text-sm text-gray-500 mb-2">WORKING STYLE</div>
-                <p>{data.culture.working_style}</p>
-              </div>
-            </div>
-          </div>
+            )}
+            {data.culture.description && <p className="text-gray-600 leading-relaxed">{data.culture.description}</p>}
+          </GlassCard>
         )}
       </div>
     );
@@ -1140,79 +1082,62 @@ export default function Results() {
     
     return (
       <div className="space-y-6">
-        {data.risk_score && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Risk Scores</h3>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              {Object.entries(data.risk_score).map(([key, value]: [string, any]) => (
-                <div key={key} className={`p-4 text-center border-2 ${
-                  value >= 7 ? 'border-red-500 bg-red-50' :
-                  value >= 4 ? 'border-yellow-500 bg-yellow-50' :
-                  'border-green-500 bg-green-50'
-                }`}>
-                  <div className="text-3xl font-semibold">{value}</div>
-                  <div className="text-xs font-bold text-gray-500">{key.replace('_', ' ').toUpperCase()}</div>
+        {data.overall_risk_score && (
+          <GlassCard className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Overall Risk Score</h3>
+                <p className="text-gray-500 text-sm">Based on comprehensive analysis</p>
+              </div>
+              <div className="relative">
+                <ProgressRing progress={100 - (data.overall_risk_score || 50)} size={100} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-gray-900">{data.overall_risk_score || 50}</span>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {data.critical_risks && data.critical_risks.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Critical Risks</h3>
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Critical Risks</h3>
             <div className="space-y-4">
               {data.critical_risks.map((risk: any, idx: number) => (
-                <div key={idx} className={`border-2 p-4 ${
-                  risk.impact === 'High' ? 'border-red-500' : 
-                  risk.impact === 'Medium' ? 'border-yellow-500' :
-                  'border-ink'
-                }`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-semibold">{risk.risk}</div>
-                    <div className="flex gap-2">
-                      <span className={`text-xs font-bold px-2 py-1 ${
-                        risk.probability === 'High' ? 'bg-red-100 text-red-700' : 
-                        risk.probability === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-green-100 text-green-700'
-                      }`}>P: {risk.probability}</span>
-                      <span className={`text-xs font-bold px-2 py-1 ${
-                        risk.impact === 'High' ? 'bg-red-100 text-red-700' : 
-                        risk.impact === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-green-100 text-green-700'
-                      }`}>I: {risk.impact}</span>
-                    </div>
+                <div key={idx} className="p-5 rounded-xl bg-red-50/60 border border-red-100">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="font-semibold text-gray-900">{risk.risk}</div>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                      risk.severity === 'High' ? 'bg-red-100 text-red-700' :
+                      risk.severity === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                      'bg-emerald-100 text-emerald-700'
+                    }`}>{risk.severity}</span>
                   </div>
-                  <div className="text-sm mb-2">
-                    <span className="font-bold">Mitigation:</span> {risk.mitigation_strategy}
-                  </div>
-                  {risk.early_warning_signs && (
-                    <div className="text-xs text-gray-500">
-                      <span className="font-bold">Watch for:</span> {risk.early_warning_signs.join(', ')}
+                  {risk.mitigation && (
+                    <div className="p-3 rounded-lg bg-white/60 mt-3">
+                      <div className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">Mitigation</div>
+                      <p className="text-sm text-gray-600">{risk.mitigation}</p>
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {data.kill_conditions && data.kill_conditions.length > 0 && (
-          <div className="bg-red-50 border-2 border-red-500 p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-4 text-red-700">Kill Conditions</h3>
-            <p className="text-sm text-gray-600 mb-4">When to consider shutting down:</p>
-            <ul className="space-y-2">
-              {data.kill_conditions.map((kc: any, idx: number) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-red-500">🛑</span>
-                  <div>
-                    <div className="font-bold">{kc.condition}</div>
-                    <div className="text-sm text-gray-600">{kc.metrics} • {kc.timeline}</div>
-                  </div>
-                </li>
+          <GlassCard className="p-6 bg-gradient-to-br from-red-50/80 to-orange-50/60">
+            <h3 className="font-semibold text-gray-900 mb-4">Kill Conditions</h3>
+            <p className="text-sm text-gray-600 mb-4">Conditions that should trigger a pivot or shutdown decision</p>
+            <div className="space-y-3">
+              {data.kill_conditions.map((condition: string, idx: number) => (
+                <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-white/60">
+                  <ShieldExclamationIcon className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">{condition}</span>
+                </div>
               ))}
-            </ul>
-          </div>
+            </div>
+          </GlassCard>
         )}
       </div>
     );
@@ -1224,118 +1149,50 @@ export default function Results() {
     
     return (
       <div className="space-y-6">
-        {data.overview && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">90-Day Success Definition</h3>
-            <p className="text-gray-700">{data.overview}</p>
-          </div>
-        )}
-
-        {data.key_milestones && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Key Milestones</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {Object.entries(data.key_milestones).map(([day, milestones]: [string, any]) => (
-                <div key={day} className="bg-primary-500/10 border border-gray-200 rounded-lg p-4">
-                  <div className="font-semibold text-primary-500">{day.replace('_', ' ').toUpperCase()}</div>
-                  <ul className="mt-2 space-y-1">
-                    {Array.isArray(milestones) && milestones.map((m: string, idx: number) => (
-                      <li key={idx} className="text-sm">✓ {m}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {data.quick_wins && data.quick_wins.length > 0 && (
-          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Quick Wins</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {data.quick_wins.map((win: any, idx: number) => (
-                <div key={idx} className="bg-white border border-gray-200 rounded-lg p-3">
-                  <div className="font-bold">{win.action}</div>
-                  <div className="text-sm text-gray-600">{win.impact}</div>
-                  <div className="flex justify-between mt-2 text-xs">
-                    <span className="text-primary-500 font-bold">{win.time_required}</span>
-                    <span>{win.when}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {data.week_by_week && data.week_by_week.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Week-by-Week Breakdown</h3>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {data.week_by_week.slice(0, 4).map((week: any, idx: number) => (
-                <div key={idx} className="border-l-4 border-primary-500 pl-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-semibold">Week {week.week}: {week.theme}</div>
-                      <div className="text-sm text-gray-500">Milestone: {week.milestone}</div>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    {week.tasks?.slice(0, 3).map((task: any, i: number) => (
-                      <div key={i} className="flex items-center gap-2 text-sm py-1">
-                        <span className={`text-xs font-bold px-1 ${
-                          task.priority === 'P1' ? 'bg-red-100 text-red-700' :
-                          task.priority === 'P2' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-gray-100'
-                        }`}>{task.priority}</span>
-                        <span>{task.task}</span>
-                        <span className="text-gray-400 text-xs">{task.time_estimate}</span>
+        {data.weeks && data.weeks.length > 0 && (
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-6">90-Day Action Plan</h3>
+            <div className="space-y-6">
+              {data.weeks.map((week: any, idx: number) => (
+                <div key={idx} className="relative pl-8 pb-6 border-l-2 border-cyan-200 last:pb-0">
+                  <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500" />
+                  <div className="font-semibold text-gray-900 mb-2">{week.week}</div>
+                  <div className="p-4 rounded-xl bg-gray-50/80 border border-gray-100">
+                    {week.focus && <p className="text-sm text-violet-600 font-medium mb-2">{week.focus}</p>}
+                    {week.tasks && (
+                      <ul className="space-y-2">
+                        {week.tasks.map((task: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                            <CheckCircleIcon className="w-4 h-4 text-cyan-500 flex-shrink-0 mt-0.5" />
+                            <span>{task}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {week.milestone && (
+                      <div className="mt-3 p-2 rounded-lg bg-cyan-50 text-cyan-700 text-sm font-medium">
+                        Milestone: {week.milestone}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {data.resources_needed && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Resources Needed</h3>
-            {data.resources_needed.budget && (
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="text-xs font-bold text-gray-500">MONTH 1</div>
-                  <div className="text-xl font-semibold">{data.resources_needed.budget.month_1}</div>
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Resources Needed</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Object.entries(data.resources_needed).map(([key, value]: [string, any]) => (
+                <div key={key} className="p-4 rounded-xl bg-gray-50/80 text-center">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{key.replace(/_/g, ' ')}</div>
+                  <div className="font-bold text-gray-900 mt-1">{String(value)}</div>
                 </div>
-                <div className="text-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="text-xs font-bold text-gray-500">MONTH 2</div>
-                  <div className="text-xl font-semibold">{data.resources_needed.budget.month_2}</div>
-                </div>
-                <div className="text-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="text-xs font-bold text-gray-500">MONTH 3</div>
-                  <div className="text-xl font-semibold">{data.resources_needed.budget.month_3}</div>
-                </div>
-              </div>
-            )}
-            {data.resources_needed.tools && (
-              <div>
-                <div className="font-bold text-sm text-gray-500 mb-2">TOOLS NEEDED</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {data.resources_needed.tools.map((tool: any, idx: number) => (
-                    <div key={idx} className="flex justify-between items-center bg-gray-50 p-2 border border-gray-200 rounded-lg">
-                      <div>
-                        <div className="font-bold text-sm">{tool.tool}</div>
-                        <div className="text-xs text-gray-500">{tool.purpose}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-sm">{tool.cost}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          </GlassCard>
         )}
       </div>
     );
@@ -1347,87 +1204,42 @@ export default function Results() {
     
     return (
       <div className="space-y-6">
-        {data.deck_strategy && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Deck Strategy</h3>
-            <p className="text-gray-700">{data.deck_strategy}</p>
-          </div>
-        )}
-
         {data.slides && data.slides.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Slide-by-Slide Breakdown</h3>
-            <div className="space-y-4">
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-6">Pitch Deck Outline</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {data.slides.map((slide: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary-500 flex items-center justify-center font-semibold">
-                        {slide.slide_number}
-                      </div>
-                      <div>
-                        <div className="font-semibold">{slide.title}</div>
-                        <div className="text-sm text-gray-500">{slide.purpose}</div>
-                      </div>
+                <div key={idx} className="p-5 rounded-xl bg-gradient-to-br from-fuchsia-50/80 to-pink-50/60 border border-fuchsia-100">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">
+                      {idx + 1}
                     </div>
-                    <span className="text-xs text-gray-400">{slide.time}</span>
+                    <div className="font-semibold text-gray-900">{slide.title}</div>
                   </div>
-                  
-                  {slide.content && (
-                    <div className="bg-gray-50 p-3 mt-3">
-                      {slide.content.headline && (
-                        <div className="font-bold mb-2">{slide.content.headline}</div>
-                      )}
-                      {slide.content.key_points && (
-                        <ul className="text-sm space-y-1">
-                          {slide.content.key_points.map((point: string, i: number) => (
-                            <li key={i}>• {point}</li>
-                          ))}
-                        </ul>
-                      )}
-                      {slide.content.visual && (
-                        <div className="text-xs text-gray-400 mt-2 italic">Visual: {slide.content.visual}</div>
-                      )}
-                    </div>
-                  )}
-
+                  <p className="text-sm text-gray-600 leading-relaxed">{slide.content}</p>
                   {slide.speaker_notes && (
-                    <div className="mt-2 text-sm text-gray-600 border-l-2 border-gray-300 pl-3">
-                      <span className="font-bold">Speaker notes:</span> {slide.speaker_notes}
+                    <div className="mt-3 p-2 rounded-lg bg-white/60 text-xs text-gray-500">
+                      <span className="font-semibold">Notes:</span> {slide.speaker_notes}
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {data.investor_faqs && data.investor_faqs.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Investor FAQs</h3>
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Investor FAQs</h3>
             <div className="space-y-4">
               {data.investor_faqs.map((faq: any, idx: number) => (
-                <div key={idx} className="border-b pb-3">
-                  <div className="font-bold text-primary-500">Q: {faq.question}</div>
-                  <div className="text-gray-700 mt-1">A: {faq.answer}</div>
+                <div key={idx} className="p-4 rounded-xl bg-gray-50/80 border border-gray-100">
+                  <div className="font-medium text-gray-900 mb-2">{faq.question}</div>
+                  <p className="text-sm text-gray-600">{faq.answer}</p>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {data.presentation_tips && data.presentation_tips.length > 0 && (
-          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-3">Presentation Tips</h3>
-            <ul className="space-y-2">
-              {data.presentation_tips.map((tip: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <span className="text-primary-500">💡</span>
-                  <span>{tip}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          </GlassCard>
         )}
       </div>
     );
@@ -1440,132 +1252,112 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.location && (
-          <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
-            <h3 className="font-medium text-sm text-gray-500 mb-2">TARGET LOCATION</h3>
-            <p className="text-3xl font-semibold">{data.location.city}, {data.location.state}</p>
-          </div>
+          <GlassCard className="p-6 bg-gradient-to-br from-lime-50/80 to-green-50/60">
+            <div className="flex items-center gap-2 mb-2">
+              <MapPinIcon className="w-5 h-5 text-lime-600" />
+              <span className="text-sm font-medium text-lime-600 uppercase tracking-wider">Target Location</span>
+            </div>
+            <p className="text-3xl font-bold text-gray-900">{data.location.city}, {data.location.state}</p>
+          </GlassCard>
         )}
 
         {data.population_data && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm text-center">
-              <div className="font-medium text-xs text-gray-500 mb-1">CITY POPULATION</div>
-              <div className="text-3xl font-semibold">{data.population_data.city_population?.toLocaleString()}</div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm text-center">
-              <div className="font-medium text-xs text-gray-500 mb-1">METRO AREA</div>
-              <div className="text-3xl font-semibold">{Math.round(data.population_data.metro_population || 0).toLocaleString()}</div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm text-center">
-              <div className="font-medium text-xs text-gray-500 mb-1">STATE POPULATION</div>
-              <div className="text-3xl font-semibold">{data.population_data.state_population?.toLocaleString()}</div>
-            </div>
-          </div>
-        )}
-
-        {data.market_insights && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Market Size Calculations</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
-                <div className="text-xs text-gray-500 font-bold">Households</div>
-                <div className="text-xl font-semibold">{data.market_insights.total_households?.toLocaleString()}</div>
-              </div>
-              <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
-                <div className="text-xs text-gray-500 font-bold">Metro Households</div>
-                <div className="text-xl font-semibold">{data.market_insights.metro_households?.toLocaleString()}</div>
-              </div>
-              <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
-                <div className="text-xs text-gray-500 font-bold">Working Adults</div>
-                <div className="text-xl font-semibold">{data.market_insights.tam_calculation_base?.working_adults?.toLocaleString()}</div>
-              </div>
-              <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
-                <div className="text-xs text-gray-500 font-bold">Est. HH Income</div>
-                <div className="text-xl font-semibold">${data.market_insights.tam_calculation_base?.median_household_income_estimate?.toLocaleString()}</div>
-              </div>
-            </div>
+            <KPICard 
+              label="City Population" 
+              value={data.population_data.city_population?.toLocaleString() || '0'}
+              icon={UserGroupIcon}
+              color="from-lime-500 to-green-500"
+            />
+            <KPICard 
+              label="Metro Area" 
+              value={Math.round(data.population_data.metro_population || 0).toLocaleString()}
+              icon={BuildingOfficeIcon}
+              color="from-emerald-500 to-teal-500"
+            />
+            <KPICard 
+              label="State Population" 
+              value={data.population_data.state_population?.toLocaleString() || '0'}
+              icon={MapPinIcon}
+              color="from-teal-500 to-cyan-500"
+            />
           </div>
         )}
 
         {data.competitors_analyzed && data.competitors_analyzed.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Competitors Scraped ({data.competitors_analyzed.length})</h3>
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Competitors Analyzed ({data.competitors_analyzed.length})</h3>
             <div className="space-y-4">
               {data.competitors_analyzed.map((comp: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="flex justify-between items-start mb-2">
+                <div key={idx} className="p-5 rounded-xl bg-gray-50/80 border border-gray-100">
+                  <div className="flex items-start justify-between mb-2">
                     <div>
-                      <div className="font-semibold">{comp.domain}</div>
+                      <div className="font-semibold text-gray-900">{comp.domain}</div>
                       {comp.title && <div className="text-sm text-gray-600">{comp.title}</div>}
                     </div>
-                    {comp.error && <span className="text-red-500 text-xs">Error: {comp.error}</span>}
+                    {comp.error && <span className="text-xs text-red-500">Error: {comp.error}</span>}
                   </div>
-                  {comp.description && <p className="text-sm text-gray-600 mb-2">{comp.description}</p>}
-                  <div className="flex flex-wrap gap-2 text-xs">
+                  {comp.description && <p className="text-sm text-gray-600 mb-3">{comp.description}</p>}
+                  <div className="flex flex-wrap gap-2">
                     {comp.prices_found && comp.prices_found.length > 0 && (
-                      <span className="bg-green-100 px-2 py-1 border border-green-300">
-                        Prices: ${Math.min(...comp.prices_found)} - ${Math.max(...comp.prices_found)}
+                      <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                        ${Math.min(...comp.prices_found)} - ${Math.max(...comp.prices_found)}
                       </span>
                     )}
                     {comp.features?.has_online_booking && (
-                      <span className="bg-blue-100 px-2 py-1 border border-blue-300">Online Booking</span>
+                      <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">Online Booking</span>
                     )}
                     {comp.features?.shows_reviews && (
-                      <span className="bg-yellow-100 px-2 py-1 border border-yellow-300">Shows Reviews</span>
-                    )}
-                    {comp.features?.has_pricing_page && (
-                      <span className="bg-purple-100 px-2 py-1 border border-purple-300">Pricing Page</span>
+                      <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">Reviews</span>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
         )}
 
         {data.competitor_summary && (
-          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-lg text-apple-text mb-4">Competitor Summary</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <GlassCard className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Competitor Summary</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {data.competitor_summary.avg_price && (
-                <div className="text-center">
-                  <div className="text-2xl font-semibold">${data.competitor_summary.avg_price.toFixed(0)}</div>
-                  <div className="text-xs text-gray-600">Avg Price</div>
+                <div className="text-center p-4 rounded-xl bg-gray-50/80">
+                  <div className="text-2xl font-bold text-gray-900">${data.competitor_summary.avg_price.toFixed(0)}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">Avg Price</div>
                 </div>
               )}
-              <div className="text-center">
-                <div className="text-2xl font-semibold">{data.competitor_summary.pct_with_online_booking?.toFixed(0)}%</div>
-                <div className="text-xs text-gray-600">Online Booking</div>
+              <div className="text-center p-4 rounded-xl bg-gray-50/80">
+                <div className="text-2xl font-bold text-gray-900">{data.competitor_summary.pct_with_online_booking?.toFixed(0)}%</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wider">Online Booking</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-semibold">{data.competitor_summary.pct_showing_reviews?.toFixed(0)}%</div>
-                <div className="text-xs text-gray-600">Show Reviews</div>
+              <div className="text-center p-4 rounded-xl bg-gray-50/80">
+                <div className="text-2xl font-bold text-gray-900">{data.competitor_summary.pct_showing_reviews?.toFixed(0)}%</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wider">Show Reviews</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-semibold">{data.competitor_summary.pct_with_pricing?.toFixed(0)}%</div>
-                <div className="text-xs text-gray-600">Show Pricing</div>
+              <div className="text-center p-4 rounded-xl bg-gray-50/80">
+                <div className="text-2xl font-bold text-gray-900">{data.competitor_summary.pct_with_pricing?.toFixed(0)}%</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wider">Show Pricing</div>
               </div>
             </div>
             {data.competitor_summary.market_gaps && data.competitor_summary.market_gaps.length > 0 && (
               <div>
-                <h4 className="font-bold mb-2">Market Gaps Identified:</h4>
-                <ul className="space-y-1">
+                <h4 className="font-semibold text-gray-900 mb-3">Market Gaps Identified</h4>
+                <div className="space-y-2">
                   {data.competitor_summary.market_gaps.map((gap: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="text-green-500">✓</span>
-                      <span>{gap}</span>
-                    </li>
+                    <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-emerald-50/60">
+                      <CheckCircleIcon className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">{gap}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
-          </div>
+          </GlassCard>
         )}
       </div>
     );
   };
-
-  const tabs = result.local_business_data ? [...baseTabs, localTab] : baseTabs;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -1584,64 +1376,171 @@ export default function Results() {
     }
   };
 
+  const activeTabData = tabs.find(t => t.id === activeTab);
+
   return (
-    <div className="bg-apple-bg min-h-screen font-sans antialiased">
-      <nav className="fixed top-0 w-full z-50 glass-panel">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <CommandLineIcon className="w-5 h-5 text-apple-text" />
-            <span className="text-lg tracking-tight">myCEO</span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-violet-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '4s' }} />
+      </div>
+
+      <nav className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl border-b border-gray-200/50">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5 font-semibold">
+            {branding?.selectedLogo ? (
+              <img src={branding.selectedLogo} alt="Logo" className="w-8 h-8 rounded-xl object-cover" />
+            ) : (
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
+                <CommandLineIcon className="w-4 h-4 text-white" />
+              </div>
+            )}
+            <span className="text-lg tracking-tight">{branding?.companyName || 'myCEO'}</span>
           </Link>
-          <button
-            onClick={() => navigate('/')}
-            className="bg-apple-text text-white font-medium px-4 py-2 rounded-full hover:bg-gray-800 transition-all text-sm"
-          >
-            New Analysis
-          </button>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowCommandPalette(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100/80 text-gray-500 text-sm hover:bg-gray-200/80 transition-colors"
+            >
+              <span>Quick Actions</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-gray-200 text-xs font-mono">⌘K</kbd>
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-medium px-4 py-2 rounded-xl hover:shadow-lg hover:shadow-violet-500/25 transition-all text-sm"
+            >
+              <SparklesIcon className="w-4 h-4" />
+              New Analysis
+            </button>
+          </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 pt-20 pb-12">
-        <div className="mb-8">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700 mb-3">
-            Business Operating System
-          </span>
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-apple-text">Your Complete Business Analysis</h1>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="lg:w-56 flex-shrink-0">
-            <div className="bg-white rounded-2xl shadow-card border border-gray-100 sticky top-20 overflow-hidden">
+      {showCommandPalette && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-32">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setShowCommandPalette(false)} />
+          <div className="relative w-full max-w-lg mx-4">
+            <GlassCard className="overflow-hidden" hover={false}>
               <div className="p-4 border-b border-gray-100">
-                <span className="font-medium text-sm text-apple-gray">Sections</span>
+                <input 
+                  type="text" 
+                  placeholder="Type a command or search..."
+                  className="w-full bg-transparent text-lg outline-none placeholder-gray-400"
+                  autoFocus
+                />
               </div>
               <div className="p-2">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 mb-1 ${
-                      activeTab === tab.id 
-                        ? 'bg-primary-500 text-white' 
-                        : 'text-apple-text hover:bg-gray-100'
-                    }`}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
+                <button 
+                  onClick={() => { generateFinancialsCSV(); setShowCommandPalette(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100/80 transition-colors text-left"
+                >
+                  <ArrowDownTrayIcon className="w-5 h-5 text-gray-400" />
+                  <span>Export Financials as CSV</span>
+                </button>
+                <button 
+                  onClick={() => { navigate('/'); setShowCommandPalette(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100/80 transition-colors text-left"
+                >
+                  <ArrowPathIcon className="w-5 h-5 text-gray-400" />
+                  <span>Start New Analysis</span>
+                </button>
+                <button 
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100/80 transition-colors text-left opacity-50 cursor-not-allowed"
+                >
+                  <ShareIcon className="w-5 h-5 text-gray-400" />
+                  <span>Share Analysis (Coming Soon)</span>
+                </button>
               </div>
+            </GlassCard>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-7xl mx-auto px-6 pt-24 pb-12 relative z-10">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-violet-100 to-indigo-100 text-violet-700">
+              <SparklesIcon className="w-3.5 h-3.5" />
+              Business Operating System
+            </span>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
+              <CheckCircleIcon className="w-3.5 h-3.5" />
+              {completedSections}/10 Complete
             </div>
           </div>
+          
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 mb-2">
+                {branding?.companyName || 'Your Business Analysis'}
+              </h1>
+              <p className="text-gray-500 max-w-xl">
+                Your complete business operating system with market research, financial projections, and actionable roadmap.
+              </p>
+            </div>
+          </div>
+        </div>
 
-          <div className="flex-1">
-            <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-6 md:p-8">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                <span className="text-2xl">{tabs.find(t => t.id === activeTab)?.icon}</span>
-                <h2 className="text-2xl font-semibold text-apple-text">{tabs.find(t => t.id === activeTab)?.label}</h2>
+        {kpiMetrics.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {kpiMetrics.map((metric, idx) => (
+              <KPICard key={idx} {...metric} />
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="lg:w-64 flex-shrink-0">
+            <GlassCard className="sticky top-24 overflow-hidden p-2" hover={false}>
+              <div className="space-y-1">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`w-full text-left px-4 py-3 rounded-xl font-medium text-sm transition-all flex items-center gap-3 group ${
+                        isActive 
+                          ? 'bg-gradient-to-r from-violet-500 to-indigo-500 text-white shadow-lg shadow-violet-500/25' 
+                          : 'text-gray-600 hover:bg-gray-100/80 hover:text-gray-900'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                        isActive 
+                          ? 'bg-white/20' 
+                          : `bg-gradient-to-br ${tab.color} text-white shadow-md group-hover:shadow-lg`
+                      }`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span className="flex-1">{tab.shortLabel}</span>
+                      <ChevronRightIcon className={`w-4 h-4 transition-transform ${isActive ? 'rotate-90' : 'group-hover:translate-x-0.5'}`} />
+                    </button>
+                  );
+                })}
+              </div>
+            </GlassCard>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <GlassCard className="p-6 md:p-8" hover={false}>
+              <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-100">
+                {activeTabData && (
+                  <>
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${activeTabData.color} flex items-center justify-center shadow-lg`}>
+                      <activeTabData.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">{activeTabData.label}</h2>
+                      <p className="text-gray-500 text-sm">Analysis and insights for your business</p>
+                    </div>
+                  </>
+                )}
               </div>
               {renderContent()}
-            </div>
+            </GlassCard>
           </div>
         </div>
       </div>

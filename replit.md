@@ -74,6 +74,18 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-28: Premium Business OS Dashboard Redesign
+  - Complete redesign of Results page as a glassmorphic business dashboard
+  - Hero header with company branding (logo, name) and KPI metrics strip
+  - Left navigation rail with gradient icons, section labels, and completion badges
+  - GlassCard component with backdrop blur, soft shadows, and hover animations
+  - Data visualizations: TAM/SAM/SOM bar chart, progress rings, financial tables
+  - Command palette (⌘K) for quick actions: export CSV, new analysis, share
+  - Dynamic background with animated gradient blobs
+  - Premium typography and spacing throughout
+  - All 10 sections redesigned with consistent glass aesthetic
+  - Branding integration: displays company logo and name from branding step
+
 - 2025-12-28: Branding Step with Logo Generation & Color Picker
   - New /branding page between Questions and Generate
   - Company name input with AI-suggested names
