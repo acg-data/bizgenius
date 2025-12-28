@@ -74,6 +74,14 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-28: Single-Question Flow with Instant First Question
+  - Redesigned Questions page to show one question at a time
+  - First question (location) displays instantly with no API wait
+  - Progress tracker shows "Question X of Y" with visual step indicators
+  - Background fetching: next questions load while user answers current one
+  - Smooth slide transitions between questions
+  - Green indicators for answered questions in progress bar
+
 - 2025-12-28: Session Persistence, OAuth & Welcome Emails
   - Added GenerationSession model for database-persisted generation state
   - Users can now leave the Generate page and return without losing progress
