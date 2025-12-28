@@ -74,6 +74,15 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-28: Mobile Browser Background Resilience
+  - Fixed critical bug: Generation no longer fails when users leave Safari on mobile
+  - Switched from long-running POST request to async session-based architecture
+  - Frontend now creates session via POST /sessions/create, polls /sessions/status/{session_id}
+  - Session ID stored in localStorage for resume on return
+  - Backend processes generation in background task (survives browser backgrounding)
+  - Added "Welcome back! Reconnecting..." UI state for returning users
+  - Users can safely leave and return during the 2-3 minute generation
+
 - 2025-12-28: Premium Business OS Dashboard Redesign
   - Complete redesign of Results page as a glassmorphic business dashboard
   - Hero header with company branding (logo, name) and KPI metrics strip
