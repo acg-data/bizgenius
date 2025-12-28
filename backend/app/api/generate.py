@@ -16,6 +16,8 @@ class GenerateRequest(BaseModel):
 
 class QuestionsRequest(BaseModel):
     idea: str
+    previous_answers: dict | None = None
+    exclude_categories: list | None = None
 
 
 class QuestionsResponse(BaseModel):
@@ -50,7 +52,11 @@ async def generate_discovery_questions(request: QuestionsRequest):
     logger.info(f"Generating discovery questions for idea: {idea_text[:100]}...")
     
     try:
-        result = await ai_service.generate_discovery_questions(idea_text)
+        result = await ai_service.generate_discovery_questions(
+            idea_text,
+            previous_answers=request.previous_answers,
+            exclude_categories=request.exclude_categories
+        )
         
         return QuestionsResponse(
             analysis=result.get("analysis"),

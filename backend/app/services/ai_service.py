@@ -1105,7 +1105,7 @@ class AIService:
         """
         return await self._call_ai(prompt)
     
-    async def generate_discovery_questions(self, idea: str, previous_answers: dict | None = None) -> dict:
+    async def generate_discovery_questions(self, idea: str, previous_answers: dict | None = None, exclude_categories: list | None = None) -> dict:
         context_section = ""
         if previous_answers and len(previous_answers) > 0:
             context_section = "\n\nPREVIOUS ANSWERS (use these to ask smarter follow-up questions, DO NOT repeat these topics):\n"
@@ -1113,58 +1113,56 @@ class AIService:
                 if isinstance(answer_data, dict):
                     context_section += f"- {answer_data.get('question', '')}: {answer_data.get('answer', '')}\n"
         
+        exclude_section = ""
+        if exclude_categories:
+            exclude_section = f"\n\nDO NOT ask about these categories (already covered): {', '.join(exclude_categories)}\n"
+        
         prompt = f"""
-        You are a brilliant startup advisor who adapts your questions based on what you learn. Analyze the business idea deeply and ask CONTEXTUAL questions that will unlock the most valuable insights.
+        You are a brilliant startup advisor using the MECE (Mutually Exclusive, Collectively Exhaustive) framework. Your questions should cover ALL critical business dimensions without overlap.
 
         BUSINESS IDEA: {idea}
         {context_section}
+        {exclude_section}
 
-        QUESTION DESIGN PRINCIPLES:
-        1. NEVER ask generic questions - every question should be tailored to THIS specific business
-        2. Options should reflect real industry knowledge (actual price points, real competitors, realistic timelines)
-        3. Each question should BUILD on what you already know to dig deeper
-        4. Frame questions to help founders think strategically, not just collect data
+        MECE FRAMEWORK - Cover these 4 dimensions (pick the most relevant questions for THIS specific business):
         
-        REQUIRED QUESTIONS (in order):
-        
-        Q1. LOCATION - Be specific to the business type:
-           - Service business: "Which neighborhood/city will you serve first?"
-           - E-commerce: "Where is your target customer base?"
-           - SaaS: "Which market will you launch in first?"
+        1. FINANCIAL DIMENSION (Mutually Exclusive):
+           - Funding needs: How much capital to start? Bootstrap vs investors?
+           - Revenue expectations: First-year revenue target?
+           - Pricing model: Subscription vs one-time? Premium vs value?
            
-        Q2. INVESTMENT - Tailored to business complexity:
-           - Low-cost service: "$500-$2K, $2K-$5K, $5K-$15K, $15K+"
-           - Tech startup: "$10K-$50K, $50K-$150K, $150K-$500K, $500K+"
-           - Physical product: "$5K-$20K, $20K-$75K, $75K-$250K, $250K+"
+        2. GEOGRAPHIC DIMENSION (Mutually Exclusive):
+           - Service area: Local city, regional, national, or global?
+           - Local requirements: Any location-specific regulations, licenses, or needs?
+           - Physical presence: Storefront, home-based, fully remote?
            
-        Q3. TIMELINE - Realistic for the business type:
-           - Simple service: "2 weeks, 1 month, 2-3 months"
-           - App/tech: "1-3 months, 3-6 months, 6-12 months"
-           - Physical product: "3-6 months, 6-12 months, 12+ months"
+        3. HUMAN DIMENSION (Mutually Exclusive):
+           - Founder expertise: Your background and key skills?
+           - Team needs: Solo founder or need co-founders/hires?
+           - Knowledge gaps: What skills do you need to acquire or hire?
+           
+        4. MARKET DIMENSION (Mutually Exclusive):
+           - Target customers: B2B or B2C? Who is the ideal first customer?
+           - Competitive positioning: Premium, value, or disruptor?
+           - Differentiation: What makes you 10x better than alternatives?
 
-        Q4-Q6. STRATEGIC QUESTIONS - Pick 2-3 that matter MOST for this specific business:
-           - Pricing strategy with real market comparisons
-           - Unique angle/differentiation
-           - First customer acquisition strategy
-           - Key partnership opportunities
-           - Technology/platform choices
-           - Team/skills needed
-           
-        MAKE OPTIONS SPECIFIC AND INDUSTRY-INFORMED:
-        Instead of: "Premium pricing" / "Mid-tier pricing" / "Budget pricing"
-        Use: "$45-60/session (premium)", "$30-40/session (competitive)", "$20-25/session (value)"
-        
-        Every question MUST end with: "Other (please specify)" and "I don't know"
+        QUESTION DESIGN RULES:
+        1. NEVER ask generic questions - tailor every question to THIS specific business
+        2. Options should reflect real industry knowledge (actual price points, realistic timelines)
+        3. Make options SPECIFIC: "$5K-15K (bootstrapped)" not just "Small budget"
+        4. Always include "Other (please specify)" and "I don't know" as final options
+        5. Each question should unlock strategic insights, not just collect data
 
         Return a JSON object with this EXACT structure:
         {{
-            "analysis": "Insightful 2-sentence analysis of the idea's potential and key unknowns",
+            "analysis": "2-sentence analysis of the idea's potential and key strategic questions to answer",
             "questions": [
                 {{
                     "id": "q1",
                     "question": "Specific, contextual question text",
                     "why_important": "Strategic reason why this matters for success",
-                    "category": "location|target_customer|pricing|competition|business_model|go_to_market|team|funding|investment|timeline|differentiation",
+                    "category": "funding|investment|pricing|location|local_needs|expertise|team|target_customer|competition|differentiation|timeline|business_model",
+                    "mece_dimension": "financial|geographic|human|market",
                     "options": [
                         {{"value": "opt_1", "label": "Specific option with context"}},
                         {{"value": "opt_2", "label": "Another realistic option"}},
@@ -1178,7 +1176,8 @@ class AIService:
             ]
         }}
 
-        Generate 5-6 HIGH-QUALITY questions. Be a strategic advisor, not a form filler.
+        Generate 4-5 HIGH-QUALITY questions that cover different MECE dimensions.
+        Prioritize: funding needs, local requirements, founder expertise, and target customers.
         Only return valid JSON, no additional text.
         """
         result = await self._call_ai_fast(prompt)

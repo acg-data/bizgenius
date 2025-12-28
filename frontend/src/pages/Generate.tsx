@@ -13,6 +13,7 @@ const STORAGE_KEY = 'myceo_pending_idea';
 const RESULT_KEY = 'myceo_analysis_result';
 const ANSWERS_KEY = 'myceo_answers';
 const SESSION_KEY = 'myceo_session_id';
+const BRANDING_KEY = 'myceo_branding';
 
 export default function Generate() {
   const location = useLocation();
@@ -47,6 +48,22 @@ export default function Generate() {
       }
     }
     return {};
+  }, [location.state]);
+
+  const branding = useMemo(() => {
+    if (location.state?.branding) {
+      localStorage.setItem(BRANDING_KEY, JSON.stringify(location.state.branding));
+      return location.state.branding;
+    }
+    const stored = localStorage.getItem(BRANDING_KEY);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }, [location.state]);
   
   const [steps, setSteps] = useState<GenerationStep[]>([
@@ -172,7 +189,7 @@ export default function Generate() {
   };
 
   const handleViewResults = () => {
-    navigate('/results', { state: { result, businessIdea } });
+    navigate('/results', { state: { result, businessIdea, branding } });
   };
 
   if (!businessIdea) {

@@ -98,9 +98,17 @@ For local/service businesses, the platform automatically:
   - Branding data (name, logo, colors) passed to Generate page
   - Backend: /api/v1/branding endpoints for names, logos, palettes
 
-- 2025-12-28: Single-Question Flow with Instant First Question
+- 2025-12-28: MECE Questionnaire with Background Branding Generation
+  - Redesigned Questions page with MECE (Mutually Exclusive, Collectively Exhaustive) framework
+  - First question is now AI-generated based on the business idea (not hardcoded location)
+  - Company name asked SECOND, triggering background logo/palette generation
+  - Questions organized by MECE dimensions: Financial, Geographic, Human, Market
+  - Background branding: logos and color palettes generated while user answers questions
+  - Flow now skips separate Branding page - goes directly to Generate with cached branding
+  - Backend updated to generate MECE-focused questions with context awareness
+
+- 2025-12-28: Single-Question Flow with Instant First Question (Legacy)
   - Redesigned Questions page to show one question at a time
-  - First question (location) displays instantly with no API wait
   - Progress tracker shows "Question X of Y" with visual step indicators
   - Background fetching: next questions load while user answers current one
   - Smooth slide transitions between questions
