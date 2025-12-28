@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { CommandLineIcon } from '@heroicons/react/24/outline';
 
 const RESULT_KEY = 'myceo_analysis_result';
 
@@ -47,27 +48,25 @@ export default function Results() {
 
   if (!result) {
     return (
-      <div className="bg-[#F2F0E9] text-ink font-sans antialiased min-h-screen">
-        <nav className="sticky top-0 z-40 bg-paper/90 backdrop-blur-md border-b-2 border-ink px-6 py-4">
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-manilla border-2 border-ink flex items-center justify-center shadow-brutal-sm group-hover:rotate-6 transition-transform">
-                <span className="font-black text-xl">M</span>
-              </div>
-              <span className="font-black text-xl tracking-tighter">myCEO</span>
+      <div className="bg-apple-bg min-h-screen font-sans antialiased">
+        <nav className="fixed top-0 w-full z-50 glass-panel">
+          <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
+              <CommandLineIcon className="w-5 h-5 text-apple-text" />
+              <span className="text-lg tracking-tight">myCEO</span>
             </Link>
           </div>
         </nav>
         
-        <div className="max-w-4xl mx-auto px-4 py-16">
-          <div className="bg-paper border-2 border-ink shadow-brutal p-8 md:p-12 text-center">
-            <h1 className="text-3xl md:text-4xl font-black mb-4">No Analysis Found</h1>
-            <p className="text-gray-600 mb-8">Generate a business analysis first to view results.</p>
+        <div className="max-w-2xl mx-auto px-6 pt-32 pb-16">
+          <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-12 text-center">
+            <h1 className="text-2xl font-semibold text-apple-text mb-4">No Analysis Found</h1>
+            <p className="text-apple-gray mb-8">Generate a business analysis first to view results.</p>
             <Link 
               to="/"
-              className="bg-cyan text-ink font-black px-6 py-4 border-2 border-ink shadow-brutal inline-block hover:bg-cyan-hover transition-all"
+              className="inline-flex items-center gap-2 bg-apple-text text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-all"
             >
-              START NEW ANALYSIS
+              Start New Analysis
             </Link>
           </div>
         </div>
@@ -82,16 +81,16 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.one_liner && (
-          <div className="bg-cyan/20 border-2 border-ink p-6">
-            <h3 className="font-black text-sm text-gray-500 mb-2">YOUR ONE-LINER PITCH</h3>
-            <p className="text-2xl font-black">"{data.one_liner}"</p>
+          <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
+            <h3 className="font-medium text-sm text-gray-500 mb-2">YOUR ONE-LINER PITCH</h3>
+            <p className="text-2xl font-semibold">"{data.one_liner}"</p>
           </div>
         )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {data.problem_statement && (
-            <div className="bg-white border-2 border-ink p-6">
-              <h3 className="font-black text-lg mb-3 flex items-center gap-2">
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+              <h3 className="font-semibold text-lg text-apple-text mb-3 flex items-center gap-2">
                 <span className="text-red-500">🔥</span> The Problem
               </h3>
               <p className="text-gray-700">{data.problem_statement}</p>
@@ -99,8 +98,8 @@ export default function Results() {
           )}
           
           {data.solution_overview && (
-            <div className="bg-white border-2 border-ink p-6">
-              <h3 className="font-black text-lg mb-3 flex items-center gap-2">
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+              <h3 className="font-semibold text-lg text-apple-text mb-3 flex items-center gap-2">
                 <span className="text-green-500">💡</span> The Solution
               </h3>
               <p className="text-gray-700">{data.solution_overview}</p>
@@ -109,43 +108,43 @@ export default function Results() {
         </div>
 
         {data.value_proposition && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Value Proposition</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Value Proposition</h3>
             <p className="text-gray-700">{data.value_proposition}</p>
           </div>
         )}
 
         {data.target_customer && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Target Customer</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Target Customer</h3>
             <p className="text-gray-700">{data.target_customer}</p>
           </div>
         )}
 
         {data.business_model && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Business Model</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Business Model</h3>
             <p className="text-gray-700">{data.business_model}</p>
           </div>
         )}
 
         {data.unfair_advantage && (
-          <div className="bg-manilla border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Unfair Advantage</h3>
+          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Unfair Advantage</h3>
             <p className="text-gray-700">{data.unfair_advantage}</p>
           </div>
         )}
 
         {data.why_now && (
-          <div className="bg-cyan/10 border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Why Now?</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Why Now?</h3>
             <p className="text-gray-700">{data.why_now}</p>
           </div>
         )}
 
         {data.key_risks && data.key_risks.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Key Risks & Mitigations</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Key Risks & Mitigations</h3>
             <ul className="space-y-2">
               {data.key_risks.map((risk: string, idx: number) => (
                 <li key={idx} className="flex items-start gap-2">
@@ -158,12 +157,12 @@ export default function Results() {
         )}
 
         {data.success_metrics && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Success Metrics Timeline</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Success Metrics Timeline</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(data.success_metrics).map(([period, metrics]: [string, any]) => (
-                <div key={period} className="bg-gray-50 border border-ink p-3">
-                  <div className="font-black text-sm text-gray-500 mb-2">{period.replace('_', ' ').toUpperCase()}</div>
+                <div key={period} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="font-medium text-sm text-gray-500 mb-2">{period.replace('_', ' ').toUpperCase()}</div>
                   <ul className="text-sm space-y-1">
                     {Array.isArray(metrics) && metrics.map((m: string, idx: number) => (
                       <li key={idx} className="text-gray-700">• {m}</li>
@@ -185,17 +184,17 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.market_overview && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Market Overview</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Market Overview</h3>
             <p className="text-gray-700">{data.market_overview}</p>
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {data.tam && (
-            <div className="bg-cyan/20 border-2 border-ink p-6 text-center">
-              <div className="font-black text-xs text-gray-500 mb-1">TAM</div>
-              <div className="text-3xl font-black">{data.tam.value}</div>
+            <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6 text-center">
+              <div className="font-medium text-xs text-gray-500 mb-1">TAM</div>
+              <div className="text-3xl font-semibold">{data.tam.value}</div>
               <div className="text-sm text-gray-600 mt-2">{data.tam.calculation || data.tam.description}</div>
               {data.tam.growth_rate && (
                 <div className="text-sm font-bold text-green-600 mt-1">{data.tam.growth_rate} CAGR</div>
@@ -208,9 +207,9 @@ export default function Results() {
             </div>
           )}
           {data.sam && (
-            <div className="bg-cyan/10 border-2 border-ink p-6 text-center">
-              <div className="font-black text-xs text-gray-500 mb-1">SAM</div>
-              <div className="text-3xl font-black">{data.sam.value}</div>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6 text-center">
+              <div className="font-medium text-xs text-gray-500 mb-1">SAM</div>
+              <div className="text-3xl font-semibold">{data.sam.value}</div>
               <div className="text-sm text-gray-600 mt-2">{data.sam.calculation || data.sam.description}</div>
               {data.sam.penetration_strategy && (
                 <div className="text-xs text-gray-500 mt-2">{data.sam.penetration_strategy}</div>
@@ -218,9 +217,9 @@ export default function Results() {
             </div>
           )}
           {data.som && (
-            <div className="bg-white border-2 border-ink p-6 text-center">
-              <div className="font-black text-xs text-gray-500 mb-1">SOM</div>
-              <div className="text-3xl font-black">{data.som.value}</div>
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm text-center">
+              <div className="font-medium text-xs text-gray-500 mb-1">SOM</div>
+              <div className="text-3xl font-semibold">{data.som.value}</div>
               <div className="text-sm text-gray-600 mt-2">{data.som.year_1_target}</div>
               {data.som.assumptions && (
                 <div className="text-xs text-gray-500 mt-2">
@@ -232,12 +231,12 @@ export default function Results() {
         </div>
 
         {data.market_trends && data.market_trends.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Market Trends</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Market Trends</h3>
             <div className="space-y-4">
               {data.market_trends.map((trend: any, idx: number) => (
-                <div key={idx} className="border-l-4 border-cyan pl-4">
-                  <div className="font-black">{trend.trend || trend}</div>
+                <div key={idx} className="border-l-4 border-primary-500 pl-4">
+                  <div className="font-semibold">{trend.trend || trend}</div>
                   {trend.description && <p className="text-gray-600 text-sm mt-1">{trend.description}</p>}
                   {trend.impact && <p className="text-sm text-green-600 mt-1">Impact: {trend.impact}</p>}
                 </div>
@@ -247,15 +246,15 @@ export default function Results() {
         )}
 
         {data.customer_segments && data.customer_segments.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Customer Segments</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Customer Segments</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {data.customer_segments.map((segment: any, idx: number) => (
-                <div key={idx} className="bg-gray-50 border border-ink p-4">
+                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <div className="font-black">{segment.segment_name}</div>
+                    <div className="font-semibold">{segment.segment_name}</div>
                     <span className={`text-xs font-bold px-2 py-1 ${
-                      segment.priority === 'High' ? 'bg-cyan text-ink' : 'bg-gray-200'
+                      segment.priority === 'High' ? 'bg-primary-500 text-ink' : 'bg-gray-200'
                     }`}>{segment.priority}</span>
                   </div>
                   <div className="text-sm text-gray-600">{segment.size}</div>
@@ -276,8 +275,8 @@ export default function Results() {
         )}
 
         {data.regulatory_landscape && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Regulatory Landscape</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Regulatory Landscape</h3>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-sm">Risk Level:</span>
               <span className={`font-bold px-2 py-1 text-sm ${
@@ -309,32 +308,32 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.executive_summary && (
-          <div className="bg-cyan/10 border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Executive Summary</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Executive Summary</h3>
             <p className="text-gray-700">{data.executive_summary}</p>
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {data.mission && (
-            <div className="bg-white border-2 border-ink p-6">
-              <h3 className="font-black text-lg mb-3">Mission</h3>
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+              <h3 className="font-semibold text-lg text-apple-text mb-3">Mission</h3>
               <p className="text-gray-700">{data.mission}</p>
             </div>
           )}
           {data.vision && (
-            <div className="bg-white border-2 border-ink p-6">
-              <h3 className="font-black text-lg mb-3">Vision</h3>
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+              <h3 className="font-semibold text-lg text-apple-text mb-3">Vision</h3>
               <p className="text-gray-700">{data.vision}</p>
             </div>
           )}
         </div>
 
         {data.business_model && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Business Model</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Business Model</h3>
             {data.business_model.type && (
-              <div className="inline-block bg-cyan text-ink font-bold px-3 py-1 mb-4">{data.business_model.type}</div>
+              <div className="inline-block bg-primary-500 text-ink font-bold px-3 py-1 mb-4">{data.business_model.type}</div>
             )}
             
             {data.business_model.pricing_strategy && (
@@ -344,9 +343,9 @@ export default function Results() {
                 {data.business_model.pricing_strategy.tiers && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {data.business_model.pricing_strategy.tiers.map((tier: any, idx: number) => (
-                      <div key={idx} className="bg-gray-50 border border-ink p-3">
-                        <div className="font-black">{tier.name}</div>
-                        <div className="text-xl font-black text-cyan">{tier.price}</div>
+                      <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <div className="font-semibold">{tier.name}</div>
+                        <div className="text-xl font-semibold text-primary-500">{tier.price}</div>
                         <ul className="text-sm mt-2">
                           {tier.features?.map((f: string, i: number) => (
                             <li key={i} className="text-gray-600">✓ {f}</li>
@@ -362,9 +361,9 @@ export default function Results() {
             {data.business_model.unit_economics && (
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
                 {Object.entries(data.business_model.unit_economics).map(([key, value]: [string, any]) => (
-                  <div key={key} className="text-center p-2 bg-gray-50 border border-ink">
+                  <div key={key} className="text-center p-2 bg-gray-50 border border-gray-200 rounded-lg">
                     <div className="text-xs font-bold text-gray-500">{key.toUpperCase().replace('_', ' ')}</div>
-                    <div className="font-black">{value}</div>
+                    <div className="font-semibold">{value}</div>
                   </div>
                 ))}
               </div>
@@ -373,15 +372,15 @@ export default function Results() {
         )}
 
         {data.product_roadmap && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Product Roadmap</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Product Roadmap</h3>
             <div className="space-y-4">
               {data.product_roadmap.mvp_features && (
                 <div>
                   <div className="font-bold text-sm text-gray-500 mb-2">MVP FEATURES</div>
                   <div className="flex flex-wrap gap-2">
                     {data.product_roadmap.mvp_features.map((f: string, idx: number) => (
-                      <span key={idx} className="bg-cyan/20 px-3 py-1 text-sm font-medium">{f}</span>
+                      <span key={idx} className="bg-primary-500/20 px-3 py-1 text-sm font-medium">{f}</span>
                     ))}
                   </div>
                 </div>
@@ -401,11 +400,11 @@ export default function Results() {
         )}
 
         {data.swot_analysis && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">SWOT Analysis</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">SWOT Analysis</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-green-50 p-4 border border-green-200">
-                <div className="font-black text-green-700 mb-2">Strengths</div>
+                <div className="font-semibold text-green-700 mb-2">Strengths</div>
                 <ul className="text-sm space-y-1">
                   {data.swot_analysis.strengths?.map((s: string, idx: number) => (
                     <li key={idx}>✓ {s}</li>
@@ -413,7 +412,7 @@ export default function Results() {
                 </ul>
               </div>
               <div className="bg-red-50 p-4 border border-red-200">
-                <div className="font-black text-red-700 mb-2">Weaknesses</div>
+                <div className="font-semibold text-red-700 mb-2">Weaknesses</div>
                 <ul className="text-sm space-y-1">
                   {data.swot_analysis.weaknesses?.map((w: string, idx: number) => (
                     <li key={idx}>• {w}</li>
@@ -421,7 +420,7 @@ export default function Results() {
                 </ul>
               </div>
               <div className="bg-blue-50 p-4 border border-blue-200">
-                <div className="font-black text-blue-700 mb-2">Opportunities</div>
+                <div className="font-semibold text-blue-700 mb-2">Opportunities</div>
                 <ul className="text-sm space-y-1">
                   {data.swot_analysis.opportunities?.map((o: string, idx: number) => (
                     <li key={idx}>↗ {o}</li>
@@ -429,7 +428,7 @@ export default function Results() {
                 </ul>
               </div>
               <div className="bg-orange-50 p-4 border border-orange-200">
-                <div className="font-black text-orange-700 mb-2">Threats</div>
+                <div className="font-semibold text-orange-700 mb-2">Threats</div>
                 <ul className="text-sm space-y-1">
                   {data.swot_analysis.threats?.map((t: string, idx: number) => (
                     <li key={idx}>⚠ {t}</li>
@@ -547,15 +546,15 @@ export default function Results() {
     
     return (
       <div className="space-y-6">
-        <div className="bg-manilla border-2 border-ink p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="bg-amber-50 border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
-            <h3 className="font-black text-lg">Export Your Financial Model</h3>
+            <h3 className="font-semibold text-lg text-apple-text">Export Your Financial Model</h3>
             <p className="text-sm text-gray-600">Open in Google Sheets or download as CSV to customize</p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={openGoogleSheets}
-              className="bg-green-500 text-white font-bold px-4 py-2 border-2 border-ink shadow-brutal-sm hover:shadow-none transition-all flex items-center gap-2"
+              className="bg-green-500 text-white font-bold px-4 py-2 border border-gray-200 rounded-lg shadow-brutal-sm hover:shadow-none transition-all flex items-center gap-2"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
@@ -564,7 +563,7 @@ export default function Results() {
             </button>
             <button
               onClick={generateFinancialsCSV}
-              className="bg-white text-ink font-bold px-4 py-2 border-2 border-ink shadow-brutal-sm hover:shadow-none transition-all flex items-center gap-2"
+              className="bg-white text-ink font-bold px-4 py-2 border border-gray-200 rounded-lg shadow-brutal-sm hover:shadow-none transition-all flex items-center gap-2"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
@@ -575,13 +574,13 @@ export default function Results() {
         </div>
 
         {data.assumptions && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Key Assumptions</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Key Assumptions</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {Object.entries(data.assumptions).map(([key, value]: [string, any]) => (
-                <div key={key} className="bg-gray-50 p-3 border border-ink">
+                <div key={key} className="bg-gray-50 p-3 border border-gray-200 rounded-lg">
                   <div className="text-xs font-bold text-gray-500">{key.replace(/_/g, ' ').toUpperCase()}</div>
-                  <div className="font-black mt-1">{value}</div>
+                  <div className="font-semibold mt-1">{value}</div>
                 </div>
               ))}
             </div>
@@ -589,8 +588,8 @@ export default function Results() {
         )}
 
         {data.projections && data.projections.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">5-Year Financial Projections</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">5-Year Financial Projections</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -647,19 +646,19 @@ export default function Results() {
         )}
 
         {data.break_even && (
-          <div className="bg-cyan/20 border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Break-Even Analysis</h3>
+          <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Break-Even Analysis</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-3xl font-black">Month {data.break_even.month}</div>
+                <div className="text-3xl font-semibold">Month {data.break_even.month}</div>
                 <div className="text-sm text-gray-600">Time to Break-Even</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-black">{data.break_even.customers_needed}</div>
+                <div className="text-3xl font-semibold">{data.break_even.customers_needed}</div>
                 <div className="text-sm text-gray-600">Customers Needed</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-black">${data.break_even.revenue_needed?.toLocaleString()}</div>
+                <div className="text-3xl font-semibold">${data.break_even.revenue_needed?.toLocaleString()}</div>
                 <div className="text-sm text-gray-600">Revenue Needed</div>
               </div>
             </div>
@@ -667,13 +666,13 @@ export default function Results() {
         )}
 
         {data.funding_strategy && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Funding Strategy</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Funding Strategy</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {data.funding_strategy.pre_seed && (
-                <div className="bg-gray-50 border border-ink p-4">
-                  <div className="font-black text-cyan">Pre-Seed</div>
-                  <div className="text-2xl font-black">{data.funding_strategy.pre_seed.amount}</div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="font-semibold text-primary-500">Pre-Seed</div>
+                  <div className="text-2xl font-semibold">{data.funding_strategy.pre_seed.amount}</div>
                   <div className="text-sm text-gray-600 mt-2">{data.funding_strategy.pre_seed.timing}</div>
                   <ul className="text-sm mt-2">
                     {data.funding_strategy.pre_seed.use_of_funds?.map((u: string, idx: number) => (
@@ -683,16 +682,16 @@ export default function Results() {
                 </div>
               )}
               {data.funding_strategy.seed && (
-                <div className="bg-gray-50 border border-ink p-4">
-                  <div className="font-black text-cyan">Seed</div>
-                  <div className="text-2xl font-black">{data.funding_strategy.seed.amount}</div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="font-semibold text-primary-500">Seed</div>
+                  <div className="text-2xl font-semibold">{data.funding_strategy.seed.amount}</div>
                   <div className="text-sm text-gray-600 mt-2">{data.funding_strategy.seed.timing}</div>
                 </div>
               )}
               {data.funding_strategy.series_a && (
-                <div className="bg-gray-50 border border-ink p-4">
-                  <div className="font-black text-cyan">Series A</div>
-                  <div className="text-2xl font-black">{data.funding_strategy.series_a.amount}</div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="font-semibold text-primary-500">Series A</div>
+                  <div className="text-2xl font-semibold">{data.funding_strategy.series_a.amount}</div>
                   <div className="text-sm text-gray-600 mt-2">{data.funding_strategy.series_a.timing}</div>
                 </div>
               )}
@@ -701,22 +700,22 @@ export default function Results() {
         )}
 
         {data.scenario_analysis && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Scenario Analysis (Year 5)</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Scenario Analysis (Year 5)</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-green-50 border border-green-200 p-4 text-center">
-                <div className="font-black text-green-700">Best Case</div>
-                <div className="text-2xl font-black">${data.scenario_analysis.best_case?.year_5_revenue?.toLocaleString()}</div>
+                <div className="font-semibold text-green-700">Best Case</div>
+                <div className="text-2xl font-semibold">${data.scenario_analysis.best_case?.year_5_revenue?.toLocaleString()}</div>
                 <div className="text-sm text-gray-600 mt-2">{data.scenario_analysis.best_case?.assumptions}</div>
               </div>
-              <div className="bg-gray-50 border border-ink p-4 text-center">
-                <div className="font-black">Base Case</div>
-                <div className="text-2xl font-black">${data.scenario_analysis.base_case?.year_5_revenue?.toLocaleString()}</div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                <div className="font-semibold">Base Case</div>
+                <div className="text-2xl font-semibold">${data.scenario_analysis.base_case?.year_5_revenue?.toLocaleString()}</div>
                 <div className="text-sm text-gray-600 mt-2">{data.scenario_analysis.base_case?.assumptions}</div>
               </div>
               <div className="bg-red-50 border border-red-200 p-4 text-center">
-                <div className="font-black text-red-700">Worst Case</div>
-                <div className="text-2xl font-black">${data.scenario_analysis.worst_case?.year_5_revenue?.toLocaleString()}</div>
+                <div className="font-semibold text-red-700">Worst Case</div>
+                <div className="text-2xl font-semibold">${data.scenario_analysis.worst_case?.year_5_revenue?.toLocaleString()}</div>
                 <div className="text-sm text-gray-600 mt-2">{data.scenario_analysis.worst_case?.assumptions}</div>
               </div>
             </div>
@@ -735,19 +734,19 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {discovery?.competitive_insights && (
-          <div className="bg-cyan/20 border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Market Intelligence Summary</h3>
+          <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Market Intelligence Summary</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-3xl font-black">{discovery.competitive_insights.total_competitors_found || '?'}</div>
+                <div className="text-3xl font-semibold">{discovery.competitive_insights.total_competitors_found || '?'}</div>
                 <div className="text-sm text-gray-600">Competitors Found</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-black">{discovery.competitive_insights.average_rating || 'N/A'}</div>
+                <div className="text-3xl font-semibold">{discovery.competitive_insights.average_rating || 'N/A'}</div>
                 <div className="text-sm text-gray-600">Avg Rating</div>
               </div>
               <div className="text-center">
-                <div className={`text-xl font-black px-3 py-1 inline-block ${
+                <div className={`text-xl font-semibold px-3 py-1 inline-block ${
                   discovery.competitive_insights.market_saturation === 'High' ? 'bg-red-100 text-red-700' :
                   discovery.competitive_insights.market_saturation === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
                   'bg-green-100 text-green-700'
@@ -773,20 +772,20 @@ export default function Results() {
         )}
 
         {discovery?.direct_competitors && discovery.direct_competitors.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4 flex items-center gap-2">
               <span className="text-red-500">🎯</span> Direct Competitors ({discovery.direct_competitors.length})
             </h3>
             <div className="space-y-4">
               {discovery.direct_competitors.map((comp: any, idx: number) => (
-                <div key={idx} className="border-2 border-ink p-4 hover:shadow-brutal-sm transition-shadow">
+                <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-brutal-sm transition-shadow">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <div className="font-black text-lg flex items-center gap-2">
+                      <div className="font-semibold text-lg text-apple-text flex items-center gap-2">
                         {comp.name}
                         {comp.website && (
                           <a href={comp.website} target="_blank" rel="noopener noreferrer" 
-                             className="text-cyan hover:underline text-sm font-normal">
+                             className="text-primary-500 hover:underline text-sm font-normal">
                             🔗 Visit Site
                           </a>
                         )}
@@ -847,8 +846,8 @@ export default function Results() {
         )}
 
         {discovery?.indirect_competitors && discovery.indirect_competitors.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4 flex items-center gap-2">
               <span className="text-yellow-500">🔄</span> Indirect Competitors ({discovery.indirect_competitors.length})
             </h3>
             <div className="space-y-4">
@@ -856,11 +855,11 @@ export default function Results() {
                 <div key={idx} className="border-2 border-yellow-200 bg-yellow-50/50 p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <div className="font-black text-lg flex items-center gap-2">
+                      <div className="font-semibold text-lg text-apple-text flex items-center gap-2">
                         {comp.name}
                         {comp.website && (
                           <a href={comp.website} target="_blank" rel="noopener noreferrer" 
-                             className="text-cyan hover:underline text-sm font-normal">
+                             className="text-primary-500 hover:underline text-sm font-normal">
                             🔗 Visit
                           </a>
                         )}
@@ -891,16 +890,16 @@ export default function Results() {
         )}
 
         {discovery?.market_gaps && discovery.market_gaps.length > 0 && (
-          <div className="bg-manilla border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-4 flex items-center gap-2">
               <span className="text-green-500">💎</span> Market Gaps & Opportunities
             </h3>
             <div className="space-y-4">
               {discovery.market_gaps.map((gap: any, idx: number) => (
-                <div key={idx} className="bg-white border border-ink p-4">
+                <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4">
                   <div className="font-bold text-lg text-green-700 mb-2">{gap.gap}</div>
                   <p className="text-sm text-gray-600 mb-2"><span className="font-bold">Evidence:</span> {gap.evidence}</p>
-                  <p className="text-sm text-cyan font-bold">→ {gap.opportunity}</p>
+                  <p className="text-sm text-primary-500 font-bold">→ {gap.opportunity}</p>
                 </div>
               ))}
             </div>
@@ -908,15 +907,15 @@ export default function Results() {
         )}
 
         {data?.competitive_landscape && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Strategic Analysis</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Strategic Analysis</h3>
             <p className="text-gray-700">{data.competitive_landscape}</p>
           </div>
         )}
 
         {data?.differentiation && (
-          <div className="bg-cyan/10 border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Your Differentiation Strategy</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Your Differentiation Strategy</h3>
             <div className="font-bold text-lg mb-2">{data.differentiation.primary_differentiator}</div>
             {data.differentiation.positioning_statement && (
               <p className="text-gray-700 italic">"{data.differentiation.positioning_statement}"</p>
@@ -926,7 +925,7 @@ export default function Results() {
                 <div className="text-sm font-bold mb-2">Messaging Angles:</div>
                 <div className="flex flex-wrap gap-2">
                   {data.differentiation.messaging_angles.map((angle: string, idx: number) => (
-                    <span key={idx} className="bg-white border border-ink px-3 py-1 text-sm">{angle}</span>
+                    <span key={idx} className="bg-white border border-gray-200 rounded-lg px-3 py-1 text-sm">{angle}</span>
                   ))}
                 </div>
               </div>
@@ -935,12 +934,12 @@ export default function Results() {
         )}
 
         {data?.battle_cards && data.battle_cards.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Battle Cards</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Battle Cards</h3>
             <div className="space-y-4">
               {data.battle_cards.map((card: any, idx: number) => (
-                <div key={idx} className="border-2 border-ink p-4">
-                  <div className="font-black mb-3">vs. {card.competitor}</div>
+                <div key={idx} className="border border-gray-200 rounded-lg p-4">
+                  <div className="font-semibold mb-3">vs. {card.competitor}</div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-green-50 p-3">
                       <div className="text-xs font-bold text-green-700 mb-1">When You Win</div>
@@ -967,19 +966,19 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.strategy_overview && (
-          <div className="bg-cyan/10 border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Strategy Overview</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Strategy Overview</h3>
             <p className="text-gray-700">{data.strategy_overview}</p>
           </div>
         )}
 
         {data.launch_phases && data.launch_phases.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Launch Phases</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Launch Phases</h3>
             <div className="space-y-4">
               {data.launch_phases.map((phase: any, idx: number) => (
-                <div key={idx} className="border-l-4 border-cyan pl-4">
-                  <div className="font-black">{phase.phase}</div>
+                <div key={idx} className="border-l-4 border-primary-500 pl-4">
+                  <div className="font-semibold">{phase.phase}</div>
                   <div className="text-sm text-gray-500">{phase.duration}</div>
                   <div className="mt-2">
                     <span className="text-xs font-bold">Goals:</span>
@@ -990,7 +989,7 @@ export default function Results() {
                     </ul>
                   </div>
                   {phase.budget && (
-                    <div className="text-sm font-bold text-cyan mt-2">Budget: {phase.budget}</div>
+                    <div className="text-sm font-bold text-primary-500 mt-2">Budget: {phase.budget}</div>
                   )}
                 </div>
               ))}
@@ -999,13 +998,13 @@ export default function Results() {
         )}
 
         {data.first_100_customers && (
-          <div className="bg-manilla border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">First 100 Customers Strategy</h3>
+          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">First 100 Customers Strategy</h3>
             <p className="text-gray-700 mb-4">{data.first_100_customers.strategy}</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {['week_1_actions', 'week_2_actions', 'week_3_actions', 'week_4_actions'].map((week, idx) => (
                 data.first_100_customers[week] && (
-                  <div key={week} className="bg-white border border-ink p-3">
+                  <div key={week} className="bg-white border border-gray-200 rounded-lg p-3">
                     <div className="font-bold text-sm">Week {idx + 1}</div>
                     <ul className="text-xs mt-1">
                       {data.first_100_customers[week].map((a: string, i: number) => (
@@ -1020,8 +1019,8 @@ export default function Results() {
         )}
 
         {data.acquisition_channels && data.acquisition_channels.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Acquisition Channels</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Acquisition Channels</h3>
             <div className="space-y-3">
               {data.acquisition_channels.map((channel: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between border-b pb-3">
@@ -1030,7 +1029,7 @@ export default function Results() {
                     <div className="text-sm text-gray-500">{channel.type} • {channel.time_to_results}</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-cyan">{channel.expected_cac} CAC</div>
+                    <div className="font-bold text-primary-500">{channel.expected_cac} CAC</div>
                     <div className="text-xs text-gray-500">Priority: {channel.priority}</div>
                   </div>
                 </div>
@@ -1049,14 +1048,14 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.founding_team && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Ideal Founding Team</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Ideal Founding Team</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <div className="font-bold text-sm text-gray-500 mb-2">IDEAL COMPOSITION</div>
                 <div className="flex flex-wrap gap-2">
                   {data.founding_team.ideal_composition?.map((role: string, idx: number) => (
-                    <span key={idx} className="bg-cyan text-ink px-3 py-1 font-bold">{role}</span>
+                    <span key={idx} className="bg-primary-500 text-ink px-3 py-1 font-bold">{role}</span>
                   ))}
                 </div>
               </div>
@@ -1073,14 +1072,14 @@ export default function Results() {
         )}
 
         {data.hiring_roadmap && data.hiring_roadmap.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Hiring Roadmap</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Hiring Roadmap</h3>
             <div className="space-y-6">
               {data.hiring_roadmap.map((phase: any, idx: number) => (
-                <div key={idx} className="border-l-4 border-cyan pl-4">
+                <div key={idx} className="border-l-4 border-primary-500 pl-4">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <div className="font-black">{phase.phase}</div>
+                      <div className="font-semibold">{phase.phase}</div>
                       <div className="text-sm text-gray-500">{phase.timeline}</div>
                     </div>
                     <div className="text-right">
@@ -1090,7 +1089,7 @@ export default function Results() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {phase.hires?.map((hire: any, i: number) => (
-                      <div key={i} className="bg-gray-50 border border-ink p-3">
+                      <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                         <div className="flex justify-between items-start">
                           <div className="font-bold">{hire.role}</div>
                           <span className={`text-xs font-bold px-2 py-1 ${
@@ -1101,7 +1100,7 @@ export default function Results() {
                         </div>
                         <div className="text-sm text-gray-600">{hire.salary_range}</div>
                         {hire.equity_range && (
-                          <div className="text-xs text-cyan font-bold">{hire.equity_range} equity</div>
+                          <div className="text-xs text-primary-500 font-bold">{hire.equity_range} equity</div>
                         )}
                       </div>
                     ))}
@@ -1113,8 +1112,8 @@ export default function Results() {
         )}
 
         {data.culture && (
-          <div className="bg-manilla border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Company Culture</h3>
+          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Company Culture</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <div className="font-bold text-sm text-gray-500 mb-2">CORE VALUES</div>
@@ -1142,8 +1141,8 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.risk_score && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Risk Scores</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Risk Scores</h3>
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
               {Object.entries(data.risk_score).map(([key, value]: [string, any]) => (
                 <div key={key} className={`p-4 text-center border-2 ${
@@ -1151,7 +1150,7 @@ export default function Results() {
                   value >= 4 ? 'border-yellow-500 bg-yellow-50' :
                   'border-green-500 bg-green-50'
                 }`}>
-                  <div className="text-3xl font-black">{value}</div>
+                  <div className="text-3xl font-semibold">{value}</div>
                   <div className="text-xs font-bold text-gray-500">{key.replace('_', ' ').toUpperCase()}</div>
                 </div>
               ))}
@@ -1160,8 +1159,8 @@ export default function Results() {
         )}
 
         {data.critical_risks && data.critical_risks.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Critical Risks</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Critical Risks</h3>
             <div className="space-y-4">
               {data.critical_risks.map((risk: any, idx: number) => (
                 <div key={idx} className={`border-2 p-4 ${
@@ -1170,7 +1169,7 @@ export default function Results() {
                   'border-ink'
                 }`}>
                   <div className="flex justify-between items-start mb-2">
-                    <div className="font-black">{risk.risk}</div>
+                    <div className="font-semibold">{risk.risk}</div>
                     <div className="flex gap-2">
                       <span className={`text-xs font-bold px-2 py-1 ${
                         risk.probability === 'High' ? 'bg-red-100 text-red-700' : 
@@ -1200,7 +1199,7 @@ export default function Results() {
 
         {data.kill_conditions && data.kill_conditions.length > 0 && (
           <div className="bg-red-50 border-2 border-red-500 p-6">
-            <h3 className="font-black text-lg mb-4 text-red-700">Kill Conditions</h3>
+            <h3 className="font-semibold text-lg text-apple-text mb-4 text-red-700">Kill Conditions</h3>
             <p className="text-sm text-gray-600 mb-4">When to consider shutting down:</p>
             <ul className="space-y-2">
               {data.kill_conditions.map((kc: any, idx: number) => (
@@ -1226,19 +1225,19 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.overview && (
-          <div className="bg-cyan/10 border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">90-Day Success Definition</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">90-Day Success Definition</h3>
             <p className="text-gray-700">{data.overview}</p>
           </div>
         )}
 
         {data.key_milestones && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Key Milestones</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Key Milestones</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {Object.entries(data.key_milestones).map(([day, milestones]: [string, any]) => (
-                <div key={day} className="bg-cyan/10 border border-ink p-4">
-                  <div className="font-black text-cyan">{day.replace('_', ' ').toUpperCase()}</div>
+                <div key={day} className="bg-primary-500/10 border border-gray-200 rounded-lg p-4">
+                  <div className="font-semibold text-primary-500">{day.replace('_', ' ').toUpperCase()}</div>
                   <ul className="mt-2 space-y-1">
                     {Array.isArray(milestones) && milestones.map((m: string, idx: number) => (
                       <li key={idx} className="text-sm">✓ {m}</li>
@@ -1251,15 +1250,15 @@ export default function Results() {
         )}
 
         {data.quick_wins && data.quick_wins.length > 0 && (
-          <div className="bg-manilla border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Quick Wins</h3>
+          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Quick Wins</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {data.quick_wins.map((win: any, idx: number) => (
-                <div key={idx} className="bg-white border border-ink p-3">
+                <div key={idx} className="bg-white border border-gray-200 rounded-lg p-3">
                   <div className="font-bold">{win.action}</div>
                   <div className="text-sm text-gray-600">{win.impact}</div>
                   <div className="flex justify-between mt-2 text-xs">
-                    <span className="text-cyan font-bold">{win.time_required}</span>
+                    <span className="text-primary-500 font-bold">{win.time_required}</span>
                     <span>{win.when}</span>
                   </div>
                 </div>
@@ -1269,14 +1268,14 @@ export default function Results() {
         )}
 
         {data.week_by_week && data.week_by_week.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Week-by-Week Breakdown</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Week-by-Week Breakdown</h3>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {data.week_by_week.slice(0, 4).map((week: any, idx: number) => (
-                <div key={idx} className="border-l-4 border-cyan pl-4">
+                <div key={idx} className="border-l-4 border-primary-500 pl-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-black">Week {week.week}: {week.theme}</div>
+                      <div className="font-semibold">Week {week.week}: {week.theme}</div>
                       <div className="text-sm text-gray-500">Milestone: {week.milestone}</div>
                     </div>
                   </div>
@@ -1300,21 +1299,21 @@ export default function Results() {
         )}
 
         {data.resources_needed && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Resources Needed</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Resources Needed</h3>
             {data.resources_needed.budget && (
               <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-center p-3 bg-gray-50 border border-ink">
+                <div className="text-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="text-xs font-bold text-gray-500">MONTH 1</div>
-                  <div className="text-xl font-black">{data.resources_needed.budget.month_1}</div>
+                  <div className="text-xl font-semibold">{data.resources_needed.budget.month_1}</div>
                 </div>
-                <div className="text-center p-3 bg-gray-50 border border-ink">
+                <div className="text-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="text-xs font-bold text-gray-500">MONTH 2</div>
-                  <div className="text-xl font-black">{data.resources_needed.budget.month_2}</div>
+                  <div className="text-xl font-semibold">{data.resources_needed.budget.month_2}</div>
                 </div>
-                <div className="text-center p-3 bg-gray-50 border border-ink">
+                <div className="text-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="text-xs font-bold text-gray-500">MONTH 3</div>
-                  <div className="text-xl font-black">{data.resources_needed.budget.month_3}</div>
+                  <div className="text-xl font-semibold">{data.resources_needed.budget.month_3}</div>
                 </div>
               </div>
             )}
@@ -1323,7 +1322,7 @@ export default function Results() {
                 <div className="font-bold text-sm text-gray-500 mb-2">TOOLS NEEDED</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {data.resources_needed.tools.map((tool: any, idx: number) => (
-                    <div key={idx} className="flex justify-between items-center bg-gray-50 p-2 border border-ink">
+                    <div key={idx} className="flex justify-between items-center bg-gray-50 p-2 border border-gray-200 rounded-lg">
                       <div>
                         <div className="font-bold text-sm">{tool.tool}</div>
                         <div className="text-xs text-gray-500">{tool.purpose}</div>
@@ -1349,25 +1348,25 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.deck_strategy && (
-          <div className="bg-cyan/10 border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Deck Strategy</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Deck Strategy</h3>
             <p className="text-gray-700">{data.deck_strategy}</p>
           </div>
         )}
 
         {data.slides && data.slides.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Slide-by-Slide Breakdown</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Slide-by-Slide Breakdown</h3>
             <div className="space-y-4">
               {data.slides.map((slide: any, idx: number) => (
-                <div key={idx} className="border-2 border-ink p-4">
+                <div key={idx} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-cyan flex items-center justify-center font-black">
+                      <div className="w-10 h-10 bg-primary-500 flex items-center justify-center font-semibold">
                         {slide.slide_number}
                       </div>
                       <div>
-                        <div className="font-black">{slide.title}</div>
+                        <div className="font-semibold">{slide.title}</div>
                         <div className="text-sm text-gray-500">{slide.purpose}</div>
                       </div>
                     </div>
@@ -1404,12 +1403,12 @@ export default function Results() {
         )}
 
         {data.investor_faqs && data.investor_faqs.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Investor FAQs</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Investor FAQs</h3>
             <div className="space-y-4">
               {data.investor_faqs.map((faq: any, idx: number) => (
                 <div key={idx} className="border-b pb-3">
-                  <div className="font-bold text-cyan">Q: {faq.question}</div>
+                  <div className="font-bold text-primary-500">Q: {faq.question}</div>
                   <div className="text-gray-700 mt-1">A: {faq.answer}</div>
                 </div>
               ))}
@@ -1418,12 +1417,12 @@ export default function Results() {
         )}
 
         {data.presentation_tips && data.presentation_tips.length > 0 && (
-          <div className="bg-manilla border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-3">Presentation Tips</h3>
+          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-3">Presentation Tips</h3>
             <ul className="space-y-2">
               {data.presentation_tips.map((tip: string, idx: number) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <span className="text-cyan">💡</span>
+                  <span className="text-primary-500">💡</span>
                   <span>{tip}</span>
                 </li>
               ))}
@@ -1441,62 +1440,62 @@ export default function Results() {
     return (
       <div className="space-y-6">
         {data.location && (
-          <div className="bg-cyan/20 border-2 border-ink p-6">
-            <h3 className="font-black text-sm text-gray-500 mb-2">TARGET LOCATION</h3>
-            <p className="text-3xl font-black">{data.location.city}, {data.location.state}</p>
+          <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
+            <h3 className="font-medium text-sm text-gray-500 mb-2">TARGET LOCATION</h3>
+            <p className="text-3xl font-semibold">{data.location.city}, {data.location.state}</p>
           </div>
         )}
 
         {data.population_data && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white border-2 border-ink p-6 text-center">
-              <div className="font-black text-xs text-gray-500 mb-1">CITY POPULATION</div>
-              <div className="text-3xl font-black">{data.population_data.city_population?.toLocaleString()}</div>
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm text-center">
+              <div className="font-medium text-xs text-gray-500 mb-1">CITY POPULATION</div>
+              <div className="text-3xl font-semibold">{data.population_data.city_population?.toLocaleString()}</div>
             </div>
-            <div className="bg-white border-2 border-ink p-6 text-center">
-              <div className="font-black text-xs text-gray-500 mb-1">METRO AREA</div>
-              <div className="text-3xl font-black">{Math.round(data.population_data.metro_population || 0).toLocaleString()}</div>
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm text-center">
+              <div className="font-medium text-xs text-gray-500 mb-1">METRO AREA</div>
+              <div className="text-3xl font-semibold">{Math.round(data.population_data.metro_population || 0).toLocaleString()}</div>
             </div>
-            <div className="bg-white border-2 border-ink p-6 text-center">
-              <div className="font-black text-xs text-gray-500 mb-1">STATE POPULATION</div>
-              <div className="text-3xl font-black">{data.population_data.state_population?.toLocaleString()}</div>
+            <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm text-center">
+              <div className="font-medium text-xs text-gray-500 mb-1">STATE POPULATION</div>
+              <div className="text-3xl font-semibold">{data.population_data.state_population?.toLocaleString()}</div>
             </div>
           </div>
         )}
 
         {data.market_insights && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Market Size Calculations</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Market Size Calculations</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gray-50 p-4 border border-ink">
+              <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
                 <div className="text-xs text-gray-500 font-bold">Households</div>
-                <div className="text-xl font-black">{data.market_insights.total_households?.toLocaleString()}</div>
+                <div className="text-xl font-semibold">{data.market_insights.total_households?.toLocaleString()}</div>
               </div>
-              <div className="bg-gray-50 p-4 border border-ink">
+              <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
                 <div className="text-xs text-gray-500 font-bold">Metro Households</div>
-                <div className="text-xl font-black">{data.market_insights.metro_households?.toLocaleString()}</div>
+                <div className="text-xl font-semibold">{data.market_insights.metro_households?.toLocaleString()}</div>
               </div>
-              <div className="bg-gray-50 p-4 border border-ink">
+              <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
                 <div className="text-xs text-gray-500 font-bold">Working Adults</div>
-                <div className="text-xl font-black">{data.market_insights.tam_calculation_base?.working_adults?.toLocaleString()}</div>
+                <div className="text-xl font-semibold">{data.market_insights.tam_calculation_base?.working_adults?.toLocaleString()}</div>
               </div>
-              <div className="bg-gray-50 p-4 border border-ink">
+              <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
                 <div className="text-xs text-gray-500 font-bold">Est. HH Income</div>
-                <div className="text-xl font-black">${data.market_insights.tam_calculation_base?.median_household_income_estimate?.toLocaleString()}</div>
+                <div className="text-xl font-semibold">${data.market_insights.tam_calculation_base?.median_household_income_estimate?.toLocaleString()}</div>
               </div>
             </div>
           </div>
         )}
 
         {data.competitors_analyzed && data.competitors_analyzed.length > 0 && (
-          <div className="bg-white border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Competitors Scraped ({data.competitors_analyzed.length})</h3>
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Competitors Scraped ({data.competitors_analyzed.length})</h3>
             <div className="space-y-4">
               {data.competitors_analyzed.map((comp: any, idx: number) => (
-                <div key={idx} className="border-2 border-ink p-4 bg-gray-50">
+                <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <div className="font-black">{comp.domain}</div>
+                      <div className="font-semibold">{comp.domain}</div>
                       {comp.title && <div className="text-sm text-gray-600">{comp.title}</div>}
                     </div>
                     {comp.error && <span className="text-red-500 text-xs">Error: {comp.error}</span>}
@@ -1525,25 +1524,25 @@ export default function Results() {
         )}
 
         {data.competitor_summary && (
-          <div className="bg-manilla border-2 border-ink p-6">
-            <h3 className="font-black text-lg mb-4">Competitor Summary</h3>
+          <div className="bg-amber-50 border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-lg text-apple-text mb-4">Competitor Summary</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               {data.competitor_summary.avg_price && (
                 <div className="text-center">
-                  <div className="text-2xl font-black">${data.competitor_summary.avg_price.toFixed(0)}</div>
+                  <div className="text-2xl font-semibold">${data.competitor_summary.avg_price.toFixed(0)}</div>
                   <div className="text-xs text-gray-600">Avg Price</div>
                 </div>
               )}
               <div className="text-center">
-                <div className="text-2xl font-black">{data.competitor_summary.pct_with_online_booking?.toFixed(0)}%</div>
+                <div className="text-2xl font-semibold">{data.competitor_summary.pct_with_online_booking?.toFixed(0)}%</div>
                 <div className="text-xs text-gray-600">Online Booking</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-black">{data.competitor_summary.pct_showing_reviews?.toFixed(0)}%</div>
+                <div className="text-2xl font-semibold">{data.competitor_summary.pct_showing_reviews?.toFixed(0)}%</div>
                 <div className="text-xs text-gray-600">Show Reviews</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-black">{data.competitor_summary.pct_with_pricing?.toFixed(0)}%</div>
+                <div className="text-2xl font-semibold">{data.competitor_summary.pct_with_pricing?.toFixed(0)}%</div>
                 <div className="text-xs text-gray-600">Show Pricing</div>
               </div>
             </div>
@@ -1586,47 +1585,45 @@ export default function Results() {
   };
 
   return (
-    <div className="bg-[#F2F0E9] text-ink font-sans antialiased min-h-screen">
-      <nav className="sticky top-0 z-40 bg-paper/90 backdrop-blur-md border-b-2 border-ink px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-manilla border-2 border-ink flex items-center justify-center shadow-brutal-sm group-hover:rotate-6 transition-transform">
-              <span className="font-black text-xl">M</span>
-            </div>
-            <span className="font-black text-xl tracking-tighter">myCEO</span>
+    <div className="bg-apple-bg min-h-screen font-sans antialiased">
+      <nav className="fixed top-0 w-full z-50 glass-panel">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
+            <CommandLineIcon className="w-5 h-5 text-apple-text" />
+            <span className="text-lg tracking-tight">myCEO</span>
           </Link>
           <button
             onClick={() => navigate('/')}
-            className="bg-cyan text-ink font-bold px-4 py-2 border-2 border-ink shadow-brutal-sm hover:bg-cyan-hover transition-all text-sm"
+            className="bg-apple-text text-white font-medium px-4 py-2 rounded-full hover:bg-gray-800 transition-all text-sm"
           >
-            NEW ANALYSIS
+            New Analysis
           </button>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <div className="inline-block bg-cyan text-ink text-xs font-black px-3 py-1 border-2 border-ink mb-2">
-            BUSINESS OPERATING SYSTEM
-          </div>
-          <h1 className="text-3xl md:text-4xl font-black">Your Complete Business Analysis</h1>
+      <div className="max-w-7xl mx-auto px-6 pt-20 pb-12">
+        <div className="mb-8">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700 mb-3">
+            Business Operating System
+          </span>
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-apple-text">Your Complete Business Analysis</h1>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="lg:w-56 flex-shrink-0">
-            <div className="bg-paper border-2 border-ink shadow-brutal sticky top-24">
-              <div className="p-3 border-b-2 border-ink bg-ink text-white">
-                <span className="font-black text-sm">SECTIONS</span>
+            <div className="bg-white rounded-2xl shadow-card border border-gray-100 sticky top-20 overflow-hidden">
+              <div className="p-4 border-b border-gray-100">
+                <span className="font-medium text-sm text-apple-gray">Sections</span>
               </div>
-              <div className="divide-y divide-ink">
+              <div className="p-2">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full text-left px-3 py-3 font-bold text-sm transition-all flex items-center gap-2 ${
+                    className={`w-full text-left px-3 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 mb-1 ${
                       activeTab === tab.id 
-                        ? 'bg-cyan text-ink' 
-                        : 'bg-paper hover:bg-gray-100'
+                        ? 'bg-primary-500 text-white' 
+                        : 'text-apple-text hover:bg-gray-100'
                     }`}
                   >
                     <span>{tab.icon}</span>
@@ -1638,10 +1635,10 @@ export default function Results() {
           </div>
 
           <div className="flex-1">
-            <div className="bg-paper border-2 border-ink shadow-brutal p-6">
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-ink">
+            <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
                 <span className="text-2xl">{tabs.find(t => t.id === activeTab)?.icon}</span>
-                <h2 className="text-2xl font-black">{tabs.find(t => t.id === activeTab)?.label}</h2>
+                <h2 className="text-2xl font-semibold text-apple-text">{tabs.find(t => t.id === activeTab)?.label}</h2>
               </div>
               {renderContent()}
             </div>

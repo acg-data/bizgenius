@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { CommandLineIcon, ArrowRightIcon, CheckIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
 
 interface QuestionOption {
@@ -148,58 +149,44 @@ export default function Questions() {
     return icons[category] || '❓';
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      target_customer: 'bg-blue-100 text-blue-800',
-      pricing: 'bg-green-100 text-green-800',
-      competition: 'bg-red-100 text-red-800',
-      location: 'bg-purple-100 text-purple-800',
-      business_model: 'bg-orange-100 text-orange-800',
-      go_to_market: 'bg-cyan-100 text-cyan-800',
-      team: 'bg-yellow-100 text-yellow-800',
-      funding: 'bg-emerald-100 text-emerald-800'
-    };
-    return colors[category] || 'bg-gray-100 text-gray-800';
-  };
-
   const answeredCount = Object.entries(answers).filter(([qId, a]) => {
     const question = questionsData?.questions?.find(q => q.id === qId);
     if (!question) return false;
     return a.selectedOption && (a.selectedOption !== 'other' || a.customText.trim());
   }).length;
   const totalQuestions = questionsData?.questions?.length || 0;
+  const progress = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
 
   return (
-    <div className="bg-[#F2F0E9] text-ink font-sans antialiased min-h-screen">
-      <nav className="sticky top-0 z-40 bg-paper/90 backdrop-blur-md border-b-2 border-ink px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-manilla border-2 border-ink flex items-center justify-center shadow-brutal-sm group-hover:rotate-6 transition-transform">
-              <span className="font-black text-xl">M</span>
-            </div>
-            <span className="font-black text-xl tracking-tighter">myCEO</span>
+    <div className="bg-apple-bg min-h-screen font-sans antialiased">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 glass-panel">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
+            <CommandLineIcon className="w-5 h-5 text-apple-text" />
+            <span className="text-lg tracking-tight">myCEO</span>
           </Link>
           <div className="flex items-center gap-4">
-            <span className="text-sm font-bold text-gray-500">
+            <span className="text-sm font-medium text-apple-gray">
               Step 1 of 2: Discovery Questions
             </span>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-4 py-12">
+      <main className="max-w-3xl mx-auto px-6 pt-24 pb-16">
         {loading ? (
-          <div className="text-center py-24">
+          <div className="text-center py-24 animate-fade-in">
             <div className="inline-block mb-6">
-              <div className="w-16 h-16 border-4 border-cyan border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <div className="w-12 h-12 border-3 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
             </div>
-            <h2 className="text-2xl font-black mb-2">Analyzing Your Idea...</h2>
-            <p className="text-gray-600">Our AI is identifying the key questions to make your business plan even stronger.</p>
+            <h2 className="text-2xl font-semibold text-apple-text mb-2">Analyzing Your Idea</h2>
+            <p className="text-apple-gray">Our AI is identifying key questions to strengthen your business plan.</p>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border-2 border-red-500 p-8 rounded-xl text-center">
-            <h2 className="text-xl font-black text-red-600 mb-2">Something went wrong</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
+          <div className="bg-red-50 border border-red-200 p-8 rounded-2xl text-center animate-fade-in">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">Something went wrong</h2>
+            <p className="text-apple-gray mb-6">{error}</p>
             <button 
               onClick={() => fetchQuestions(businessIdea)}
               className="btn-primary"
@@ -208,125 +195,141 @@ export default function Questions() {
             </button>
           </div>
         ) : (
-          <>
+          <div className="animate-fade-in">
+            {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl md:text-4xl font-black mb-4">
-                Let's refine your idea 💡
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-apple-text mb-4">
+                Let's refine your idea
               </h1>
               {questionsData?.analysis && (
-                <div className="bg-cyan/10 border-2 border-cyan p-4 rounded-xl">
-                  <p className="font-medium text-gray-700">{questionsData.analysis}</p>
+                <div className="bg-white rounded-xl p-4 shadow-card border border-gray-100">
+                  <p className="text-apple-gray">{questionsData.analysis}</p>
                 </div>
               )}
             </div>
 
-            <div className="mb-6 flex items-center justify-between">
-              <div className="text-sm font-bold text-gray-500">
-                {answeredCount} of {totalQuestions} questions answered
+            {/* Progress */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-apple-gray">
+                  {answeredCount} of {totalQuestions} questions answered
+                </span>
+                <span className="text-sm font-medium text-apple-gray">
+                  {Math.round(progress)}%
+                </span>
               </div>
-              <div className="w-48 h-2 bg-gray-200 border border-ink rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-cyan transition-all duration-300"
-                  style={{ width: `${(answeredCount / Math.max(totalQuestions, 1)) * 100}%` }}
+                  className="h-full bg-primary-500 transition-all duration-500 ease-out rounded-full"
+                  style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
 
+            {/* Questions */}
             <div className="space-y-6 mb-8">
               {questionsData?.questions?.map((q, index) => (
                 <div 
                   key={q.id} 
-                  className="bg-white border-2 border-ink shadow-brutal p-6 rounded-xl"
+                  className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-card-hover"
                 >
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-10 h-10 bg-ink text-white flex items-center justify-center font-black rounded-lg flex-shrink-0">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${getCategoryColor(q.category)}`}>
-                          {getCategoryIcon(q.category)} {q.category.replace('_', ' ')}
-                        </span>
+                  <div className="p-6">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-10 h-10 bg-apple-bg text-apple-text flex items-center justify-center font-semibold rounded-xl flex-shrink-0">
+                        {index + 1}
                       </div>
-                      <h3 className="text-lg font-bold">{q.question}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{q.why_important}</p>
-                    </div>
-                  </div>
-                  
-                  {q.options && q.options.length > 0 ? (
-                    <div className="space-y-2">
-                      {q.options.map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() => handleOptionSelect(q.id, option.value)}
-                          className={`w-full text-left p-4 border-2 transition-all rounded-lg flex items-center gap-3 ${
-                            answers[q.id]?.selectedOption === option.value
-                              ? 'border-cyan bg-cyan/10 shadow-brutal-sm'
-                              : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                            answers[q.id]?.selectedOption === option.value
-                              ? 'border-cyan bg-cyan'
-                              : 'border-gray-300'
-                          }`}>
-                            {answers[q.id]?.selectedOption === option.value && (
-                              <div className="w-2 h-2 bg-ink rounded-full" />
-                            )}
-                          </div>
-                          <span className="font-medium">{option.label}</span>
-                        </button>
-                      ))}
-                      
-                      {answers[q.id]?.selectedOption === 'other' && (
-                        <div className="mt-3 ml-8">
-                          <input
-                            type="text"
-                            value={answers[q.id]?.customText || ''}
-                            onChange={(e) => handleCustomTextChange(q.id, e.target.value)}
-                            placeholder="Please specify..."
-                            className="w-full p-3 bg-white border-2 border-cyan focus:border-ink text-ink font-medium focus:outline-none transition-colors rounded-lg"
-                            autoFocus
-                          />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-apple-gray">
+                            {getCategoryIcon(q.category)} {q.category.replace('_', ' ')}
+                          </span>
                         </div>
-                      )}
+                        <h3 className="text-lg font-semibold text-apple-text">{q.question}</h3>
+                        <p className="text-sm text-apple-gray mt-1">{q.why_important}</p>
+                      </div>
                     </div>
-                  ) : (
-                    <textarea
-                      value={answers[q.id]?.customText || ''}
-                      onChange={(e) => handleCustomTextChange(q.id, e.target.value)}
-                      placeholder={q.example_answer || 'Enter your answer...'}
-                      className="w-full h-24 p-4 bg-gray-50 border-2 border-gray-200 focus:border-cyan text-ink font-medium resize-none focus:outline-none transition-colors rounded-lg"
-                    />
-                  )}
+                    
+                    {q.options && q.options.length > 0 ? (
+                      <div className="space-y-2 mt-4">
+                        {q.options.map((option) => {
+                          const isSelected = answers[q.id]?.selectedOption === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              onClick={() => handleOptionSelect(q.id, option.value)}
+                              className={`w-full text-left p-4 rounded-xl transition-all duration-200 flex items-center gap-3 ${
+                                isSelected
+                                  ? 'bg-primary-500/10 border-2 border-primary-500'
+                                  : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                              }`}
+                            >
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                                isSelected
+                                  ? 'border-primary-500 bg-primary-500'
+                                  : 'border-gray-300'
+                              }`}>
+                                {isSelected && (
+                                  <CheckIcon className="w-3 h-3 text-white" />
+                                )}
+                              </div>
+                              <span className={`font-medium ${isSelected ? 'text-apple-text' : 'text-apple-gray'}`}>
+                                {option.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                        
+                        {answers[q.id]?.selectedOption === 'other' && (
+                          <div className="mt-3 ml-8">
+                            <input
+                              type="text"
+                              value={answers[q.id]?.customText || ''}
+                              onChange={(e) => handleCustomTextChange(q.id, e.target.value)}
+                              placeholder="Please specify..."
+                              className="w-full p-3 bg-white border-2 border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-apple-text font-medium focus:outline-none transition-all rounded-xl"
+                              autoFocus
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <textarea
+                        value={answers[q.id]?.customText || ''}
+                        onChange={(e) => handleCustomTextChange(q.id, e.target.value)}
+                        placeholder={q.example_answer || 'Enter your answer...'}
+                        className="w-full h-24 p-4 bg-gray-50 border-2 border-transparent focus:border-primary-500 focus:bg-white text-apple-text font-medium resize-none focus:outline-none transition-all rounded-xl mt-4"
+                      />
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-manilla border-2 border-ink p-6 rounded-xl shadow-brutal">
-              <div className="text-sm">
-                <p className="font-bold">Answering helps create a more tailored plan.</p>
-                <p className="text-gray-600">But you can skip if you prefer.</p>
-              </div>
-              <div className="flex gap-3">
-                <button 
-                  onClick={handleSkip}
-                  className="px-6 py-3 border-2 border-ink bg-white font-bold hover:bg-gray-100 transition-colors"
-                >
-                  Skip Questions
-                </button>
-                <button 
-                  onClick={handleSubmit}
-                  className="btn-cyan flex items-center gap-2"
-                >
-                  Generate Plan
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </button>
+            {/* Action Bar */}
+            <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-6">
+              <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+                <div className="text-sm text-center sm:text-left">
+                  <p className="font-medium text-apple-text">Answering helps create a more tailored plan.</p>
+                  <p className="text-apple-gray">But you can skip if you prefer.</p>
+                </div>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={handleSkip}
+                    className="px-6 py-3 rounded-full font-medium text-apple-gray hover:bg-gray-100 transition-colors"
+                  >
+                    Skip Questions
+                  </button>
+                  <button 
+                    onClick={handleSubmit}
+                    className="bg-apple-text text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-all shadow-sm flex items-center gap-2"
+                  >
+                    Generate Plan
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
-          </>
+          </div>
         )}
       </main>
     </div>
