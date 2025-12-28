@@ -1126,15 +1126,16 @@ class AIService:
 
         MECE FRAMEWORK - Cover these 4 dimensions (pick the most relevant questions for THIS specific business):
         
-        1. FINANCIAL DIMENSION (Mutually Exclusive):
+        1. GEOGRAPHIC DIMENSION (ASK THIS FIRST if location is unclear):
+           - CRITICAL: If the business name or idea could apply to multiple locations, ALWAYS ask "Where will this business operate?" as the FIRST question
+           - Service area: Which city/region will you serve?
+           - Local requirements: Any location-specific regulations, licenses, or needs?
+           - Physical presence: Storefront, home-based, fully remote?
+           
+        2. FINANCIAL DIMENSION (Mutually Exclusive):
            - Funding needs: How much capital to start? Bootstrap vs investors?
            - Revenue expectations: First-year revenue target?
            - Pricing model: Subscription vs one-time? Premium vs value?
-           
-        2. GEOGRAPHIC DIMENSION (Mutually Exclusive):
-           - Service area: Local city, regional, national, or global?
-           - Local requirements: Any location-specific regulations, licenses, or needs?
-           - Physical presence: Storefront, home-based, fully remote?
            
         3. HUMAN DIMENSION (Mutually Exclusive):
            - Founder expertise: Your background and key skills?
@@ -1147,11 +1148,12 @@ class AIService:
            - Differentiation: What makes you 10x better than alternatives?
 
         QUESTION DESIGN RULES:
-        1. NEVER ask generic questions - tailor every question to THIS specific business
-        2. Options should reflect real industry knowledge (actual price points, realistic timelines)
-        3. Make options SPECIFIC: "$5K-15K (bootstrapped)" not just "Small budget"
-        4. Always include "Other (please specify)" and "I don't know" as final options
-        5. Each question should unlock strategic insights, not just collect data
+        1. IF the business idea does NOT mention a specific city/state/country, the FIRST question MUST ask about location
+        2. NEVER ask generic questions - tailor every question to THIS specific business
+        3. Options should reflect real industry knowledge (actual price points, realistic timelines)
+        4. Make options SPECIFIC: "$5K-15K (bootstrapped)" not just "Small budget"
+        5. Always include "Other (please specify)" and "I don't know" as final options
+        6. Each question should unlock strategic insights, not just collect data
 
         Return a JSON object with this EXACT structure:
         {{
@@ -1219,14 +1221,14 @@ class AIService:
             return json.loads(content)
     
     async def _call_ai_fast(self, prompt: str) -> dict:
-        """Use GPT-4o-mini for faster responses on simpler tasks like question generation."""
+        """Use Gemini Flash for faster responses on simpler tasks like question generation."""
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     f"{self.base_url}/chat/completions",
                     headers=self.headers,
                     json={
-                        "model": "openai/gpt-oss-120b",
+                        "model": "google/gemini-2.0-flash-001",
                         "messages": [
                             {
                                 "role": "system",

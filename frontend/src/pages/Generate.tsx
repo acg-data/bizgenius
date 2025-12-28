@@ -147,7 +147,9 @@ export default function Generate() {
     }
   };
 
-  const startSessionGeneration = async () => {
+  const startSessionGeneration = async (retryCount = 0) => {
+    const maxRetries = 3;
+    
     try {
       const response = await axios.post('/api/v1/sessions/create', {
         idea: businessIdea,
@@ -166,6 +168,12 @@ export default function Generate() {
       pollingRef.current = setInterval(() => pollSessionStatus(newSessionId), 2000);
       
     } catch (err: any) {
+      if (retryCount < maxRetries) {
+        const delay = Math.pow(2, retryCount) * 1000;
+        console.log(`Retrying session creation in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return startSessionGeneration(retryCount + 1);
+      }
       setError(err.response?.data?.detail || 'Failed to start generation. Please try again.');
     }
   };
