@@ -74,6 +74,16 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-28: Session Persistence, OAuth & Welcome Emails
+  - Added GenerationSession model for database-persisted generation state
+  - Users can now leave the Generate page and return without losing progress
+  - Implemented Replit Auth OAuth with Google, GitHub, Apple, and email/password
+  - Added OAuthUser model for storing authenticated user data
+  - Created email service using Resend via Replit Connectors for welcome emails
+  - New users automatically receive a branded welcome email on signup
+  - Improved question generation to be contextual and avoid repetition
+  - Added ConversationHistory model to track user context across sessions
+
 - 2025-12-27: Enhanced Competitor Discovery & Financial Exports
   - Added Gemini Flash (`google/gemini-2.0-flash-001`) for competitor discovery with real sources
   - Competitor analysis now shows 5-10 direct + 3-5 indirect competitors with:
