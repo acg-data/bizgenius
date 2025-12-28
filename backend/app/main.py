@@ -10,7 +10,7 @@ from pathlib import Path
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.core.exceptions import register_exception_handlers
-from app.api import auth, users, ideas, subscriptions, payments, documents, generate
+from app.api import auth, users, ideas, subscriptions, payments, documents, generate, sessions, replit_auth
 from app.db.init_db import init_db
 
 # Initialize structured logging
@@ -82,6 +82,8 @@ app.include_router(subscriptions.router, prefix="/api/v1/subscriptions", tags=["
 app.include_router(payments.router, prefix="/api/v1/payments", tags=["Payments"])
 app.include_router(documents.router, prefix="/api/v1/documents", tags=["Documents"])
 app.include_router(generate.router, prefix="/api/v1/generate", tags=["Generate"])
+app.include_router(sessions.router, prefix="/api/v1/sessions", tags=["Sessions"])
+app.include_router(replit_auth.router, prefix="/api/auth", tags=["OAuth"])
 
 
 @app.get("/health")

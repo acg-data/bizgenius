@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { SparklesIcon, ArrowRightIcon, CommandLineIcon, CheckIcon, ChartBarIcon, DocumentTextIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ArrowRightIcon, CommandLineIcon, CheckIcon, ChartBarIcon, DocumentTextIcon, RocketLaunchIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../hooks/useAuth';
 
 const TYPEWRITER_PHRASES = [
   "A dog walking app for busy professionals in Austin...",
@@ -12,6 +13,7 @@ const TYPEWRITER_PHRASES = [
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { user, isAuthenticated, isLoading, login, logout } = useAuth();
   const [businessIdea, setBusinessIdea] = useState('');
   const [placeholder, setPlaceholder] = useState('');
   const [phraseIndex, setPhraseIndex] = useState(0);
@@ -88,10 +90,38 @@ export default function Landing() {
           <div className="flex items-center gap-6 text-sm font-medium">
             <a href="#demo" className="text-apple-text/70 hover:text-apple-text transition hidden md:block">How it Works</a>
             <a href="#features" className="text-apple-text/70 hover:text-apple-text transition hidden md:block">Features</a>
-            <Link to="/login" className="text-apple-text/70 hover:text-apple-text transition">Log In</Link>
-            <Link to="/register" className="bg-apple-text text-white px-4 py-1.5 rounded-full hover:bg-gray-800 transition shadow-sm text-sm">
-              Get Started
-            </Link>
+            {isLoading ? (
+              <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+            ) : isAuthenticated && user ? (
+              <div className="flex items-center gap-3">
+                {user.profile_image_url ? (
+                  <img 
+                    src={user.profile_image_url} 
+                    alt={user.first_name || 'User'} 
+                    className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                  />
+                ) : (
+                  <UserCircleIcon className="w-8 h-8 text-gray-400" />
+                )}
+                <span className="text-apple-text hidden md:block">{user.first_name || user.email}</span>
+                <button 
+                  onClick={logout}
+                  className="text-apple-text/70 hover:text-apple-text transition"
+                >
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <>
+                <button onClick={login} className="text-apple-text/70 hover:text-apple-text transition">Log In</button>
+                <button 
+                  onClick={login} 
+                  className="bg-apple-text text-white px-4 py-1.5 rounded-full hover:bg-gray-800 transition shadow-sm text-sm"
+                >
+                  Get Started
+                </button>
+              </>
+            )}
           </div>
         </div>
       </nav>

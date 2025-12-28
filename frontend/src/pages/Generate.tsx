@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { CommandLineIcon, ArrowRightIcon, CheckIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
@@ -12,11 +12,13 @@ interface GenerationStep {
 const STORAGE_KEY = 'myceo_pending_idea';
 const RESULT_KEY = 'myceo_analysis_result';
 const ANSWERS_KEY = 'myceo_answers';
+const SESSION_KEY = 'myceo_session_id';
 
 export default function Generate() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   const businessIdea = useMemo(() => {
     if (location.state?.businessIdea) {
@@ -64,64 +66,109 @@ export default function Generate() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const completedSteps = steps.filter(s => s.status === 'completed').length;
   const progress = (completedSteps / steps.length) * 100;
 
-  useEffect(() => {
-    if (!businessIdea) {
-      return;
-    }
-
-    if (isGenerating || isComplete) return;
-
-    const generateBusiness = async () => {
-      setIsGenerating(true);
-      const stepIds = steps.map(s => s.id);
-      let currentStep = 0;
+  const pollSessionStatus = async (sid: string) => {
+    try {
+      const response = await axios.get(`/api/v1/sessions/status/${sid}`);
+      const { status, current_step, result: sessionResult, error_message } = response.data;
       
-      const stepInterval = setInterval(() => {
-        if (currentStep < stepIds.length) {
-          setSteps(prev => prev.map((step, idx) => ({
-            ...step,
-            status: idx < currentStep ? 'completed' : idx === currentStep ? 'in_progress' : 'pending'
-          })));
-          currentStep++;
-        }
-      }, 2000);
-
-      try {
-        const response = await axios.post('/api/v1/generate/', {
-          idea: businessIdea,
-          answers: Object.keys(answers).length > 0 ? answers : null
-        });
-        
-        clearInterval(stepInterval);
-        setResult(response.data);
+      if (status === 'completed' && sessionResult) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        setResult(sessionResult);
         setSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
         setIsComplete(true);
-        localStorage.setItem(RESULT_KEY, JSON.stringify(response.data));
+        localStorage.setItem(RESULT_KEY, JSON.stringify(sessionResult));
         localStorage.removeItem(STORAGE_KEY);
-      } catch (err: any) {
-        clearInterval(stepInterval);
-        setError(err.response?.data?.detail || 'Failed to generate business analysis. Please try again.');
+        localStorage.removeItem(SESSION_KEY);
+      } else if (status === 'failed') {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        setError(error_message || 'Generation failed. Please try again.');
         setSteps(prev => prev.map(step => ({
           ...step,
-          status: step.status === 'in_progress' || step.status === 'completed' ? 'error' : 'pending'
+          status: step.status === 'in_progress' ? 'error' : step.status
         })));
-        setIsGenerating(false);
+      } else if (status === 'generating') {
+        const stepIndex = steps.findIndex(s => s.id === current_step);
+        setSteps(prev => prev.map((step, idx) => ({
+          ...step,
+          status: idx < stepIndex ? 'completed' : idx === stepIndex ? 'in_progress' : 'pending'
+        })));
+      }
+    } catch (err) {
+      console.error('Failed to poll session status:', err);
+    }
+  };
+
+  const startDirectGeneration = async () => {
+    const stepIds = steps.map(s => s.id);
+    let currentStep = 0;
+    
+    const stepInterval = setInterval(() => {
+      if (currentStep < stepIds.length) {
+        setSteps(prev => prev.map((step, idx) => ({
+          ...step,
+          status: idx < currentStep ? 'completed' : idx === currentStep ? 'in_progress' : 'pending'
+        })));
+        currentStep++;
+      }
+    }, 2000);
+
+    try {
+      const response = await axios.post('/api/v1/generate/', {
+        idea: businessIdea,
+        answers: Object.keys(answers).length > 0 ? answers : null
+      });
+      
+      clearInterval(stepInterval);
+      setResult(response.data);
+      setSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
+      setIsComplete(true);
+      localStorage.setItem(RESULT_KEY, JSON.stringify(response.data));
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (err: any) {
+      clearInterval(stepInterval);
+      setError(err.response?.data?.detail || 'Failed to generate business analysis. Please try again.');
+      setSteps(prev => prev.map(step => ({
+        ...step,
+        status: step.status === 'in_progress' || step.status === 'completed' ? 'error' : 'pending'
+      })));
+    }
+  };
+
+  useEffect(() => {
+    if (!businessIdea || isComplete) return;
+
+    const existingSessionId = localStorage.getItem(SESSION_KEY);
+    
+    if (existingSessionId) {
+      setSessionId(existingSessionId);
+      pollingRef.current = setInterval(() => pollSessionStatus(existingSessionId), 2000);
+      pollSessionStatus(existingSessionId);
+    } else if (!sessionId) {
+      startDirectGeneration();
+    }
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
       }
     };
-
-    generateBusiness();
   }, [businessIdea]);
 
   const handleRetry = () => {
     setError(null);
-    setIsGenerating(false);
+    setSessionId(null);
     setIsComplete(false);
+    localStorage.removeItem(SESSION_KEY);
     setSteps(prev => prev.map(step => ({ ...step, status: 'pending' })));
+    
+    setTimeout(() => {
+      startDirectGeneration();
+    }, 100);
   };
 
   const handleViewResults = () => {
@@ -173,7 +220,6 @@ export default function Generate() {
 
       <div className="max-w-4xl mx-auto px-6 pt-24 pb-16">
         <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
-          {/* Header */}
           <div className="p-8 border-b border-gray-100">
             <div className="flex items-center gap-2 mb-4">
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
@@ -202,7 +248,6 @@ export default function Generate() {
             </div>
           </div>
 
-          {/* Progress Bar */}
           <div className="px-8 py-4 border-b border-gray-100 bg-gray-50">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-apple-text">
@@ -220,7 +265,6 @@ export default function Generate() {
             </div>
           </div>
 
-          {/* Error State */}
           {error && (
             <div className="m-8 bg-red-50 border border-red-200 rounded-xl p-6">
               <p className="font-medium text-red-700 mb-4">{error}</p>
@@ -242,7 +286,6 @@ export default function Generate() {
             </div>
           )}
 
-          {/* Steps Grid */}
           <div className="p-8 grid grid-cols-2 md:grid-cols-3 gap-3">
             {steps.map((step) => (
               <div 
@@ -282,7 +325,6 @@ export default function Generate() {
             ))}
           </div>
 
-          {/* Loading State */}
           {!isComplete && !error && (
             <div className="px-8 pb-8">
               <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-6 text-center">
@@ -295,7 +337,6 @@ export default function Generate() {
             </div>
           )}
 
-          {/* Results Preview */}
           {isComplete && result && (
             <div className="p-8 border-t border-gray-100">
               <h2 className="text-xl font-semibold text-apple-text mb-6">Quick Preview</h2>

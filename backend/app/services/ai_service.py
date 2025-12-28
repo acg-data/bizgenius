@@ -1105,48 +1105,71 @@ class AIService:
         """
         return await self._call_ai(prompt)
     
-    async def generate_discovery_questions(self, idea: str) -> dict:
+    async def generate_discovery_questions(self, idea: str, previous_answers: dict | None = None) -> dict:
+        context_section = ""
+        if previous_answers and len(previous_answers) > 0:
+            context_section = "\n\nPREVIOUS ANSWERS (use these to ask smarter follow-up questions, DO NOT repeat these topics):\n"
+            for q_id, answer_data in previous_answers.items():
+                if isinstance(answer_data, dict):
+                    context_section += f"- {answer_data.get('question', '')}: {answer_data.get('answer', '')}\n"
+        
         prompt = f"""
-        You are a seasoned startup advisor conducting an initial discovery call with a founder. Your goal is to ask the RIGHT questions that will uncover critical information missing from their pitch.
+        You are a brilliant startup advisor who adapts your questions based on what you learn. Analyze the business idea deeply and ask CONTEXTUAL questions that will unlock the most valuable insights.
 
         BUSINESS IDEA: {idea}
+        {context_section}
 
-        REQUIRED QUESTIONS (always include these in order):
+        QUESTION DESIGN PRINCIPLES:
+        1. NEVER ask generic questions - every question should be tailored to THIS specific business
+        2. Options should reflect real industry knowledge (actual price points, real competitors, realistic timelines)
+        3. Each question should BUILD on what you already know to dig deeper
+        4. Frame questions to help founders think strategically, not just collect data
         
-        1. LOCATION (FIRST): 
-           - If local/regional business: Ask for specific CITY and STATE (e.g., "Austin, TX")
-           - If online/global business: Ask for COUNTRY of primary operations
+        REQUIRED QUESTIONS (in order):
         
-        2. INVESTMENT AMOUNT (REQUIRED):
-           - Ask how much capital they have available to invest in this business
-           - Options should range from bootstrapping to significant investment amounts
-        
-        3. TIMELINE (REQUIRED):
-           - Ask when they want to launch or how quickly they want to move
+        Q1. LOCATION - Be specific to the business type:
+           - Service business: "Which neighborhood/city will you serve first?"
+           - E-commerce: "Where is your target customer base?"
+           - SaaS: "Which market will you launch in first?"
+           
+        Q2. INVESTMENT - Tailored to business complexity:
+           - Low-cost service: "$500-$2K, $2K-$5K, $5K-$15K, $15K+"
+           - Tech startup: "$10K-$50K, $50K-$150K, $150K-$500K, $500K+"
+           - Physical product: "$5K-$20K, $20K-$75K, $75K-$250K, $250K+"
+           
+        Q3. TIMELINE - Realistic for the business type:
+           - Simple service: "2 weeks, 1 month, 2-3 months"
+           - App/tech: "1-3 months, 3-6 months, 6-12 months"
+           - Physical product: "3-6 months, 6-12 months, 12+ months"
 
-        After these 3 required questions, add 1-2 additional questions based on gaps. Focus on:
-        - Target customer specifics
-        - Pricing strategy  
-        - Competition awareness
-        - Business model decisions
-
-        CRITICAL: Every question must include these TWO special options at the END:
-        1. "Other (please specify)" - for custom answers
-        2. "I don't know" - for founders who are unsure
+        Q4-Q6. STRATEGIC QUESTIONS - Pick 2-3 that matter MOST for this specific business:
+           - Pricing strategy with real market comparisons
+           - Unique angle/differentiation
+           - First customer acquisition strategy
+           - Key partnership opportunities
+           - Technology/platform choices
+           - Team/skills needed
+           
+        MAKE OPTIONS SPECIFIC AND INDUSTRY-INFORMED:
+        Instead of: "Premium pricing" / "Mid-tier pricing" / "Budget pricing"
+        Use: "$45-60/session (premium)", "$30-40/session (competitive)", "$20-25/session (value)"
+        
+        Every question MUST end with: "Other (please specify)" and "I don't know"
 
         Return a JSON object with this EXACT structure:
         {{
-            "analysis": "Brief 1-2 sentence analysis of what's provided and what's missing",
+            "analysis": "Insightful 2-sentence analysis of the idea's potential and key unknowns",
             "questions": [
                 {{
                     "id": "q1",
-                    "question": "The question text",
-                    "why_important": "Why this matters for the business plan",
-                    "category": "One of: location, target_customer, pricing, competition, business_model, go_to_market, team, funding, investment, timeline",
+                    "question": "Specific, contextual question text",
+                    "why_important": "Strategic reason why this matters for success",
+                    "category": "location|target_customer|pricing|competition|business_model|go_to_market|team|funding|investment|timeline|differentiation",
                     "options": [
-                        {{"value": "option_1", "label": "First choice with specific detail"}},
-                        {{"value": "option_2", "label": "Second choice with specific detail"}},
-                        {{"value": "option_3", "label": "Third choice with specific detail"}},
+                        {{"value": "opt_1", "label": "Specific option with context"}},
+                        {{"value": "opt_2", "label": "Another realistic option"}},
+                        {{"value": "opt_3", "label": "Third smart option"}},
+                        {{"value": "opt_4", "label": "Fourth option if needed"}},
                         {{"value": "other", "label": "Other (please specify)"}},
                         {{"value": "unknown", "label": "I don't know"}}
                     ],
@@ -1155,22 +1178,7 @@ class AIService:
             ]
         }}
 
-        EXAMPLE for a dog walking app in Texas:
-        
-        Question 1 (LOCATION - REQUIRED): "Where will you primarily operate this business?"
-        Options: ["Austin, TX", "Houston, TX", "Dallas, TX", "San Antonio, TX", "Other (please specify)", "I don't know"]
-
-        Question 2 (INVESTMENT - REQUIRED): "How much capital do you have available to invest in this business?"
-        Options: ["Under $5,000 (bootstrapping)", "$5,000 - $25,000", "$25,000 - $100,000", "$100,000+", "Other (please specify)", "I don't know"]
-
-        Question 3 (TIMELINE - REQUIRED): "When do you want to launch?"
-        Options: ["Within 1 month", "1-3 months", "3-6 months", "6-12 months", "Other (please specify)", "I don't know"]
-
-        Question 4 (PRICING): "What price point are you considering per walk?"
-        Options: ["$15-20 per 30-min walk (budget-friendly)", "$25-35 per 30-min walk (mid-market)", "$40-50+ per 30-min walk (premium)", "Other (please specify)", "I don't know"]
-
-        Generate 4-6 questions total. First 3 MUST be location, investment, and timeline. All options must end with "Other (please specify)" and "I don't know".
-        
+        Generate 5-6 HIGH-QUALITY questions. Be a strategic advisor, not a form filler.
         Only return valid JSON, no additional text.
         """
         result = await self._call_ai_fast(prompt)
