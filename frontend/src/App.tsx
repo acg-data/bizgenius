@@ -26,6 +26,7 @@ import Loading from './pages/Loading';
 import Generate from './pages/Generate';
 import Results from './pages/Results';
 import Questions from './pages/Questions';
+import Branding from './pages/Branding';
 
 function App() {
   const { setUser, setToken, isAuthenticated, isLoading } = useAuthStore();
@@ -53,6 +54,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/questions" element={<Questions />} />
+      <Route path="/branding" element={<Branding />} />
       <Route path="/generate" element={<Generate />} />
       <Route path="/results" element={<Results />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />

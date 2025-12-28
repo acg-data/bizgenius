@@ -209,7 +209,7 @@ export default function Questions() {
     });
     
     localStorage.setItem('myceo_answers', JSON.stringify(answersWithContext));
-    navigate('/generate', { 
+    navigate('/branding', { 
       state: { 
         businessIdea, 
         answers: answersWithContext
@@ -218,7 +218,7 @@ export default function Questions() {
   };
 
   const handleSkip = () => {
-    navigate('/generate', { 
+    navigate('/branding', { 
       state: { 
         businessIdea,
         answers: {}

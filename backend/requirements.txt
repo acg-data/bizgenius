@@ -28,3 +28,7 @@ stripe>=7.0.0
 # Utilities
 python-multipart>=0.0.6
 python-dotenv>=1.0.0
+
+# AI Image Generation (Gemini via Replit AI Integrations)
+google-genai>=1.0.0
+tenacity>=8.2.0

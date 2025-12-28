@@ -74,6 +74,18 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-28: Branding Step with Logo Generation & Color Picker
+  - New /branding page between Questions and Generate
+  - Company name input with AI-suggested names
+  - Logo generation using Gemini 2.5 Flash Image (Nano Banana)
+  - 4 logo variations generated with different styles
+  - Coolors.co-style color palette picker:
+    - 5 color swatches with click-to-lock functionality
+    - Shuffle unlocked colors button
+    - AI-suggested palettes based on business type
+  - Branding data (name, logo, colors) passed to Generate page
+  - Backend: /api/v1/branding endpoints for names, logos, palettes
+
 - 2025-12-28: Single-Question Flow with Instant First Question
   - Redesigned Questions page to show one question at a time
   - First question (location) displays instantly with no API wait
