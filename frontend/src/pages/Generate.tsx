@@ -84,17 +84,41 @@ export default function Generate() {
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isResuming, setIsResuming] = useState(false);
+  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const completedSteps = steps.filter(s => s.status === 'completed').length;
   const progress = (completedSteps / steps.length) * 100;
 
+  const startStepTimer = () => {
+    if (stepTimerRef.current) return;
+    let currentStepIndex = 0;
+    stepTimerRef.current = setInterval(() => {
+      setSteps(prev => {
+        const inProgressIdx = prev.findIndex(s => s.status === 'in_progress');
+        const nextIdx = inProgressIdx >= 0 ? inProgressIdx : currentStepIndex;
+        if (nextIdx < prev.length - 1) {
+          currentStepIndex = nextIdx + 1;
+          return prev.map((step, idx) => ({
+            ...step,
+            status: idx < currentStepIndex ? 'completed' : idx === currentStepIndex ? 'in_progress' : 'pending'
+          }));
+        }
+        return prev;
+      });
+    }, 12000);
+  };
+
   const pollSessionStatus = async (sid: string) => {
     try {
       const response = await axios.get(`/api/v1/sessions/status/${sid}`);
-      const { status, current_step, result: sessionResult, error_message } = response.data;
+      const { status, result: sessionResult, error_message } = response.data;
+      
+      setIsResuming(false);
       
       if (status === 'completed' && sessionResult) {
         if (pollingRef.current) clearInterval(pollingRef.current);
+        if (stepTimerRef.current) clearInterval(stepTimerRef.current);
         setResult(sessionResult);
         setSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
         setIsComplete(true);
@@ -103,56 +127,46 @@ export default function Generate() {
         localStorage.removeItem(SESSION_KEY);
       } else if (status === 'failed') {
         if (pollingRef.current) clearInterval(pollingRef.current);
+        if (stepTimerRef.current) clearInterval(stepTimerRef.current);
         setError(error_message || 'Generation failed. Please try again.');
         setSteps(prev => prev.map(step => ({
           ...step,
           status: step.status === 'in_progress' ? 'error' : step.status
         })));
-      } else if (status === 'generating') {
-        const stepIndex = steps.findIndex(s => s.id === current_step);
-        setSteps(prev => prev.map((step, idx) => ({
-          ...step,
-          status: idx < stepIndex ? 'completed' : idx === stepIndex ? 'in_progress' : 'pending'
-        })));
+      } else if (status === 'generating' || status === 'pending') {
+        startStepTimer();
       }
-    } catch (err) {
-      console.error('Failed to poll session status:', err);
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        localStorage.removeItem(SESSION_KEY);
+        setSessionId(null);
+        startSessionGeneration();
+      } else {
+        console.error('Failed to poll session status:', err);
+      }
     }
   };
 
-  const startDirectGeneration = async () => {
-    const stepIds = steps.map(s => s.id);
-    let currentStep = 0;
-    
-    const stepInterval = setInterval(() => {
-      if (currentStep < stepIds.length) {
-        setSteps(prev => prev.map((step, idx) => ({
-          ...step,
-          status: idx < currentStep ? 'completed' : idx === currentStep ? 'in_progress' : 'pending'
-        })));
-        currentStep++;
-      }
-    }, 2000);
-
+  const startSessionGeneration = async () => {
     try {
-      const response = await axios.post('/api/v1/generate/', {
+      const response = await axios.post('/api/v1/sessions/create', {
         idea: businessIdea,
         answers: Object.keys(answers).length > 0 ? answers : null
       });
       
-      clearInterval(stepInterval);
-      setResult(response.data);
-      setSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
-      setIsComplete(true);
-      localStorage.setItem(RESULT_KEY, JSON.stringify(response.data));
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (err: any) {
-      clearInterval(stepInterval);
-      setError(err.response?.data?.detail || 'Failed to generate business analysis. Please try again.');
-      setSteps(prev => prev.map(step => ({
+      const newSessionId = response.data.session_id;
+      setSessionId(newSessionId);
+      localStorage.setItem(SESSION_KEY, newSessionId);
+      
+      setSteps(prev => prev.map((step, idx) => ({
         ...step,
-        status: step.status === 'in_progress' || step.status === 'completed' ? 'error' : 'pending'
+        status: idx === 0 ? 'in_progress' : 'pending'
       })));
+      
+      pollingRef.current = setInterval(() => pollSessionStatus(newSessionId), 2000);
+      
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to start generation. Please try again.');
     }
   };
 
@@ -163,29 +177,51 @@ export default function Generate() {
     
     if (existingSessionId) {
       setSessionId(existingSessionId);
-      pollingRef.current = setInterval(() => pollSessionStatus(existingSessionId), 2000);
+      setIsResuming(true);
+      setSteps(prev => prev.map((step, idx) => ({
+        ...step,
+        status: idx === 0 ? 'in_progress' : 'pending'
+      })));
       pollSessionStatus(existingSessionId);
+      pollingRef.current = setInterval(() => pollSessionStatus(existingSessionId), 2000);
     } else if (!sessionId) {
-      startDirectGeneration();
+      startSessionGeneration();
     }
 
     return () => {
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
       }
+      if (stepTimerRef.current) {
+        clearInterval(stepTimerRef.current);
+      }
     };
   }, [businessIdea]);
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setError(null);
-    setSessionId(null);
     setIsComplete(false);
-    localStorage.removeItem(SESSION_KEY);
     setSteps(prev => prev.map(step => ({ ...step, status: 'pending' })));
     
-    setTimeout(() => {
-      startDirectGeneration();
-    }, 100);
+    const existingSessionId = localStorage.getItem(SESSION_KEY);
+    
+    if (existingSessionId) {
+      try {
+        await axios.post(`/api/v1/sessions/retry/${existingSessionId}`);
+        setSteps(prev => prev.map((step, idx) => ({
+          ...step,
+          status: idx === 0 ? 'in_progress' : 'pending'
+        })));
+        pollingRef.current = setInterval(() => pollSessionStatus(existingSessionId), 2000);
+      } catch {
+        localStorage.removeItem(SESSION_KEY);
+        setSessionId(null);
+        startSessionGeneration();
+      }
+    } else {
+      setSessionId(null);
+      startSessionGeneration();
+    }
   };
 
   const handleViewResults = () => {
@@ -348,8 +384,17 @@ export default function Generate() {
                 <div className="inline-block mb-3">
                   <div className="w-12 h-12 border-3 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                 </div>
-                <p className="font-medium text-apple-text">Our AI is building your complete business operating system</p>
-                <p className="text-sm text-apple-gray mt-1">This typically takes 2-3 minutes for comprehensive analysis</p>
+                {isResuming ? (
+                  <>
+                    <p className="font-medium text-apple-text">Welcome back! Reconnecting to your generation...</p>
+                    <p className="text-sm text-apple-gray mt-1">Your analysis is still running in the background</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-apple-text">Our AI is building your complete business operating system</p>
+                    <p className="text-sm text-apple-gray mt-1">Feel free to leave - we'll save your progress. This typically takes 2-3 minutes.</p>
+                  </>
+                )}
               </div>
             </div>
           )}
