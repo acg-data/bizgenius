@@ -74,6 +74,13 @@ For local/service businesses, the platform automatically:
 - **Enriches AI prompts** with real local market data
 
 ## Recent Changes
+- 2025-12-28: Faster Questions, Location-First, Retry Logic
+  - Switched question generation from slow `openai/gpt-oss-120b` to fast `google/gemini-2.0-flash-001`
+  - First question now loads in ~2-3 seconds instead of 10+ seconds
+  - Location is now asked FIRST if not mentioned in business idea (fixes "Spark" ambiguity)
+  - Added automatic retry with exponential backoff (1s, 2s, 4s) for session creation
+  - Errors only shown after 3 failed attempts, reducing transient failures
+
 - 2025-12-28: Mobile Browser Background Resilience
   - Fixed critical bug: Generation no longer fails when users leave Safari on mobile
   - Switched from long-running POST request to async session-based architecture
