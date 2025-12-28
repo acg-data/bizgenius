@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #18181b;
+  color: #1D1D1F;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -16,114 +16,78 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #F2F0E9;
+  background: #F5F5F7;
 }
 
 #root {
   min-height: 100vh;
 }
 
+::selection {
+  background-color: #1D1D1F;
+  color: white;
+}
+
 @layer utilities {
-  .card-base {
-    @apply bg-paper border-2 border-ink shadow-brutal transition-all duration-200;
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
-  
-  .card-base:hover {
-    @apply translate-x-[-2px] translate-y-[-2px] shadow-brutal-lg;
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
   }
-  
+
+  .card-apple {
+    @apply bg-white rounded-2xl shadow-card transition-all duration-300;
+  }
+
+  .card-apple:hover {
+    @apply shadow-card-hover;
+  }
+
   .btn-primary {
-    @apply bg-ink text-white font-black px-6 py-3 border-2 border-ink shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-ink/90 transition-all uppercase tracking-wide text-sm;
-  }
-  
-  .btn-cyan {
-    @apply bg-cyan text-ink font-black px-6 py-4 border-2 border-ink shadow-brutal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-cyan-hover transition-all text-lg flex items-center justify-center gap-2;
+    @apply bg-apple-text text-white font-medium px-6 py-3 rounded-full hover:bg-gray-800 transition-all duration-200 shadow-sm;
   }
 
-  .marker-highlight {
-    background: linear-gradient(180deg, transparent 60%, #00F0FF 60%);
+  .btn-secondary {
+    @apply bg-white text-apple-text font-medium px-6 py-3 rounded-full border border-gray-200 hover:bg-gray-50 transition-all duration-200;
   }
-  
-  .paper-texture {
-    background-image: radial-gradient(#18181b 0.5px, transparent 0.5px);
-    background-size: 20px 20px;
-    opacity: 0.1;
+
+  .input-apple {
+    @apply bg-white border border-gray-200 rounded-xl px-4 py-3 text-apple-text focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 shadow-input;
   }
-  
-  .receipt-edge {
-    background: linear-gradient(-45deg, transparent 16px, #ffffff 0), linear-gradient(45deg, transparent 16px, #ffffff 0);
-    background-repeat: repeat-x;
-    background-position: left bottom;
-    background-size: 24px 32px;
-    height: 32px;
-    width: 100%;
-    position: absolute;
-    bottom: -32px;
-    left: 0;
+
+  .text-gradient {
+    background: linear-gradient(135deg, #1D1D1F 0%, #86868b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  
-  .mad-lib-input {
-    @apply bg-transparent border-b-4 border-ink/20 text-ink font-black text-center focus:outline-none focus:border-cyan transition-colors placeholder-gray-300;
+
+  .hero-glow {
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.15), transparent);
   }
 }
 
-.gradient-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background-color: #1D1D1F;
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  vertical-align: middle;
 }
 
-.glass-effect {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.card-hover {
-  transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-.text-gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-.pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
-}
-
-@keyframes slide-in-right {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out forwards;
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 @keyframes shimmer {
@@ -139,27 +103,49 @@ body {
   background: linear-gradient(
     90deg,
     #f0f0f0 25%,
-    #e0e0e0 50%,
+    #e8e8e8 50%,
     #f0f0f0 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
-.skeleton-text {
-  height: 1em;
-  margin-bottom: 0.5em;
+.animate-stagger > * {
+  animation: fadeInUp 0.6s ease-out both;
 }
 
-.skeleton-text:last-child {
-  width: 70%;
+.animate-stagger > *:nth-child(1) { animation-delay: 0s; }
+.animate-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.animate-stagger > *:nth-child(3) { animation-delay: 0.2s; }
+.animate-stagger > *:nth-child(4) { animation-delay: 0.3s; }
+.animate-stagger > *:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-.skeleton-circle {
+.live-dot {
+  position: relative;
+}
+
+.live-dot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
+  background: inherit;
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
-.skeleton-card {
-  border-radius: 12px;
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.tracking-tighter {
+  letter-spacing: -0.04em;
 }
