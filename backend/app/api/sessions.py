@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.core.database import get_db_session
 from app.models.models import GenerationSession, ConversationHistory
-from app.services.ai_service import ai_service
+from app.services.gemini_service import gemini_service
 from app.services.local_business_service import local_business_service
 import asyncio
 import logging
@@ -33,8 +33,22 @@ class SessionStatusResponse(BaseModel):
     error_message: str | None = None
 
 
+def update_session_step(db, session_id: str, step: str, partial_result: dict | None = None):
+    """Helper to update session progress."""
+    session = db.query(GenerationSession).filter(
+        GenerationSession.session_id == session_id
+    ).first()
+    if session:
+        session.current_step = step
+        if partial_result and session.result:
+            session.result = {**session.result, **partial_result}
+        elif partial_result:
+            session.result = partial_result
+        db.commit()
+
+
 async def run_generation_in_background(session_id: str, idea: str, answers: dict | None):
-    """Background task to run the full generation."""
+    """Background task using phased generation with Gemini for better context management."""
     with get_db_session() as db:
         try:
             session = db.query(GenerationSession).filter(
@@ -46,6 +60,7 @@ async def run_generation_in_background(session_id: str, idea: str, answers: dict
             
             session.status = "generating"
             session.current_step = "market"
+            session.result = {}
             db.commit()
             
             local_data = await local_business_service.analyze_local_business(idea)
@@ -63,78 +78,117 @@ async def run_generation_in_background(session_id: str, idea: str, answers: dict
                     elif isinstance(answer_data, str) and answer_data.strip():
                         enriched_idea += f"- {answer_data.strip()}\n"
             
+            local_context = ""
             if local_data.get("is_local_business") and local_data.get("population_data"):
                 pop_data = local_data["population_data"]
-                enriched_idea += f"""
-
-LOCAL MARKET DATA (USE THIS FOR TAM/SAM/SOM):
+                local_context = f"""
+LOCAL MARKET DATA:
 - Location: {pop_data.get('city')}, {pop_data.get('state')}
 - City Population: {pop_data.get('city_population', 0):,}
-- Metro Area Population: {int(pop_data.get('metro_population', 0)):,}
-- State Population: {pop_data.get('state_population', 0):,}
-- Estimated Households: {int(pop_data.get('city_population', 75000) / 2.5):,}
-- Working Adults (estimated): {int(pop_data.get('city_population', 75000) * 0.65):,}
+- Metro Population: {int(pop_data.get('metro_population', 0)):,}
+- Households: {int(pop_data.get('city_population', 75000) / 2.5):,}
 """
-            
-            if local_data.get("competitors_analyzed"):
-                enriched_idea += "\n\nCOMPETITOR WEBSITE ANALYSIS:\n"
-                for comp in local_data["competitors_analyzed"]:
-                    if comp.get("error"):
-                        continue
-                    enriched_idea += f"""
-- {comp.get('domain', 'Unknown')}:
-  Title: {comp.get('title', 'N/A')}
-  Description: {comp.get('description', 'N/A')[:200] if comp.get('description') else 'N/A'}
-  Prices Found: {comp.get('prices_found', [])}
-  Has Online Booking: {comp.get('features', {}).get('has_online_booking', False)}
-  Shows Reviews: {comp.get('features', {}).get('shows_reviews', False)}
-  Has Pricing Page: {comp.get('features', {}).get('has_pricing_page', False)}
-"""
+                enriched_idea += local_context
             
             location = local_data.get("location") if local_data.get("is_local_business") else None
             
-            session.current_step = "competitors"
-            db.commit()
+            final_result = {
+                "local_business_data": local_data if local_data.get("is_local_business") else None
+            }
+            context = ""
             
-            results = await asyncio.gather(
-                ai_service.generate_executive_summary(enriched_idea),
-                ai_service.generate_market_research(enriched_idea),
-                ai_service.generate_business_plan(enriched_idea),
-                ai_service.generate_financial_model(enriched_idea),
-                ai_service.generate_competitor_analysis(enriched_idea),
-                ai_service.discover_competitors_with_gemini(enriched_idea, location),
-                ai_service.generate_go_to_market(enriched_idea),
-                ai_service.generate_team_plan(enriched_idea),
-                ai_service.generate_risk_assessment(enriched_idea),
-                ai_service.generate_action_plan(enriched_idea),
-                ai_service.generate_pitch_deck(enriched_idea),
+            logger.info(f"Session {session_id}: Phase 1 - Market Foundations")
+            update_session_step(db, session_id, "market")
+            
+            phase1_results = await asyncio.gather(
+                gemini_service.generate_market_research(enriched_idea, local_context),
+                gemini_service.generate_competitor_discovery(enriched_idea, location),
                 return_exceptions=True
             )
             
-            def safe_result(r) -> dict | None:
-                return r if isinstance(r, dict) else None
+            market_research = phase1_results[0] if isinstance(phase1_results[0], dict) else {}
+            competitor_discovery = phase1_results[1] if isinstance(phase1_results[1], dict) else {}
             
-            final_result = {
-                "executive_summary": safe_result(results[0]),
-                "market_research": safe_result(results[1]),
-                "business_plan": safe_result(results[2]),
-                "financial_model": safe_result(results[3]),
-                "competitor_analysis": safe_result(results[4]),
-                "competitor_discovery": safe_result(results[5]),
-                "go_to_market": safe_result(results[6]),
-                "team_plan": safe_result(results[7]),
-                "risk_assessment": safe_result(results[8]),
-                "action_plan": safe_result(results[9]),
-                "pitch_deck": safe_result(results[10]),
-                "local_business_data": local_data if local_data.get("is_local_business") else None
-            }
+            final_result["market_research"] = market_research
+            final_result["competitor_discovery"] = competitor_discovery
+            update_session_step(db, session_id, "icp", final_result)
             
-            session.result = final_result
-            session.status = "completed"
-            session.completed_at = datetime.utcnow()
-            db.commit()
+            context = gemini_service.extract_context_summary(market_research, "market_research")
+            context += gemini_service.extract_context_summary(competitor_discovery, "competitor_discovery")
             
-            logger.info(f"Session {session_id} completed successfully")
+            logger.info(f"Session {session_id}: Phase 2 - Strategic Core")
+            update_session_step(db, session_id, "executive")
+            
+            executive_summary = await gemini_service.generate_executive_summary(enriched_idea, context)
+            final_result["executive_summary"] = executive_summary
+            update_session_step(db, session_id, "business", final_result)
+            
+            context += gemini_service.extract_context_summary(executive_summary, "executive_summary")
+            
+            business_plan = await gemini_service.generate_business_plan(enriched_idea, context)
+            final_result["business_plan"] = business_plan
+            update_session_step(db, session_id, "financial", final_result)
+            
+            context += gemini_service.extract_context_summary(business_plan, "business_plan")
+            
+            phase2b_results = await asyncio.gather(
+                gemini_service.generate_financial_model(enriched_idea, context),
+                gemini_service.generate_competitor_analysis(enriched_idea, context),
+                return_exceptions=True
+            )
+            
+            financial_model = phase2b_results[0] if isinstance(phase2b_results[0], dict) else {}
+            competitor_analysis = phase2b_results[1] if isinstance(phase2b_results[1], dict) else {}
+            
+            final_result["financial_model"] = financial_model
+            final_result["competitor_analysis"] = competitor_analysis
+            update_session_step(db, session_id, "gtm", final_result)
+            
+            context += gemini_service.extract_context_summary(financial_model, "financial_model")
+            
+            logger.info(f"Session {session_id}: Phase 3 - Execution Plans")
+            
+            phase3a_results = await asyncio.gather(
+                gemini_service.generate_go_to_market(enriched_idea, context),
+                gemini_service.generate_team_plan(enriched_idea, context),
+                return_exceptions=True
+            )
+            
+            go_to_market = phase3a_results[0] if isinstance(phase3a_results[0], dict) else {}
+            team_plan = phase3a_results[1] if isinstance(phase3a_results[1], dict) else {}
+            
+            final_result["go_to_market"] = go_to_market
+            final_result["team_plan"] = team_plan
+            update_session_step(db, session_id, "risk", final_result)
+            
+            phase3b_results = await asyncio.gather(
+                gemini_service.generate_risk_assessment(enriched_idea, context),
+                gemini_service.generate_action_plan(enriched_idea, context),
+                return_exceptions=True
+            )
+            
+            risk_assessment = phase3b_results[0] if isinstance(phase3b_results[0], dict) else {}
+            action_plan = phase3b_results[1] if isinstance(phase3b_results[1], dict) else {}
+            
+            final_result["risk_assessment"] = risk_assessment
+            final_result["action_plan"] = action_plan
+            update_session_step(db, session_id, "pitch", final_result)
+            
+            logger.info(f"Session {session_id}: Phase 4 - Pitch Deck")
+            
+            pitch_deck = await gemini_service.generate_pitch_deck(enriched_idea, context)
+            final_result["pitch_deck"] = pitch_deck
+            
+            session = db.query(GenerationSession).filter(
+                GenerationSession.session_id == session_id
+            ).first()
+            if session:
+                session.result = final_result
+                session.status = "completed"
+                session.completed_at = datetime.utcnow()
+                db.commit()
+            
+            logger.info(f"Session {session_id} completed successfully with phased generation")
             
         except Exception as e:
             logger.error(f"Session {session_id} failed: {str(e)}")
