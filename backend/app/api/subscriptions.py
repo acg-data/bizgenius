@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+import logging
 
 from app.core.database import get_db
 from app.core.config import settings
@@ -9,10 +10,12 @@ from app.api.deps import get_current_user
 from app.services.stripe_service import stripe_service
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class SubscriptionRequest(BaseModel):
-    plan_type: str  # "pro" or "coach"
+    plan_type: str  # "monthly" or "annual"
+    session_id: str | None = None  # Optional: link to generation session after payment
 
 
 @router.post("/create-checkout-session")
@@ -29,13 +32,31 @@ async def create_checkout_session(
         current_user.stripe_customer_id = customer.id
         db.commit()
     
-    price_id = settings.STRIPE_PRICE_ID_PRO if request.plan_type == "pro" else settings.STRIPE_PRICE_ID_COACH
+    if request.plan_type == "monthly":
+        price_id = settings.STRIPE_PRICE_ID_MONTHLY
+    elif request.plan_type == "annual":
+        price_id = settings.STRIPE_PRICE_ID_ANNUAL
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid plan type. Use 'monthly' or 'annual'"
+        )
+    
+    if not price_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Stripe price ID not configured"
+        )
+    
+    success_url = f"{settings.CORS_ORIGINS[0]}/results?success=true"
+    if request.session_id:
+        success_url += f"&session_id={request.session_id}"
     
     session = stripe_service.create_checkout_session(
         customer_id=current_user.stripe_customer_id,
         price_id=price_id,
-        success_url=f"{settings.CORS_ORIGINS[0]}/dashboard?success=true",
-        cancel_url=f"{settings.CORS_ORIGINS[0]}/pricing?canceled=true",
+        success_url=success_url,
+        cancel_url=f"{settings.CORS_ORIGINS[0]}/results?canceled=true",
         customer_email=current_user.email
     )
     

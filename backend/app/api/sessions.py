@@ -1,18 +1,82 @@
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.core.database import get_db_session
-from app.models.models import GenerationSession, ConversationHistory
+from app.models.models import GenerationSession, ConversationHistory, User
 from app.services.gemini_service import gemini_service
 from app.services.local_business_service import local_business_service
+from app.api.deps import decode_token
 import asyncio
 import logging
 import secrets
 from datetime import datetime
+from typing import Optional
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+PREMIUM_SECTIONS = ["financial_model", "pitch_deck"]
+
+
+def normalize_financial_model(data: dict | None) -> dict | None:
+    """Transform financial model keys from Gemini output to frontend expected format."""
+    if not data:
+        return data
+    
+    normalized = {}
+    
+    if "five_year_projections" in data:
+        projections = data["five_year_projections"]
+        normalized["projections"] = projections
+    elif "projections" in data:
+        normalized["projections"] = data["projections"]
+    
+    if "break_even_analysis" in data:
+        be = data["break_even_analysis"]
+        normalized["break_even"] = {
+            "month": be.get("break_even_timeline", "N/A"),
+            "customers_needed": be.get("customers_needed", "N/A"),
+            "revenue_needed": be.get("break_even_revenue", "N/A")
+        }
+    elif "break_even" in data:
+        normalized["break_even"] = data["break_even"]
+    
+    if "funding_strategy" in data:
+        fs = data["funding_strategy"]
+        normalized["funding"] = {
+            "total_raise": fs.get("total_needed", "N/A"),
+            "stages": fs.get("stages", []),
+            "runway_months": fs.get("runway_months", 0)
+        }
+    elif "funding" in data:
+        normalized["funding"] = data["funding"]
+    
+    if "scenario_analysis" in data:
+        normalized["scenario_analysis"] = data["scenario_analysis"]
+    
+    if "assumptions" in data:
+        normalized["assumptions"] = data["assumptions"]
+    
+    for key, value in data.items():
+        if key not in normalized and key not in ["five_year_projections", "break_even_analysis", "funding_strategy"]:
+            normalized[key] = value
+    
+    return normalized
+
+
+def normalize_result(result: dict | None) -> dict | None:
+    """Normalize all sections in the result to match frontend expectations."""
+    if not result:
+        return result
+    
+    normalized = result.copy()
+    
+    if "financial_model" in normalized and normalized["financial_model"]:
+        if not normalized["financial_model"].get("locked"):
+            normalized["financial_model"] = normalize_financial_model(normalized["financial_model"])
+    
+    return normalized
 
 
 class CreateSessionRequest(BaseModel):
@@ -232,8 +296,59 @@ async def create_session(request: CreateSessionRequest, background_tasks: Backgr
     return CreateSessionResponse(session_id=session_id, status="pending")
 
 
+def get_user_from_token(authorization: Optional[str], db) -> Optional[User]:
+    """Extract user from Bearer token if valid."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    try:
+        token = authorization.replace("Bearer ", "")
+        token_data = decode_token(token)
+        if not token_data or not token_data.email:
+            return None
+        return db.query(User).filter(User.email == token_data.email).first()
+    except Exception:
+        return None
+
+
+def redact_premium_sections(result: dict | None, is_subscribed: bool) -> dict | None:
+    """Remove or mark premium sections as locked for non-subscribers."""
+    if not result or is_subscribed:
+        return result
+    
+    redacted = result.copy()
+    for section in PREMIUM_SECTIONS:
+        if section in redacted and redacted[section]:
+            redacted[section] = {
+                "locked": True,
+                "message": "Upgrade to Pro to unlock this section",
+                "preview": _get_section_preview(section, redacted[section])
+            }
+    return redacted
+
+
+def _get_section_preview(section: str, data: dict) -> dict:
+    """Create a teaser preview of locked content."""
+    if section == "financial_model":
+        projections = data.get("five_year_projections", []) or data.get("projections", [])
+        return {
+            "available_years": len(projections) if projections else 5,
+            "has_break_even": "break_even_analysis" in data or "break_even" in data,
+            "has_funding_strategy": "funding_strategy" in data or "funding" in data
+        }
+    elif section == "pitch_deck":
+        slides = data.get("slides", [])
+        return {
+            "total_slides": len(slides) if slides else 10,
+            "slide_titles": [s.get("title", "") for s in slides[:3]] if slides else ["Problem", "Solution", "Market"]
+        }
+    return {}
+
+
 @router.get("/status/{session_id}", response_model=SessionStatusResponse)
-async def get_session_status(session_id: str):
+async def get_session_status(
+    session_id: str,
+    authorization: Optional[str] = Header(None)
+):
     """Get the current status of a generation session."""
     with get_db_session() as db:
         session = db.query(GenerationSession).filter(
@@ -246,13 +361,90 @@ async def get_session_status(session_id: str):
                 detail="Session not found"
             )
         
+        user = get_user_from_token(authorization, db)
+        is_subscribed = user and user.subscription_tier == "pro" and user.subscription_status == "active"
+        
+        result = normalize_result(session.result)
+        result = redact_premium_sections(result, is_subscribed)
+        
         return SessionStatusResponse(
             session_id=session.session_id,
             status=session.status,
             current_step=session.current_step,
-            result=session.result,
+            result=result,
             error_message=session.error_message
         )
+
+
+class AttachUserRequest(BaseModel):
+    session_id: str
+
+
+class AttachUserResponse(BaseModel):
+    success: bool
+    message: str
+
+
+@router.post("/attach-user", response_model=AttachUserResponse)
+async def attach_user_to_session(
+    request: AttachUserRequest,
+    authorization: str = Header(...)
+):
+    """Link a generation session to the authenticated user."""
+    with get_db_session() as db:
+        user = get_user_from_token(authorization, db)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or missing authentication"
+            )
+        
+        session = db.query(GenerationSession).filter(
+            GenerationSession.session_id == request.session_id
+        ).first()
+        
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found"
+            )
+        
+        if session.user_id and session.user_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Session belongs to another user"
+            )
+        
+        session.user_id = user.id
+        db.commit()
+        
+        return AttachUserResponse(
+            success=True,
+            message="Session linked to your account"
+        )
+
+
+@router.get("/user-sessions")
+async def get_user_sessions(authorization: str = Header(...)):
+    """Get all sessions for the authenticated user."""
+    with get_db_session() as db:
+        user = get_user_from_token(authorization, db)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or missing authentication"
+            )
+        
+        sessions = db.query(GenerationSession).filter(
+            GenerationSession.user_id == user.id
+        ).order_by(GenerationSession.created_at.desc()).limit(10).all()
+        
+        return [{
+            "session_id": s.session_id,
+            "business_idea": s.business_idea[:100] + "..." if len(s.business_idea) > 100 else s.business_idea,
+            "status": s.status,
+            "created_at": s.created_at.isoformat() if s.created_at else None
+        } for s in sessions]
 
 
 @router.post("/retry/{session_id}", response_model=CreateSessionResponse)

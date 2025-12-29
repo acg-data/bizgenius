@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     # Stripe - Required for production
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
-    STRIPE_PRICE_ID_PRO: str = "price_pro_monthly"
-    STRIPE_PRICE_ID_COACH: str = "price_coach_monthly"
+    STRIPE_PRICE_ID_MONTHLY: str = ""
+    STRIPE_PRICE_ID_ANNUAL: str = ""
 
     # Database (Supabase)
     DATABASE_URL: str

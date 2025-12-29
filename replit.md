@@ -73,7 +73,42 @@ For local/service businesses, the platform automatically:
 - **Identifies market gaps** based on competitor analysis
 - **Enriches AI prompts** with real local market data
 
+## Subscription & Paywall System
+The platform uses a freemium model with premium sections gated behind subscription:
+
+**Free Tier** (all users):
+- Executive Summary, Market Research, Competitor Analysis
+- Business Plan, Go-to-Market, Team Plan
+- Risk Assessment, 90-Day Action Plan
+
+**Pro Tier** ($10/month or $100/year):
+- Financial Model (5-year projections, break-even, funding strategy)
+- Pitch Deck (10-12 slides with speaker notes, investor FAQs)
+
+**Implementation**:
+- Backend: `sessions.py` has `redact_premium_sections()` that replaces premium sections with `{locked: true, preview: {...}}` for non-Pro users
+- Backend: `normalize_result()` transforms Gemini output field names to frontend-expected format
+- Backend: `subscriptions.py` creates Stripe checkout sessions, `payments.py` handles webhooks
+- Frontend: `PaywallModal.tsx` shows upgrade options with plan selection
+- Frontend: `LockedSectionCard` displays preview info and unlock button for locked sections
+- Frontend: Results page checks `data.locked` before accessing any nested fields
+
+**Stripe Environment Variables**:
+- `STRIPE_SECRET_KEY` - API key for Stripe
+- `STRIPE_PRICE_ID_MONTHLY` - Price ID for $10/month plan
+- `STRIPE_PRICE_ID_ANNUAL` - Price ID for $100/year plan
+- `STRIPE_WEBHOOK_SECRET` - Webhook signing secret
+
 ## Recent Changes
+- 2025-12-29: Stripe Subscription Paywall
+  - Added PaywallModal component for upgrade flow with monthly/annual plan selection
+  - Created LockedSectionCard component showing teaser preview with unlock button
+  - Backend redacts financial_model and pitch_deck for non-Pro users
+  - Added normalize_result() to transform Gemini output to frontend-expected field names
+  - Sidebar shows lock icon for premium sections when not subscribed
+  - Webhook handling for checkout.session.completed, subscription updates, and invoice events
+  - Users can upgrade mid-session and immediately unlock premium content
+
 - 2025-12-28: Phased Gemini Generation Pipeline
   - Switched from parallel OpenRouter calls to phased Gemini execution via Replit AI Integrations
   - New GeminiService using google.genai SDK with automatic retry (5 attempts, exponential backoff)

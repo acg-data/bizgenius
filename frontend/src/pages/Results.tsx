@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { 
   CommandLineIcon, 
   ArrowDownTrayIcon, 
@@ -17,10 +17,14 @@ import {
   PresentationChartLineIcon,
   MapPinIcon,
   BuildingOfficeIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  LockClosedIcon
 } from '@heroicons/react/24/outline';
+import PaywallModal, { LockedSectionCard } from '../components/PaywallModal';
+import { useAuthStore } from '../store';
 
 const RESULT_KEY = 'myceo_analysis_result';
+const SESSION_KEY = 'myceo_session_id';
 
 type TabId = 'summary' | 'market' | 'business' | 'financials' | 'competitors' | 'gtm' | 'team' | 'risks' | 'action' | 'pitch' | 'local';
 
@@ -162,11 +166,28 @@ const MarketSizeChart = ({ tam, sam, som }: { tam: string; sam: string; som: str
 export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user, isAuthenticated } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabId>('summary');
   const [result, setResult] = useState<any>(null);
   const [_businessIdea, setBusinessIdea] = useState<string>('');
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [branding, setBranding] = useState<any>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  const isProUser = isAuthenticated && user?.subscription_tier === 'pro' && user?.subscription_status === 'active';
+
+  useEffect(() => {
+    const savedSessionId = localStorage.getItem(SESSION_KEY);
+    if (savedSessionId) {
+      setSessionId(savedSessionId);
+    }
+    
+    if (searchParams.get('success') === 'true') {
+      window.location.reload();
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (location.state?.result) {
@@ -723,6 +744,18 @@ export default function Results() {
     const data = result.financial_model;
     if (!data) return <div className="text-gray-500">Financial model not available</div>;
     
+    if (data.locked && !isProUser) {
+      return (
+        <LockedSectionCard
+          title="Financial Model"
+          description="Unlock 5-year projections, break-even analysis, and funding strategy to make data-driven decisions."
+          icon={CurrencyDollarIcon}
+          preview={data.preview}
+          onUnlock={() => setShowPaywall(true)}
+        />
+      );
+    }
+    
     return (
       <div className="space-y-6">
         <div className="flex gap-3">
@@ -1202,6 +1235,18 @@ export default function Results() {
     const data = result.pitch_deck;
     if (!data) return <div className="text-gray-500">Pitch deck not available</div>;
     
+    if (data.locked && !isProUser) {
+      return (
+        <LockedSectionCard
+          title="Pitch Deck"
+          description="Get your investor-ready pitch deck with 10-12 slides, speaker notes, and prepared answers for investor questions."
+          icon={PresentationChartLineIcon}
+          preview={data.preview}
+          onUnlock={() => setShowPaywall(true)}
+        />
+      );
+    }
+    
     return (
       <div className="space-y-6">
         {data.slides && data.slides.length > 0 && (
@@ -1498,6 +1543,7 @@ export default function Results() {
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
+                  const isLocked = !isProUser && (tab.id === 'financials' || tab.id === 'pitch');
                   return (
                     <button
                       key={tab.id}
@@ -1516,7 +1562,11 @@ export default function Results() {
                         <Icon className="w-4 h-4" />
                       </div>
                       <span className="flex-1">{tab.shortLabel}</span>
-                      <ChevronRightIcon className={`w-4 h-4 transition-transform ${isActive ? 'rotate-90' : 'group-hover:translate-x-0.5'}`} />
+                      {isLocked ? (
+                        <LockClosedIcon className="w-4 h-4 text-violet-400" />
+                      ) : (
+                        <ChevronRightIcon className={`w-4 h-4 transition-transform ${isActive ? 'rotate-90' : 'group-hover:translate-x-0.5'}`} />
+                      )}
                     </button>
                   );
                 })}
@@ -1544,6 +1594,12 @@ export default function Results() {
           </div>
         </div>
       </div>
+
+      <PaywallModal 
+        isOpen={showPaywall} 
+        onClose={() => setShowPaywall(false)} 
+        sessionId={sessionId || undefined}
+      />
     </div>
   );
 }
