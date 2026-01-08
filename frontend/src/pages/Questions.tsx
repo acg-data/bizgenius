@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { CommandLineIcon, ArrowRightIcon, ArrowLeftIcon, CheckIcon, SparklesIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { CommandLineIcon, ArrowRightIcon, ArrowLeftIcon, CheckIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import { useAction } from '../lib/convex';
 import { api } from '../convex/_generated/api';
 
@@ -26,105 +26,64 @@ interface AnswerState {
   customText: string;
 }
 
-interface BrandingData {
-  companyName: string;
-  logos: (string | null)[];
-  palettes: string[][];
-  isLoading: boolean;
-}
 
-// 8 canned questions - appear instantly, no API call needed
+// 5 essential questions - focused on what the AI actually needs
 const CANNED_QUESTIONS: Question[] = [
   {
-    id: 'target_customer',
-    question: 'Who is your ideal customer?',
-    why_important: 'Understanding your target audience shapes market research, pricing, and go-to-market strategy.',
+    id: 'target_market',
+    question: 'Who will pay for this?',
+    why_important: 'Shapes market research, personas, and go-to-market strategy.',
     category: 'target_customer',
     options: [
-      { value: 'b2c_consumers', label: 'Individual consumers (B2C)' },
-      { value: 'b2b_smb', label: 'Small/medium businesses (B2B SMB)' },
-      { value: 'b2b_enterprise', label: 'Large enterprises (B2B Enterprise)' },
-      { value: 'both', label: 'Both consumers and businesses' },
-      { value: 'other', label: 'Other' }
+      { value: 'b2c', label: 'Individual consumers (B2C)' },
+      { value: 'b2b_smb', label: 'Small/medium businesses' },
+      { value: 'b2b_enterprise', label: 'Large enterprises' },
+      { value: 'both', label: 'Both consumers and businesses' }
     ]
   },
   {
-    id: 'problem_solved',
-    question: 'What problem does your business solve?',
-    why_important: 'A clear problem statement drives your value proposition and helps us understand your market opportunity.',
+    id: 'problem',
+    question: "What's the #1 pain point you solve?",
+    why_important: 'Your problem statement drives the entire value proposition and pitch.',
     category: 'differentiation',
     allow_custom_input: true,
-    example_answer: 'e.g., "People waste 2+ hours/week on meal planning"'
+    example_answer: 'e.g., "Small restaurants lose 30% of revenue to delivery app fees"'
   },
   {
-    id: 'location_market',
-    question: 'Where will you operate?',
-    why_important: 'Geographic scope affects market sizing, regulations, and go-to-market strategy.',
+    id: 'geography',
+    question: 'Where will you operate first?',
+    why_important: 'Geography determines market size calculations and regulatory considerations.',
     category: 'location',
     options: [
-      { value: 'local', label: 'Local (single city/region)' },
-      { value: 'regional', label: 'Regional (multiple cities/states)' },
-      { value: 'national', label: 'National (one country)' },
-      { value: 'international', label: 'International (multiple countries)' },
-      { value: 'online_global', label: 'Online / Global (no geographic limits)' }
+      { value: 'local', label: 'Single city or region' },
+      { value: 'national', label: 'One country (national)' },
+      { value: 'global', label: 'Online / Global' }
     ]
   },
   {
     id: 'revenue_model',
-    question: 'How will you make money?',
-    why_important: 'Your revenue model shapes financial projections, pricing strategy, and business model.',
+    question: 'How will customers pay you?',
+    why_important: 'Revenue model shapes your financial projections and business strategy.',
     category: 'business_model',
     options: [
-      { value: 'subscription', label: 'Subscription / recurring revenue' },
-      { value: 'one_time', label: 'One-time purchases' },
-      { value: 'marketplace', label: 'Marketplace / transaction fees' },
-      { value: 'advertising', label: 'Advertising / freemium' },
+      { value: 'subscription', label: 'Subscription (recurring)' },
+      { value: 'transaction', label: 'Per-transaction or one-time' },
+      { value: 'marketplace', label: 'Marketplace fees' },
       { value: 'services', label: 'Services / consulting' },
-      { value: 'other', label: 'Other' }
+      { value: 'freemium', label: 'Free + premium / ads' }
     ]
   },
   {
-    id: 'differentiation',
-    question: 'What makes you different from alternatives?',
-    why_important: 'Your unique edge defines competitive positioning, messaging, and defensibility.',
-    category: 'competition',
-    allow_custom_input: true,
-    example_answer: 'e.g., "We use AI to cut delivery time by 50%"'
-  },
-  {
-    id: 'business_stage',
-    question: 'What stage is your business at?',
-    why_important: "We'll tailor the plan, financial projections, and recommendations to your current stage.",
+    id: 'stage',
+    question: 'Where are you at today?',
+    why_important: "We'll tailor projections and recommendations to your current reality.",
     category: 'timeline',
     options: [
-      { value: 'idea', label: "Just an idea - haven't started yet" },
-      { value: 'mvp', label: 'Building MVP / prototype' },
-      { value: 'launched', label: 'Launched with early customers' },
-      { value: 'growing', label: 'Growing with revenue' },
-      { value: 'scaling', label: 'Scaling / raising funding' }
+      { value: 'idea', label: 'Just an idea' },
+      { value: 'building', label: 'Building product/MVP' },
+      { value: 'launched', label: 'Launched with customers' },
+      { value: 'growing', label: 'Growing with revenue' }
     ]
-  },
-  {
-    id: 'startup_budget',
-    question: "What's your initial budget to get started?",
-    why_important: 'Budget shapes financial projections, funding strategies, and operational recommendations.',
-    category: 'funding',
-    options: [
-      { value: 'bootstrap', label: 'Bootstrapping ($0 - $5K)' },
-      { value: 'small', label: 'Small budget ($5K - $25K)' },
-      { value: 'moderate', label: 'Moderate ($25K - $100K)' },
-      { value: 'funded', label: 'Well-funded ($100K+)' },
-      { value: 'seeking', label: 'Seeking investors' }
-    ]
-  },
-  {
-    id: 'company_name',
-    question: 'What would you like to name your company?',
-    why_important: "Your company name is the first impression customers will have. We'll generate logo options and color palettes while you continue.",
-    category: 'branding',
-    isCompanyName: true,
-    allow_custom_input: true,
-    example_answer: 'Enter your company name or leave blank for AI suggestions...'
   }
 ];
 
@@ -161,13 +120,7 @@ export default function Questions() {
   // Convex actions
   const generateSmartQuestions = useAction(api.ai.generateSmartQuestions);
   const generateInsight = useAction(api.ai.generateInsight);
-  const [branding, setBranding] = useState<BrandingData>({
-    companyName: '',
-    logos: [],
-    palettes: [],
-    isLoading: false
-  });
-  const brandingGeneratedRef = useRef(false);
+  // Branding removed - not needed for plan generation
 
   useEffect(() => {
     const idea = location.state?.businessIdea || localStorage.getItem('myceo_business_idea');
@@ -220,44 +173,6 @@ export default function Questions() {
     fetchAiQuestions();
   }, [businessIdea, generateSmartQuestions]);
 
-  const generateBrandingInBackground = useCallback(async (companyName: string) => {
-    if (brandingGeneratedRef.current || !companyName.trim()) return;
-    brandingGeneratedRef.current = true;
-    
-    setBranding(prev => ({ ...prev, companyName, isLoading: true }));
-    
-    try {
-      const [logosResponse, palettesResponse] = await Promise.all([
-        api.post('/branding/logo-variations', {
-          company_name: companyName,
-          business_idea: businessIdea,
-          count: 4
-        }).catch(() => ({ data: { logos: [] } })),
-        api.post('/branding/color-palettes', {
-          business_idea: businessIdea,
-          count: 3
-        }).catch(() => ({ data: { palettes: [] } }))
-      ]);
-      
-      setBranding({
-        companyName,
-        logos: logosResponse.data.logos || [],
-        palettes: palettesResponse.data.palettes || [],
-        isLoading: false
-      });
-      
-      localStorage.setItem('myceo_branding', JSON.stringify({
-        companyName,
-        logos: logosResponse.data.logos || [],
-        palettes: palettesResponse.data.palettes || [],
-        selectedLogo: logosResponse.data.logos?.[0] || null,
-        selectedPalette: palettesResponse.data.palettes?.[0] || []
-      }));
-    } catch (err) {
-      console.error('Background branding generation failed:', err);
-      setBranding(prev => ({ ...prev, isLoading: false }));
-    }
-  }, [businessIdea]);
 
   // Combine canned questions with AI questions when available
   // AI questions appear AFTER all canned questions
@@ -339,17 +254,15 @@ export default function Questions() {
   }, [currentQuestion?.id, currentIndex, businessIdea, answers, generateInsight]);
 
   const hasValidAnswer = currentQuestion && (
-    currentQuestion.isCompanyName
+    (!currentQuestion.options || currentQuestion.options.length === 0)
       ? currentAnswer?.customText?.trim()
-      : (!currentQuestion.options || currentQuestion.options.length === 0)
-        ? currentAnswer?.customText?.trim()
-        : currentAnswer?.selectedOption &&
-          (currentAnswer.selectedOption !== 'other' || currentAnswer.customText?.trim())
+      : currentAnswer?.selectedOption &&
+        (currentAnswer.selectedOption !== 'other' || currentAnswer.customText?.trim())
   );
 
-  // Total questions = canned (8) + AI questions (0-4, loading in background)
+  // Total questions = 5 canned + AI questions (0-2, loading in background)
   const totalDisplayQuestions = aiQuestionsLoading
-    ? TOTAL_CANNED_QUESTIONS + 3 // Show placeholder count while loading
+    ? TOTAL_CANNED_QUESTIONS + 2 // Show placeholder count while loading
     : allQuestions.length;
 
   // Last question: at end of combined list and AI fetch is done
@@ -364,13 +277,6 @@ export default function Questions() {
 
   const handleNext = () => {
     if (!hasValidAnswer) return;
-
-    if (currentQuestion?.isCompanyName) {
-      const companyName = currentAnswer?.customText?.trim() || '';
-      if (companyName && !brandingGeneratedRef.current) {
-        generateBrandingInBackground(companyName);
-      }
-    }
 
     if (isLastQuestion) {
       handleSubmit();
@@ -398,57 +304,37 @@ export default function Questions() {
 
   const handleSubmit = () => {
     const answersWithContext: Record<string, { question: string; answer: string }> = {};
-    let companyName = '';
 
     allQuestions.forEach((q: Question) => {
       const answerText = getAnswerText(q.id, q);
-      if (q.isCompanyName) {
-        companyName = answerText;
-      } else if (answerText.trim()) {
+      if (answerText.trim()) {
         answersWithContext[q.id] = {
           question: q.question,
           answer: answerText.trim()
         };
       }
     });
-    
+
     localStorage.setItem('myceo_answers', JSON.stringify(answersWithContext));
-    
-    const storedBranding = localStorage.getItem('myceo_branding');
-    let brandingData = storedBranding ? JSON.parse(storedBranding) : null;
-    
-    if (!brandingData && companyName) {
-      brandingData = {
-        companyName,
-        logos: branding.logos,
-        palettes: branding.palettes,
-        selectedLogo: branding.logos[0] || null,
-        selectedPalette: branding.palettes[0] || []
-      };
-      localStorage.setItem('myceo_branding', JSON.stringify(brandingData));
-    }
-    
-    navigate('/generate', { 
-      state: { 
-        businessIdea, 
-        answers: answersWithContext,
-        branding: brandingData
-      } 
+
+    navigate('/generate', {
+      state: {
+        businessIdea,
+        answers: answersWithContext
+      }
     });
   };
 
   const handleSkip = () => {
-    navigate('/generate', { 
-      state: { 
+    navigate('/generate', {
+      state: {
         businessIdea,
-        answers: {},
-        branding: null
-      } 
+        answers: {}
+      }
     });
   };
 
-  const getCategoryIcon = (category: string, isCompanyName?: boolean) => {
-    if (isCompanyName) return '✨';
+  const getCategoryIcon = (category: string) => {
     const icons: Record<string, string> = {
       target_customer: '👥',
       pricing: '💰',
@@ -510,10 +396,10 @@ export default function Questions() {
             <span className="text-sm font-semibold text-apple-text">
               Question {currentIndex + 1} of {totalDisplayQuestions}
             </span>
-            {(aiQuestionsLoading || branding.isLoading) && (
+            {aiQuestionsLoading && (
               <span className="text-xs text-apple-gray flex items-center gap-2">
                 <span className="w-3 h-3 border border-violet-500 border-t-transparent rounded-full animate-spin" />
-                {branding.isLoading ? 'Generating branding...' : 'Loading personalized questions...'}
+                Loading personalized questions...
               </span>
             )}
           </div>
@@ -522,7 +408,7 @@ export default function Questions() {
             {Array.from({ length: totalDisplayQuestions }).map((_, idx) => {
               const question = allQuestions[idx];
               const answer = question ? answers[question.id] : null;
-              const isAnswered = question?.isCompanyName
+              const isAnswered = question?.allow_custom_input && !question?.options
                 ? answer?.customText?.trim()
                 : answer?.selectedOption &&
                   (answer.selectedOption !== 'other' || answer.customText?.trim());
@@ -551,9 +437,9 @@ export default function Questions() {
           <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
             <div className="p-8">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">{getCategoryIcon(currentQuestion.category, currentQuestion.isCompanyName)}</span>
+                <span className="text-2xl">{getCategoryIcon(currentQuestion.category)}</span>
                 <span className="text-xs font-medium px-2 py-1 rounded-full bg-gradient-to-r from-violet-100 to-indigo-100 text-violet-700 uppercase tracking-wide">
-                  {currentQuestion.isCompanyName ? 'Branding' : currentQuestion.category.replace('_', ' ')}
+                  {currentQuestion.category.replace('_', ' ')}
                 </span>
                 {currentQuestion.mece_dimension && (
                   <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-600">
@@ -584,28 +470,7 @@ export default function Questions() {
                 </div>
               )}
               
-              {currentQuestion.isCompanyName ? (
-                <div className="space-y-4">
-                  <div className="relative">
-                    <SparklesIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-violet-400" />
-                    <input
-                      type="text"
-                      value={currentAnswer?.customText || ''}
-                      onChange={(e) => handleCustomTextChange(currentQuestion.id, e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder={currentQuestion.example_answer}
-                      className="w-full pl-12 pr-4 py-4 bg-gradient-to-r from-violet-50 to-indigo-50 border-2 border-violet-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 text-apple-text font-medium focus:outline-none transition-all rounded-xl text-lg"
-                      autoFocus
-                    />
-                  </div>
-                  {branding.isLoading && (
-                    <div className="flex items-center gap-2 text-sm text-violet-600 bg-violet-50 rounded-lg p-3">
-                      <span className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-                      Generating your logo and color palette in the background...
-                    </div>
-                  )}
-                </div>
-              ) : currentQuestion.options && currentQuestion.options.length > 0 ? (
+              {currentQuestion.options && currentQuestion.options.length > 0 ? (
                 <div className="space-y-3">
                   {currentQuestion.options.map((option) => {
                     const isSelected = currentAnswer?.selectedOption === option.value;

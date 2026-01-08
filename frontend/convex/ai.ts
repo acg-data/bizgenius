@@ -709,59 +709,55 @@ export const generateSmartQuestions = action({
     count: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { businessIdea, existingCategories = [], count = 4 } = args;
+    const { businessIdea, existingCategories = [] } = args;
 
-    const systemPrompt = `You are a sharp business strategist who asks the MOST IMPORTANT questions to understand a business idea deeply.
+    const systemPrompt = `You are a sharp business strategist. Your job is to analyze a business idea and decide if any ADDITIONAL questions are needed beyond the 5 standard questions (target market, problem, geography, revenue model, stage).
 
-Your job is to generate ${count} highly specific, insightful questions that:
-1. Are DIRECTLY relevant to THIS specific business idea (not generic)
-2. Uncover critical information that will shape the business plan
-3. Cover gaps NOT already addressed by these categories: ${existingCategories.join(", ")}
-4. Feel like questions a savvy investor or experienced entrepreneur would ask
+IMPORTANT: Most business ideas DON'T need extra questions. Only generate questions for SPECIAL CASES like:
+- Hardware/manufacturing businesses → "How will you manufacture at scale?"
+- Marketplaces → "Will you control supply, demand, or both?"
+- Regulated industries (healthcare, finance, legal) → "What compliance requirements apply?"
+- Deep tech/AI → "What's your data moat or technical differentiation?"
 
-Each question should have:
-- A clear, direct question (not vague)
-- Why it matters for THIS business specifically
-- Smart multiple-choice options that cover the realistic range of answers
-- Allow for custom input when needed
-
-Focus on questions about:
-- Unit economics specific to this business model
-- Key risks unique to this market
-- Regulatory or compliance considerations
-- Customer acquisition channels that fit this business
-- Timing and market conditions
-- Founder/team fit questions
-- Technology or operational moats`;
+Rules:
+1. Return 0 questions for standard service, SaaS, e-commerce, consulting businesses
+2. Return 1-2 questions ONLY if the business has unique complexity
+3. Never ask generic questions - only business-specific critical questions
+4. Questions must reveal information that significantly changes the business plan`;
 
     const userPrompt = `Business idea: "${businessIdea}"
+Existing categories covered: ${existingCategories.join(", ")}
 
-Generate ${count} highly specific questions for THIS business idea. NOT generic questions.
+Analyze this business idea. Does it have special complexity that requires additional questions?
 
-Return JSON with this EXACT structure:
+Return JSON with this structure:
 {
+  "analysis": "Brief explanation of why questions are/aren't needed",
+  "questions": []
+}
+
+If questions ARE needed (max 2), include them:
+{
+  "analysis": "This hardware business needs manufacturing strategy clarification",
   "questions": [
     {
-      "id": "unique_snake_case_id",
-      "question": "Specific question about THIS business?",
-      "why_important": "Why this matters for THIS specific business idea",
-      "category": "category_name",
-      "mece_dimension": "financial|market|operational|human",
+      "id": "manufacturing_approach",
+      "question": "How will you manufacture your hardware product?",
+      "why_important": "Manufacturing strategy determines 60% of unit economics and timeline",
+      "category": "operations",
+      "mece_dimension": "operational",
       "options": [
-        { "value": "option_1", "label": "First realistic option" },
-        { "value": "option_2", "label": "Second realistic option" },
-        { "value": "option_3", "label": "Third realistic option" },
+        { "value": "contract_manufacturer", "label": "Contract manufacturer (Foxconn-style)" },
+        { "value": "in_house", "label": "Build own manufacturing" },
+        { "value": "dropship", "label": "White-label/dropship existing products" },
         { "value": "other", "label": "Other" }
       ],
-      "allow_custom_input": true,
-      "example_answer": "Example if free-form input is primary"
+      "allow_custom_input": true
     }
   ]
 }
 
-Make questions SPECIFIC to "${businessIdea}". Reference the actual business in questions and options.
-Include industry-specific terminology where relevant.
-Options should reflect realistic scenarios for THIS type of business.`;
+Remember: MOST businesses need 0 additional questions. Only add questions for truly unique situations.`;
 
     try {
       const response = await fetch(OPENROUTER_API_URL, {
@@ -778,8 +774,8 @@ Options should reflect realistic scenarios for THIS type of business.`;
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
-          temperature: 0.8, // Slightly creative for varied questions
-          max_tokens: 2000,
+          temperature: 0.5, // More deterministic for smart filtering
+          max_tokens: 1000,
           response_format: { type: "json_object" },
         }),
       });
