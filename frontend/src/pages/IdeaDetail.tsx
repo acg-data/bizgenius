@@ -31,12 +31,12 @@ import {
 import type { Idea } from '../types';
 
 const mockIdea: Idea = {
-  id: 1,
+  _id: '1',
   title: 'AI-Powered Tutoring Platform',
   description: 'An adaptive learning platform that uses AI to personalize education for students of all ages',
   industry: 'EdTech',
   target_market: 'K-12 students, Parents, Schools',
-  user_id: 1,
+  userId: '1',
   business_plan: {
     executive_summary: 'An innovative AI-powered tutoring platform that revolutionizes personalized learning.',
     mission: 'To make quality education accessible to every student through AI-driven personalized learning.',
@@ -132,8 +132,8 @@ const mockIdea: Idea = {
     key_messages: ['AI personalization works', 'Large market', 'Experienced team'],
     call_to_action: 'Join us in revolutionizing education',
   },
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+  created_at: Date.now(),
+  updated_at: Date.now(),
 };
 
 const tabs = [

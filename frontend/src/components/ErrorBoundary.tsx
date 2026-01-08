@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button, Card, CardBody } from '@heroui/react';
 import { ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import * as Sentry from '@sentry/react';
 
 interface Props {
   children: ReactNode;
@@ -34,10 +35,12 @@ export class ErrorBoundary extends Component<Props, State> {
     // Log error to console in development
     console.error('ErrorBoundary caught an error:', error, errorInfo);
 
-    // TODO: Send to error tracking service (e.g., Sentry)
-    // if (import.meta.env.PROD) {
-    //   Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
-    // }
+    // Send to Sentry in production
+    if (import.meta.env.PROD) {
+      Sentry.captureException(error, {
+        extra: { componentStack: errorInfo.componentStack },
+      });
+    }
   }
 
   private handleReset = (): void => {

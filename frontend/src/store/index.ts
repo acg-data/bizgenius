@@ -1,109 +1,41 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, Idea, AuthState, IdeaState, SubscriptionPlan } from '../types';
 
-// Error types for the application
-export interface AppError {
-  code: string;
-  message: string;
-  details?: string;
-  requestId?: string;
-  timestamp: number;
-}
-
-interface ErrorState {
-  error: AppError | null;
-  isOffline: boolean;
-}
-
-interface AppState extends AuthState, IdeaState, ErrorState {
-  // Auth actions
-  setUser: (user: User | null) => void;
-  setToken: (token: string | null) => void;
-  logout: () => void;
-  // Idea actions
-  setIdeas: (ideas: Idea[]) => void;
-  addIdea: (idea: Idea) => void;
-  updateIdea: (id: number, updates: Partial<Idea>) => void;
-  removeIdea: (id: number) => void;
-  setCurrentIdea: (idea: Idea | null) => void;
-  // Loading actions
-  setLoading: (isLoading: boolean) => void;
+interface AppState {
+  isGenerating: boolean;
+  currentSessionId: string | null;
+  error: string | null;
+  
+  // Actions
   setGenerating: (isGenerating: boolean) => void;
-  // Error actions
-  setError: (error: Omit<AppError, 'timestamp'> | null) => void;
+  setCurrentSessionId: (sessionId: string | null) => void;
+  setError: (error: string | null) => void;
   clearError: () => void;
-  setOffline: (isOffline: boolean) => void;
 }
 
 export const useAuthStore = create<AppState>()(
   persist(
     (set) => ({
-      // Auth state
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      isLoading: false,
-
-      // Idea state
-      ideas: [],
-      currentIdea: null,
       isGenerating: false,
-
-      // Error state
+      currentSessionId: null,
       error: null,
-      isOffline: false,
-
-      // Auth actions
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-      setToken: (token) => set({ token, isAuthenticated: !!token }),
-      logout: () => set({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        ideas: [],
-        currentIdea: null,
-        error: null,
-      }),
-
-      // Idea actions
-      setIdeas: (ideas) => set({ ideas }),
-      addIdea: (idea) => set((state) => ({ ideas: [idea, ...state.ideas] })),
-      updateIdea: (id, updates) => set((state) => ({
-        ideas: state.ideas.map((i) => i.id === id ? { ...i, ...updates } : i),
-        currentIdea: state.currentIdea?.id === id
-          ? { ...state.currentIdea, ...updates }
-          : state.currentIdea
-      })),
-      removeIdea: (id) => set((state) => ({
-        ideas: state.ideas.filter((i) => i.id !== id),
-        currentIdea: state.currentIdea?.id === id ? null : state.currentIdea
-      })),
-      setCurrentIdea: (idea) => set({ currentIdea: idea }),
-
-      // Loading actions
-      setLoading: (isLoading) => set({ isLoading }),
+      
       setGenerating: (isGenerating) => set({ isGenerating }),
-
-      // Error actions
-      setError: (error) => set({
-        error: error ? { ...error, timestamp: Date.now() } : null
-      }),
+      setCurrentSessionId: (sessionId) => set({ currentSessionId: sessionId }),
+      setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
-      setOffline: (isOffline) => set({ isOffline }),
     }),
     {
-      name: 'bizgenius-storage',
+      name: 'bizgenius-ui-state',
       partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-        isAuthenticated: state.isAuthenticated
+        isGenerating: state.isGenerating,
+        currentSessionId: state.currentSessionId,
       }),
     }
   )
 );
 
-export const subscriptionPlans: SubscriptionPlan[] = [
+export const subscriptionPlans = [
   {
     id: 1,
     name: 'Free',
@@ -111,42 +43,43 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     price_monthly: 0,
     price_yearly: 0,
     features: [
-      '1 idea generation per month',
-      'Basic business plan',
-      'Community support',
-      'Export to PDF'
+      '1 analysis per month',
+      '2 saved ideas',
+      'Unlocked: Executive Summary, Market Research, Business Plan',
+      'Locked: Financial Model, Pitch Deck',
+      'Export to PDF (watermarked)'
     ]
   },
   {
     id: 2,
-    name: 'Pro',
+    name: 'Premium',
     description: 'For serious entrepreneurs',
-    price_monthly: 80,
-    price_yearly: 800,
+    price_monthly: 29,
+    price_yearly: 290,
     features: [
-      'Unlimited idea generations',
-      'Full business plan & financial model',
-      'Market research & competitor analysis',
-      'Pitch deck generation',
-      'Export to PDF, PPTX, Excel',
-      'Priority support',
-      'API access'
+      '10 analyses per month',
+      '20 saved ideas',
+      'All 11 sections unlocked',
+      'Export to PDF, CSV',
+      'No watermark',
+      'Priority support (48hr response)'
     ],
     is_popular: true
   },
   {
     id: 3,
-    name: 'Daily Coach',
-    description: 'AI-powered daily guidance',
-    price_monthly: 15,
-    price_yearly: 150,
+    name: 'Expert',
+    description: 'For scaling businesses and fundraising',
+    price_monthly: 99,
+    price_yearly: 990,
     features: [
-      'All Pro features',
-      'Daily AI business coaching',
-      'Action item tracking',
-      'Weekly progress reports',
-      'Slack/Discord integration',
-      '1-on-1 weekly call with expert'
+      'Unlimited analyses',
+      'Unlimited saved ideas',
+      'All 11 sections unlocked',
+      'Export to PDF, CSV, PPT',
+      'No watermark',
+      'Priority support (24hr response)',
+      'Custom branding priority'
     ]
   }
 ];

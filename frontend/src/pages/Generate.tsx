@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { CommandLineIcon, ArrowRightIcon, CheckIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
+import { useQuery, useMutation } from '../lib/convex';
+import { api } from '../convex/_generated/api';
 
 interface GenerationStep {
   id: string;
@@ -15,11 +16,24 @@ const ANSWERS_KEY = 'myceo_answers';
 const SESSION_KEY = 'myceo_session_id';
 const BRANDING_KEY = 'myceo_branding';
 
+const STEP_ORDER = [
+  'market',
+  'competitors', 
+  'icp',
+  'business',
+  'executive',
+  'financial',
+  'gtm',
+  'team',
+  'risk',
+  'action',
+  'pitch'
+];
+
 export default function Generate() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   const businessIdea = useMemo(() => {
     if (location.state?.businessIdea) {
@@ -33,7 +47,7 @@ export default function Generate() {
     }
     return localStorage.getItem(STORAGE_KEY) || localStorage.getItem('myceo_business_idea') || '';
   }, [location.state, searchParams]);
-
+  
   const answers = useMemo(() => {
     if (location.state?.answers) {
       localStorage.setItem(ANSWERS_KEY, JSON.stringify(location.state.answers));
@@ -49,7 +63,7 @@ export default function Generate() {
     }
     return {};
   }, [location.state]);
-
+  
   const branding = useMemo(() => {
     if (location.state?.branding) {
       localStorage.setItem(BRANDING_KEY, JSON.stringify(location.state.branding));
@@ -66,176 +80,107 @@ export default function Generate() {
     return null;
   }, [location.state]);
   
-  const [steps, setSteps] = useState<GenerationStep[]>([
-    { id: 'market', label: 'Market Opportunity', status: 'pending' },
-    { id: 'competitors', label: 'Competitor Research', status: 'pending' },
-    { id: 'icp', label: 'Ideal Customer Profile', status: 'pending' },
-    { id: 'business', label: 'Business Strategy', status: 'pending' },
-    { id: 'executive', label: 'Executive Summary', status: 'pending' },
-    { id: 'financial', label: 'Financial Projections', status: 'pending' },
-    { id: 'gtm', label: 'Go-to-Market Plan', status: 'pending' },
-    { id: 'team', label: 'Team & Hiring', status: 'pending' },
-    { id: 'risk', label: 'Risk Assessment', status: 'pending' },
-    { id: 'action', label: '90-Day Action Plan', status: 'pending' },
-    { id: 'pitch', label: 'Pitch Deck', status: 'pending' },
-  ]);
-  
-  const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [isResuming, setIsResuming] = useState(false);
-  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  const existingSessionId = localStorage.getItem(SESSION_KEY);
 
+  // Convex useQuery returns data directly (or undefined while loading)
+  // Use "skip" as second arg to skip the query when no sessionId
+  const session = useQuery(
+    api.sessions.getSessionStatus,
+    existingSessionId ? { sessionId: existingSessionId } : "skip"
+  );
+  const isSessionLoading = existingSessionId ? session === undefined : false;
+  
+  const createSession = useMutation(api.sessions.createSession);
+  const retrySession = useMutation(api.sessions.retrySession);
+  const saveToIdea = useMutation(api.sessions.saveSessionToIdea);
+  
+  const steps: GenerationStep[] = useMemo(() => {
+    if (!session?.currentStep) {
+      return STEP_ORDER.map((id, idx) => ({
+        id,
+        label: getStepLabel(id),
+        status: 'pending'
+      }));
+    }
+    
+    const currentStepIndex = STEP_ORDER.indexOf(session.currentStep);
+    
+    return STEP_ORDER.map((id, idx) => ({
+      id,
+      label: getStepLabel(id),
+      status: idx < currentStepIndex ? 'completed' :
+              idx === currentStepIndex ? (session.status === 'failed' ? 'error' : 'in_progress') :
+              'pending'
+    }));
+  }, [session?.currentStep, session?.status]);
+  
   const completedSteps = steps.filter(s => s.status === 'completed').length;
   const progress = (completedSteps / steps.length) * 100;
-
-  const startStepTimer = () => {
-    if (stepTimerRef.current) return;
-    let currentStepIndex = 0;
-    stepTimerRef.current = setInterval(() => {
-      setSteps(prev => {
-        const inProgressIdx = prev.findIndex(s => s.status === 'in_progress');
-        const nextIdx = inProgressIdx >= 0 ? inProgressIdx : currentStepIndex;
-        if (nextIdx < prev.length - 1) {
-          currentStepIndex = nextIdx + 1;
-          return prev.map((step, idx) => ({
-            ...step,
-            status: idx < currentStepIndex ? 'completed' : idx === currentStepIndex ? 'in_progress' : 'pending'
-          }));
-        }
-        return prev;
-      });
-    }, 12000);
-  };
-
-  const pollSessionStatus = async (sid: string) => {
-    try {
-      const response = await axios.get(`/api/v1/sessions/status/${sid}`);
-      const { status, result: sessionResult, error_message } = response.data;
-      
-      setIsResuming(false);
-      
-      if (status === 'completed' && sessionResult) {
-        if (pollingRef.current) clearInterval(pollingRef.current);
-        if (stepTimerRef.current) clearInterval(stepTimerRef.current);
-        setResult(sessionResult);
-        setSteps(prev => prev.map(step => ({ ...step, status: 'completed' })));
-        setIsComplete(true);
-        localStorage.setItem(RESULT_KEY, JSON.stringify(sessionResult));
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(SESSION_KEY);
-      } else if (status === 'failed') {
-        if (pollingRef.current) clearInterval(pollingRef.current);
-        if (stepTimerRef.current) clearInterval(stepTimerRef.current);
-        setError(error_message || 'Generation failed. Please try again.');
-        setSteps(prev => prev.map(step => ({
-          ...step,
-          status: step.status === 'in_progress' ? 'error' : step.status
-        })));
-      } else if (status === 'generating' || status === 'pending') {
-        startStepTimer();
-      }
-    } catch (err: any) {
-      if (err.response?.status === 404) {
-        localStorage.removeItem(SESSION_KEY);
-        setSessionId(null);
-        startSessionGeneration();
-      } else {
-        console.error('Failed to poll session status:', err);
-      }
-    }
-  };
-
-  const startSessionGeneration = async (retryCount = 0) => {
-    const maxRetries = 3;
+  
+  const isGenerating = !isComplete && session?.status === 'generating';
+  const isResuming = !!existingSessionId && isGenerating;
+  
+  const startSessionGeneration = async () => {
+    if (!businessIdea) return;
     
     try {
-      const response = await axios.post('/api/v1/sessions/create', {
+      const result = await createSession({
         idea: businessIdea,
-        answers: Object.keys(answers).length > 0 ? answers : null
+        answers: Object.keys(answers).length > 0 ? answers : undefined
       });
       
-      const newSessionId = response.data.session_id;
-      setSessionId(newSessionId);
-      localStorage.setItem(SESSION_KEY, newSessionId);
-      
-      setSteps(prev => prev.map((step, idx) => ({
-        ...step,
-        status: idx === 0 ? 'in_progress' : 'pending'
-      })));
-      
-      pollingRef.current = setInterval(() => pollSessionStatus(newSessionId), 2000);
-      
+      setSessionId(result.sessionId);
+      localStorage.setItem(SESSION_KEY, result.sessionId);
+      setError(null);
     } catch (err: any) {
-      if (retryCount < maxRetries) {
-        const delay = Math.pow(2, retryCount) * 1000;
-        console.log(`Retrying session creation in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return startSessionGeneration(retryCount + 1);
-      }
-      setError(err.response?.data?.detail || 'Failed to start generation. Please try again.');
+      console.error('Failed to start generation:', err);
+      setError('Failed to start generation. Please try again.');
     }
   };
-
-  useEffect(() => {
-    if (!businessIdea || isComplete) return;
-
-    const existingSessionId = localStorage.getItem(SESSION_KEY);
-    
-    if (existingSessionId) {
-      setSessionId(existingSessionId);
-      setIsResuming(true);
-      setSteps(prev => prev.map((step, idx) => ({
-        ...step,
-        status: idx === 0 ? 'in_progress' : 'pending'
-      })));
-      pollSessionStatus(existingSessionId);
-      pollingRef.current = setInterval(() => pollSessionStatus(existingSessionId), 2000);
-    } else if (!sessionId) {
-      startSessionGeneration();
-    }
-
-    return () => {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-      }
-      if (stepTimerRef.current) {
-        clearInterval(stepTimerRef.current);
-      }
-    };
-  }, [businessIdea]);
-
+  
   const handleRetry = async () => {
     setError(null);
     setIsComplete(false);
-    setSteps(prev => prev.map(step => ({ ...step, status: 'pending' })));
-    
-    const existingSessionId = localStorage.getItem(SESSION_KEY);
     
     if (existingSessionId) {
       try {
-        await axios.post(`/api/v1/sessions/retry/${existingSessionId}`);
-        setSteps(prev => prev.map((step, idx) => ({
-          ...step,
-          status: idx === 0 ? 'in_progress' : 'pending'
-        })));
-        pollingRef.current = setInterval(() => pollSessionStatus(existingSessionId), 2000);
-      } catch {
+        await retrySession({ sessionId: existingSessionId });
+        setError(null);
+      } catch (err: any) {
+        console.error('Failed to retry:', err);
         localStorage.removeItem(SESSION_KEY);
         setSessionId(null);
         startSessionGeneration();
       }
     } else {
-      setSessionId(null);
       startSessionGeneration();
     }
   };
-
+  
   const handleViewResults = () => {
-    navigate('/results', { state: { result, businessIdea, branding } });
+    navigate('/results', { state: { result: session?.result, businessIdea, branding } });
   };
-
+  
+  const setSessionId = (id: string) => {
+    localStorage.setItem(SESSION_KEY, id);
+    window.location.reload();
+  };
+  
+  useEffect(() => {
+    if (session?.status === 'completed' && !isComplete) {
+      setIsComplete(true);
+      localStorage.setItem(RESULT_KEY, JSON.stringify(session.result));
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    
+    if (session?.status === 'failed') {
+      setError(session.errorMessage || 'Generation failed. Please try again.');
+    }
+  }, [session?.status, session?.errorMessage, session?.result]);
+  
   if (!businessIdea) {
     return (
       <div className="bg-apple-bg min-h-screen font-sans antialiased">
@@ -251,7 +196,7 @@ export default function Generate() {
         <div className="max-w-2xl mx-auto px-6 pt-32 pb-16">
           <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-12 text-center">
             <h1 className="text-2xl font-semibold text-apple-text mb-4">No Business Idea Found</h1>
-            <p className="text-apple-gray mb-8">Please enter your business idea on the home page to get started.</p>
+            <p className="text-apple-gray mb-8">Please enter your business idea on home page to get started.</p>
             <Link 
               to="/"
               className="inline-flex items-center gap-2 bg-apple-text text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-all"
@@ -264,7 +209,18 @@ export default function Generate() {
       </div>
     );
   }
-
+  
+  if (!existingSessionId && !isSessionLoading) {
+    useEffect(() => {
+      startSessionGeneration();
+    }, []);
+    return null;
+  }
+  
+  if (isSessionLoading) {
+    return <LoadingSpinner />;
+  }
+  
   return (
     <div className="bg-apple-bg min-h-screen font-sans antialiased">
       <nav className="fixed top-0 w-full z-50 glass-panel">
@@ -278,7 +234,7 @@ export default function Generate() {
           </span>
         </div>
       </nav>
-
+      
       <div className="max-w-4xl mx-auto px-6 pt-24 pb-16">
         <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
           <div className="p-8 border-b border-gray-100">
@@ -308,7 +264,7 @@ export default function Generate() {
               </p>
             </div>
           </div>
-
+          
           <div className="px-8 py-4 border-b border-gray-100 bg-gray-50">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-apple-text">
@@ -325,7 +281,7 @@ export default function Generate() {
               />
             </div>
           </div>
-
+          
           {error && (
             <div className="m-8 bg-red-50 border border-red-200 rounded-xl p-6">
               <p className="font-medium text-red-700 mb-4">{error}</p>
@@ -346,7 +302,7 @@ export default function Generate() {
               </div>
             </div>
           )}
-
+          
           <div className="p-8 grid grid-cols-2 md:grid-cols-3 gap-3">
             {steps.map((step) => (
               <div 
@@ -385,7 +341,7 @@ export default function Generate() {
               </div>
             ))}
           </div>
-
+          
           {!isComplete && !error && (
             <div className="px-8 pb-8">
               <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-6 text-center">
@@ -406,39 +362,39 @@ export default function Generate() {
               </div>
             </div>
           )}
-
-          {isComplete && result && (
+          
+          {isComplete && session?.result && (
             <div className="p-8 border-t border-gray-100">
               <h2 className="text-xl font-semibold text-apple-text mb-6">Quick Preview</h2>
               
-              {result.executive_summary?.one_liner && (
+              {session.result.executive_summary?.one_liner && (
                 <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-6 mb-6">
                   <h3 className="text-sm font-medium text-apple-gray mb-2">Your One-Liner</h3>
-                  <p className="text-lg font-semibold text-apple-text">"{result.executive_summary.one_liner}"</p>
+                  <p className="text-lg font-semibold text-apple-text">"{session.result.executive_summary.one_liner}"</p>
                 </div>
               )}
-
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                {result.market_research?.tam?.value && (
+                {session.result.market_research?.tam?.value && (
                   <div className="bg-apple-bg rounded-xl p-4 text-center">
                     <div className="text-xs font-medium text-apple-gray mb-1">TOTAL MARKET</div>
-                    <div className="text-xl font-semibold text-apple-text">{result.market_research.tam.value}</div>
+                    <div className="text-xl font-semibold text-apple-text">{session.result.market_research.tam.value}</div>
                   </div>
                 )}
-                {result.financial_model?.break_even?.month && (
+                {session.result.financial_model?.break_even?.month && (
                   <div className="bg-apple-bg rounded-xl p-4 text-center">
                     <div className="text-xs font-medium text-apple-gray mb-1">BREAK-EVEN</div>
-                    <div className="text-xl font-semibold text-apple-text">Month {result.financial_model.break_even.month}</div>
+                    <div className="text-xl font-semibold text-apple-text">Month {session.result.financial_model.break_even.month}</div>
                   </div>
                 )}
-                {result.risk_assessment?.risk_score?.overall && (
+                {session.result.risk_assessment?.risk_score?.overall && (
                   <div className="bg-apple-bg rounded-xl p-4 text-center">
                     <div className="text-xs font-medium text-apple-gray mb-1">RISK SCORE</div>
-                    <div className="text-xl font-semibold text-apple-text">{result.risk_assessment.risk_score.overall}/10</div>
+                    <div className="text-xl font-semibold text-apple-text">{session.result.risk_assessment.risk_score.overall}/10</div>
                   </div>
                 )}
               </div>
-
+              
               <div className="bg-apple-bg rounded-xl p-6 mb-8">
                 <h3 className="font-medium text-apple-text mb-4">What's Included</h3>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
@@ -450,7 +406,7 @@ export default function Generate() {
                   ))}
                 </div>
               </div>
-
+              
               <div className="flex flex-col sm:flex-row gap-4">
                 <button 
                   onClick={handleViewResults}
@@ -469,6 +425,31 @@ export default function Generate() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function getStepLabel(stepId: string): string {
+  const labels: Record<string, string> = {
+    'market': 'Market Opportunity',
+    'competitors': 'Competitor Research',
+    'icp': 'Ideal Customer Profile',
+    'business': 'Business Strategy',
+    'executive': 'Executive Summary',
+    'financial': 'Financial Projections',
+    'gtm': 'Go-to-Market Plan',
+    'team': 'Team & Hiring',
+    'risk': 'Risk Assessment',
+    'action': '90-Day Action Plan',
+    'pitch': 'Pitch Deck'
+  };
+  return labels[stepId] || stepId;
+}
+
+function LoadingSpinner() {
+  return (
+    <div className="bg-apple-bg min-h-screen flex items-center justify-center">
+      <div className="w-12 h-12 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
 }

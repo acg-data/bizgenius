@@ -7,10 +7,10 @@ import {
   TrashIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
-import { useAuthStore } from '../store';
+import { useAuthActions } from "@convex-dev/auth/react";
 
 export default function Settings() {
-  const { logout } = useAuthStore();
+  const { signOut } = useAuthActions();
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
@@ -25,8 +25,8 @@ export default function Settings() {
     currency: 'USD',
   });
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     window.location.href = '/login';
   };
 

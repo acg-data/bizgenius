@@ -1,121 +1,107 @@
-import axios from 'axios';
-import type { User, Idea } from '../types';
+import { useQuery, useMutation, useAction } from "../lib/convex";
+import { api } from "../convex/_generated/api";
 
-// Use relative URL in production, localhost for development
-const isDevelopment = import.meta.env.DEV;
-const API_BASE_URL = isDevelopment ? 'http://localhost:8000/api/v1' : '/api/v1';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('bizgenius_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('bizgenius_token');
-      localStorage.removeItem('bizgenius_user');
-      window.location.href = '/login';
+// Simple HTTP wrapper for branding endpoints (stubs for now)
+const httpApi = {
+  async post(endpoint: string, data: any): Promise<{ data: any }> {
+    // Stub implementations for branding features
+    if (endpoint === '/branding/company-names') {
+      // Generate simple name variations based on the idea
+      const words = data.business_idea?.split(' ').slice(0, 3) || ['My', 'Business'];
+      const suffixes = ['AI', 'Labs', 'Co', 'HQ', 'Pro'];
+      const names = suffixes.map((suffix, i) =>
+        `${words[i % words.length]}${suffix}`
+      );
+      return { data: { names } };
     }
-    return Promise.reject(error);
-  }
-);
 
-export const authService = {
-  login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
-    if (response.data.access_token) {
-      localStorage.setItem('bizgenius_token', response.data.access_token);
-      localStorage.setItem('bizgenius_user', JSON.stringify(response.data.user));
+    if (endpoint === '/branding/logo-variations') {
+      // Return placeholder logo URLs
+      return { data: { logos: [null, null, null, null] } };
     }
-    return response.data;
-  },
 
-  register: async (email: string, password: string, fullName?: string) => {
-    const response = await api.post('/auth/register', { email, password, full_name: fullName });
-    if (response.data.access_token) {
-      localStorage.setItem('bizgenius_token', response.data.access_token);
-      localStorage.setItem('bizgenius_user', JSON.stringify(response.data.user));
+    if (endpoint === '/branding/color-palettes') {
+      // Return predefined color palettes
+      return {
+        data: {
+          palettes: [
+            ['#1D1D1F', '#F5F5F7', '#0066CC', '#34C759', '#FF9500'],
+            ['#2C3E50', '#ECF0F1', '#3498DB', '#2ECC71', '#E74C3C'],
+            ['#1A1A2E', '#EEEEF0', '#4A90D9', '#50C878', '#FF6B6B'],
+          ],
+        },
+      };
     }
-    return response.data;
-  },
 
-  getMe: async (): Promise<User> => {
-    const response = await api.get('/auth/me');
-    return response.data;
+    if (endpoint === '/branding/random-palette') {
+      const lockedColors = data.locked_colors || [];
+      const palette = lockedColors.map((c: string | null) =>
+        c || `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`
+      );
+      return { data: { palette } };
+    }
+
+    throw new Error(`Unknown endpoint: ${endpoint}`);
   },
+};
+
+export const sessionService = {
+  create: (idea: string, answers: any) =>
+    useMutation(api.sessions.createSession),
+
+  getStatus: (sessionId: string) =>
+    useQuery(api.sessions.getSessionStatus, { sessionId }),
+
+  saveToIdea: (sessionId: string, title: string, description: string) =>
+    useMutation(api.sessions.saveSessionToIdea),
+
+  retry: (sessionId: string) =>
+    useMutation(api.sessions.retrySession),
 };
 
 export const ideaService = {
-  getAll: async (): Promise<Idea[]> => {
-    const response = await api.get('/ideas');
-    return response.data;
-  },
+  getAll: () => useQuery(api.ideas.listIdeas),
 
-  getOne: async (id: number): Promise<Idea> => {
-    const response = await api.get(`/ideas/${id}`);
-    return response.data;
-  },
+  getOne: (id: string) => useQuery(api.ideas.getIdea, { id }),
 
-  create: async (data: { title: string; description: string; industry?: string; target_market?: string }): Promise<Idea> => {
-    const response = await api.post('/ideas', data);
-    return response.data;
-  },
+  create: (data: { title: string; description: string; industry?: string; targetMarket?: string }) =>
+    useMutation(api.ideas.createIdea),
 
-  delete: async (id: number): Promise<void> => {
-    await api.delete(`/ideas/${id}`);
-  },
+  delete: (id: string) => useMutation(api.ideas.deleteIdea),
 
-  generate: async (
-    id: number,
-    options: {
-      include_business_plan?: boolean;
-      include_financial_model?: boolean;
-      include_market_research?: boolean;
-      include_competitor_analysis?: boolean;
-      include_pitch_deck?: boolean;
-    } = {}
-  ): Promise<Idea> => {
-    const response = await api.post(`/ideas/${id}/generate`, options);
-    return response.data;
-  },
-
-  export: async (id: number, format: string = 'json'): Promise<Record<string, unknown>> => {
-    const response = await api.get(`/documents/export/${id}`, { params: { format } });
-    return response.data;
-  },
+  update: (id: string, updates: { title?: string; description?: string; industry?: string; target_market?: string }) =>
+    useMutation(api.ideas.updateIdea),
 };
 
+export const authService = {
+  login: () => window.location.href = "/api/auth/login",
+
+  logout: () => window.location.href = "/api/auth/logout",
+};
+
+// Stripe payment service
+export const stripeService = {
+  createCheckout: (tier: "premium" | "expert", billing: "monthly" | "yearly", successUrl?: string, cancelUrl?: string) =>
+    useAction(api.stripe.createCheckoutSession),
+
+  createPortal: (returnUrl?: string) =>
+    useAction(api.stripe.createPortalSession),
+
+  getStatus: () =>
+    useQuery(api.stripe.getSubscriptionStatus),
+};
+
+// Alias for backwards compatibility
 export const subscriptionService = {
-  createCheckout: async (planType: 'pro' | 'coach'): Promise<{ checkout_url: string }> => {
-    const response = await api.post('/subscriptions/create-checkout-session', { plan_type: planType });
-    return response.data;
-  },
-
-  createPortal: async (): Promise<{ portal_url: string }> => {
-    const response = await api.post('/subscriptions/create-portal-session');
-    return response.data;
-  },
-
-  getStatus: async (): Promise<{ tier: string; status: string; customer_id?: string }> => {
-    const response = await api.get('/subscriptions/status');
-    return response.data;
-  },
-
-  cancel: async (): Promise<void> => {
-    await api.post('/subscriptions/cancel');
-  },
+  ...stripeService,
 };
 
-export default api;
+export default {
+  sessionService,
+  ideaService,
+  authService,
+  subscriptionService,
+  stripeService,
+  // HTTP wrapper for branding endpoints
+  post: httpApi.post,
+};

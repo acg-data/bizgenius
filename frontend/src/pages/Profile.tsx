@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Card, CardBody, CardHeader, Button, Input, Avatar, Divider } from '@heroui/react';
 import { UserIcon, EnvelopeIcon, CameraIcon } from '@heroicons/react/24/outline';
-import { useAuthStore } from '../store';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Profile() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.full_name || '',

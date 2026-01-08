@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardBody, Button, Input, Textarea, Select, SelectItem, Progress } from '@heroui/react';
 import { SparklesIcon, ArrowRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
-import { ideaService } from '../services/api';
-import { useAuthStore } from '../store';
+import { useMutation } from '../lib/convex';
+import { api } from '../convex/_generated/api';
 
 const industries = [
   { value: 'technology', label: 'Technology & Software', emoji: '💻' },
@@ -22,7 +22,7 @@ const industries = [
 
 export default function CreateIdea() {
   const navigate = useNavigate();
-  const { addIdea } = useAuthStore();
+  const createIdea = useMutation(api.ideas.create);
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,9 +40,16 @@ export default function CreateIdea() {
     setIsLoading(true);
 
     try {
-      const idea = await ideaService.create(formData);
-      addIdea(idea);
-      navigate(`/ideas/${idea.id}`);
+      const ideaId = await createIdea({
+        title: formData.title,
+        description: formData.description,
+        industry: formData.industry,
+        targetMarket: formData.target_market,
+        problem: formData.problem,
+        solution: formData.solution,
+        uniqueness: formData.uniqueness,
+      });
+      navigate(`/ideas/${ideaId}`);
     } catch (error) {
       console.error('Error creating idea:', error);
       setIsLoading(false);

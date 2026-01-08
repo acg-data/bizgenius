@@ -1,87 +1,26 @@
-import { useState, useEffect, useCallback } from 'react';
-
-export interface User {
-  id: string;
-  email?: string | null;
-  first_name?: string | null;
-  last_name?: string | null;
-  profile_image_url?: string | null;
-  is_authenticated: boolean;
-}
-
-interface AuthState {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  error: string | null;
-}
+import { useQuery } from "../lib/convex";
+import { api } from "../convex/_generated/api";
 
 export function useAuth() {
-  const [state, setState] = useState<AuthState>({
-    user: null,
-    isLoading: true,
-    isAuthenticated: false,
-    error: null
-  });
+  // Fetch user details from Convex - this also tells us if user is authenticated
+  const userDetails = useQuery(api.users.getUser, {});
 
-  const fetchUser = useCallback(async () => {
-    try {
-      const response = await fetch('/api/auth/user', {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data) {
-          setState({
-            user: data,
-            isLoading: false,
-            isAuthenticated: true,
-            error: null
-          });
-        } else {
-          setState({
-            user: null,
-            isLoading: false,
-            isAuthenticated: false,
-            error: null
-          });
-        }
-      } else {
-        setState({
-          user: null,
-          isLoading: false,
-          isAuthenticated: false,
-          error: null
-        });
-      }
-    } catch (error) {
-      setState({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-        error: 'Failed to fetch user'
-      });
-    }
-  }, []);
+  // Loading state: query is undefined while loading
+  const isLoading = userDetails === undefined;
 
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  const login = useCallback(() => {
-    window.location.href = '/api/auth/login';
-  }, []);
-
-  const logout = useCallback(() => {
-    window.location.href = '/api/auth/logout';
-  }, []);
+  // Authenticated if we got a user back (not null)
+  const isAuthenticated = userDetails !== null && userDetails !== undefined;
 
   return {
-    ...state,
-    login,
-    logout,
-    refetch: fetchUser
+    user: userDetails || null,
+    isAuthenticated,
+    isLoading,
+    logout: () => {
+      window.location.href = "/api/auth/logout";
+    },
+    refetch: () => {},
+    subscription_tier: userDetails?.subscription_tier || "free",
+    subscription_status: userDetails?.subscription_status || "inactive",
   };
 }
 

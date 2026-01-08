@@ -3,181 +3,22 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useAuthStore, subscriptionPlans } from './index';
-import { createMockUser, createMockIdea } from '../test/utils';
 
 describe('useAuthStore', () => {
   beforeEach(() => {
     // Reset store to initial state before each test
     useAuthStore.setState({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      isLoading: false,
-      ideas: [],
-      currentIdea: null,
       isGenerating: false,
+      currentSessionId: null,
+      error: null,
     });
   });
 
-  describe('authentication', () => {
-    it('should initialize with null user and not authenticated', () => {
+  describe('generation state', () => {
+    it('should initialize with isGenerating false', () => {
       const state = useAuthStore.getState();
 
-      expect(state.user).toBeNull();
-      expect(state.token).toBeNull();
-      expect(state.isAuthenticated).toBe(false);
-    });
-
-    it('should set user and authenticate', () => {
-      const mockUser = createMockUser();
-
-      useAuthStore.getState().setUser(mockUser);
-      const state = useAuthStore.getState();
-
-      expect(state.user).toEqual(mockUser);
-      expect(state.isAuthenticated).toBe(true);
-    });
-
-    it('should set token and authenticate', () => {
-      useAuthStore.getState().setToken('test-token');
-      const state = useAuthStore.getState();
-
-      expect(state.token).toBe('test-token');
-      expect(state.isAuthenticated).toBe(true);
-    });
-
-    it('should logout and clear all auth data', () => {
-      const mockUser = createMockUser();
-      const mockIdea = createMockIdea();
-
-      // Set up authenticated state
-      useAuthStore.setState({
-        user: mockUser,
-        token: 'test-token',
-        isAuthenticated: true,
-        ideas: [mockIdea],
-        currentIdea: mockIdea,
-      });
-
-      // Logout
-      useAuthStore.getState().logout();
-      const state = useAuthStore.getState();
-
-      expect(state.user).toBeNull();
-      expect(state.token).toBeNull();
-      expect(state.isAuthenticated).toBe(false);
-      expect(state.ideas).toEqual([]);
-      expect(state.currentIdea).toBeNull();
-    });
-
-    it('should clear authentication when setting user to null', () => {
-      useAuthStore.setState({
-        user: createMockUser(),
-        isAuthenticated: true,
-      });
-
-      useAuthStore.getState().setUser(null);
-
-      expect(useAuthStore.getState().isAuthenticated).toBe(false);
-    });
-  });
-
-  describe('ideas management', () => {
-    it('should set ideas', () => {
-      const ideas = [createMockIdea({ id: 1 }), createMockIdea({ id: 2 })];
-
-      useAuthStore.getState().setIdeas(ideas);
-
-      expect(useAuthStore.getState().ideas).toEqual(ideas);
-    });
-
-    it('should add idea to beginning of list', () => {
-      const existingIdea = createMockIdea({ id: 1 });
-      const newIdea = createMockIdea({ id: 2 });
-
-      useAuthStore.setState({ ideas: [existingIdea] });
-      useAuthStore.getState().addIdea(newIdea);
-
-      const state = useAuthStore.getState();
-      expect(state.ideas).toHaveLength(2);
-      expect(state.ideas[0].id).toBe(2); // New idea at beginning
-      expect(state.ideas[1].id).toBe(1);
-    });
-
-    it('should update idea by id', () => {
-      const idea = createMockIdea({ id: 1, title: 'Original Title' });
-      useAuthStore.setState({ ideas: [idea] });
-
-      useAuthStore.getState().updateIdea(1, { title: 'Updated Title' });
-
-      expect(useAuthStore.getState().ideas[0].title).toBe('Updated Title');
-    });
-
-    it('should update currentIdea when updating matching idea', () => {
-      const idea = createMockIdea({ id: 1, title: 'Original' });
-      useAuthStore.setState({ ideas: [idea], currentIdea: idea });
-
-      useAuthStore.getState().updateIdea(1, { title: 'Updated' });
-
-      expect(useAuthStore.getState().currentIdea?.title).toBe('Updated');
-    });
-
-    it('should not update currentIdea when updating different idea', () => {
-      const idea1 = createMockIdea({ id: 1, title: 'Idea 1' });
-      const idea2 = createMockIdea({ id: 2, title: 'Idea 2' });
-      useAuthStore.setState({ ideas: [idea1, idea2], currentIdea: idea1 });
-
-      useAuthStore.getState().updateIdea(2, { title: 'Updated Idea 2' });
-
-      expect(useAuthStore.getState().currentIdea?.title).toBe('Idea 1');
-    });
-
-    it('should remove idea by id', () => {
-      const ideas = [createMockIdea({ id: 1 }), createMockIdea({ id: 2 })];
-      useAuthStore.setState({ ideas });
-
-      useAuthStore.getState().removeIdea(1);
-
-      const state = useAuthStore.getState();
-      expect(state.ideas).toHaveLength(1);
-      expect(state.ideas[0].id).toBe(2);
-    });
-
-    it('should clear currentIdea when removing matching idea', () => {
-      const idea = createMockIdea({ id: 1 });
-      useAuthStore.setState({ ideas: [idea], currentIdea: idea });
-
-      useAuthStore.getState().removeIdea(1);
-
-      expect(useAuthStore.getState().currentIdea).toBeNull();
-    });
-
-    it('should not clear currentIdea when removing different idea', () => {
-      const idea1 = createMockIdea({ id: 1 });
-      const idea2 = createMockIdea({ id: 2 });
-      useAuthStore.setState({ ideas: [idea1, idea2], currentIdea: idea1 });
-
-      useAuthStore.getState().removeIdea(2);
-
-      expect(useAuthStore.getState().currentIdea?.id).toBe(1);
-    });
-
-    it('should set current idea', () => {
-      const idea = createMockIdea();
-
-      useAuthStore.getState().setCurrentIdea(idea);
-
-      expect(useAuthStore.getState().currentIdea).toEqual(idea);
-    });
-  });
-
-  describe('loading states', () => {
-    it('should set loading state', () => {
-      useAuthStore.getState().setLoading(true);
-      expect(useAuthStore.getState().isLoading).toBe(true);
-
-      useAuthStore.getState().setLoading(false);
-      expect(useAuthStore.getState().isLoading).toBe(false);
+      expect(state.isGenerating).toBe(false);
     });
 
     it('should set generating state', () => {
@@ -186,6 +27,48 @@ describe('useAuthStore', () => {
 
       useAuthStore.getState().setGenerating(false);
       expect(useAuthStore.getState().isGenerating).toBe(false);
+    });
+  });
+
+  describe('session management', () => {
+    it('should initialize with null session id', () => {
+      const state = useAuthStore.getState();
+
+      expect(state.currentSessionId).toBeNull();
+    });
+
+    it('should set current session id', () => {
+      useAuthStore.getState().setCurrentSessionId('session-123');
+
+      expect(useAuthStore.getState().currentSessionId).toBe('session-123');
+    });
+
+    it('should clear session id', () => {
+      useAuthStore.setState({ currentSessionId: 'session-123' });
+      useAuthStore.getState().setCurrentSessionId(null);
+
+      expect(useAuthStore.getState().currentSessionId).toBeNull();
+    });
+  });
+
+  describe('error handling', () => {
+    it('should initialize with null error', () => {
+      const state = useAuthStore.getState();
+
+      expect(state.error).toBeNull();
+    });
+
+    it('should set error', () => {
+      useAuthStore.getState().setError('Something went wrong');
+
+      expect(useAuthStore.getState().error).toBe('Something went wrong');
+    });
+
+    it('should clear error', () => {
+      useAuthStore.setState({ error: 'Something went wrong' });
+      useAuthStore.getState().clearError();
+
+      expect(useAuthStore.getState().error).toBeNull();
     });
   });
 });
@@ -203,18 +86,18 @@ describe('subscriptionPlans', () => {
     expect(freePlan?.price_yearly).toBe(0);
   });
 
-  it('should have Pro plan marked as popular', () => {
-    const proPlan = subscriptionPlans.find((p) => p.name === 'Pro');
+  it('should have Premium plan marked as popular', () => {
+    const premiumPlan = subscriptionPlans.find((p) => p.name === 'Premium');
 
-    expect(proPlan).toBeDefined();
-    expect(proPlan?.is_popular).toBe(true);
+    expect(premiumPlan).toBeDefined();
+    expect(premiumPlan?.is_popular).toBe(true);
   });
 
-  it('should have Daily Coach plan with coaching features', () => {
-    const coachPlan = subscriptionPlans.find((p) => p.name === 'Daily Coach');
+  it('should have Expert plan with unlimited features', () => {
+    const expertPlan = subscriptionPlans.find((p) => p.name === 'Expert');
 
-    expect(coachPlan).toBeDefined();
-    expect(coachPlan?.features).toContain('Daily AI business coaching');
+    expect(expertPlan).toBeDefined();
+    expect(expertPlan?.features).toContain('Unlimited analyses');
   });
 
   it('should have all plans with required fields', () => {

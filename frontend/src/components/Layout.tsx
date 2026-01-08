@@ -26,7 +26,7 @@ import {
   SparklesIcon,
   BellIcon,
 } from '@heroicons/react/24/outline';
-import { useAuthStore } from '../store';
+import { useAuth } from '../hooks/useAuth';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -42,8 +42,7 @@ const navItems = [
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
-  const { } = useDisclosure();
+  const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {

@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { 
-  LockClosedIcon, 
-  CheckIcon, 
+import {
+  LockClosedIcon,
+  CheckIcon,
   SparklesIcon,
   CurrencyDollarIcon,
   PresentationChartLineIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { useAuthStore } from '../store';
+import { useAuth } from '../hooks/useAuth';
+import { useAction } from '../lib/convex';
+import { api } from '../convex/_generated/api';
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -25,8 +27,9 @@ const features = [
 ];
 
 export default function PaywallModal({ isOpen, onClose, sessionId }: PaywallModalProps) {
-  const { user, isAuthenticated, token } = useAuthStore();
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
+  const { user, isAuthenticated } = useAuth();
+  const createCheckoutSession = useAction(api.stripe.createCheckoutSession);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,25 +46,16 @@ export default function PaywallModal({ isOpen, onClose, sessionId }: PaywallModa
     setError(null);
 
     try {
-      const response = await fetch('/api/v1/subscriptions/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          plan_type: selectedPlan,
-          session_id: sessionId
-        })
+      const result = await createCheckoutSession({
+        tier: 'premium',
+        billing: selectedPlan,
+        successUrl: `${window.location.origin}/dashboard?checkout=success`,
+        cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Failed to create checkout session');
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
       }
-
-      const data = await response.json();
-      window.location.href = data.checkout_url;
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
     } finally {
@@ -96,26 +90,26 @@ export default function PaywallModal({ isOpen, onClose, sessionId }: PaywallModa
             <button
               onClick={() => setSelectedPlan('monthly')}
               className={`p-4 rounded-xl border-2 transition-all ${
-                selectedPlan === 'monthly' 
-                  ? 'border-violet-500 bg-violet-50' 
+                selectedPlan === 'monthly'
+                  ? 'border-violet-500 bg-violet-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <div className="text-2xl font-bold text-gray-900">$10</div>
+              <div className="text-2xl font-bold text-gray-900">$29</div>
               <div className="text-sm text-gray-500">/month</div>
             </button>
             <button
-              onClick={() => setSelectedPlan('annual')}
+              onClick={() => setSelectedPlan('yearly')}
               className={`p-4 rounded-xl border-2 transition-all relative ${
-                selectedPlan === 'annual' 
-                  ? 'border-violet-500 bg-violet-50' 
+                selectedPlan === 'yearly'
+                  ? 'border-violet-500 bg-violet-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <div className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                 SAVE 17%
               </div>
-              <div className="text-2xl font-bold text-gray-900">$100</div>
+              <div className="text-2xl font-bold text-gray-900">$290</div>
               <div className="text-sm text-gray-500">/year</div>
             </button>
           </div>

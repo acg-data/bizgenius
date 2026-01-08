@@ -13,7 +13,7 @@ const TYPEWRITER_PHRASES = [
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading, login, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [businessIdea, setBusinessIdea] = useState('');
   const [placeholder, setPlaceholder] = useState('');
   const [phraseIndex, setPhraseIndex] = useState(0);
@@ -113,13 +113,13 @@ export default function Landing() {
               </div>
             ) : (
               <>
-                <button onClick={login} className="text-apple-text/70 hover:text-apple-text transition">Log In</button>
-                <button 
-                  onClick={login} 
+                <Link to="/login" className="text-apple-text/70 hover:text-apple-text transition">Log In</Link>
+                <Link
+                  to="/register"
                   className="bg-apple-text text-white px-4 py-1.5 rounded-full hover:bg-gray-800 transition shadow-sm text-sm"
                 >
                   Get Started
-                </button>
+                </Link>
               </>
             )}
           </div>

@@ -1,141 +1,95 @@
 export interface User {
-  id: number;
+  _id: string;
   email: string;
   full_name?: string;
+  profile_image_url?: string;
   is_active: boolean;
   is_verified: boolean;
-  subscription_tier: string;
-  subscription_status: string;
-  created_at: string;
+
+  subscription_tier: "free" | "premium" | "expert";
+  subscription_status: "inactive" | "active" | "canceled" | "past_due";
+
+  // Stripe payment gateway
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
+  stripe_price_id?: string;
+
+  created_at: number;
+  updated_at: number;
 }
 
 export interface Idea {
-  id: number;
+  _id: string;
   title: string;
   description: string;
   industry?: string;
   target_market?: string;
-  user_id: number;
-  business_plan?: BusinessPlan;
-  financial_model?: FinancialModel;
-  market_research?: MarketResearch;
-  competitor_analysis?: CompetitorAnalysis;
-  pitch_deck?: PitchDeck;
-  generated_at?: string;
-  created_at: string;
-  updated_at: string;
+  userId: string;
+
+  // ALL 11 SECTIONS AS FIELDS
+  executive_summary?: any;
+  market_research?: any;
+  business_plan?: any;
+  financial_model?: any;
+  competitor_analysis?: any;
+  go_to_market?: any;
+  team_plan?: any;
+  risk_assessment?: any;
+  action_plan?: any;
+  pitch_deck?: any;
+  local_business_data?: any;
+
+  generated_at?: number;
+  created_at: number;
+  updated_at: number;
 }
 
-export interface BusinessPlan {
-  executive_summary: string;
-  mission: string;
-  vision: string;
-  objectives: string[];
-  company_description: string;
-  products_services: string[];
-  marketing_strategy: string;
-  operations_plan: string;
-  management_team: string[];
-  swot_analysis: {
-    strengths: string[];
-    weaknesses: string[];
-    opportunities: string[];
-    threats: string[];
-  };
+export interface Payment {
+  _id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  stripe_payment_intent_id?: string;
+  stripe_invoice_id?: string;
+  stripe_checkout_session_id?: string;
+  status: string;
+  description?: string;
+  createdAt: number;
 }
 
-export interface FinancialModel {
-  assumptions: {
-    market_size: string;
-    growth_rate: string;
-    pricing_model: string;
-    customer_acquisition_cost: string;
-    lifetime_value: string;
-    operating_margin: string;
-  };
-  projections: Array<{
-    year: number;
-    revenue: number;
-    costs: number;
-    profit: number;
-  }>;
-  break_even: {
-    month: string;
-    customers_needed: number;
-  };
-  funding_needed: {
-    amount: string;
-    use_of_funds: string[];
-  };
-  key_metrics: {
-    cac: string;
-    ltv: string;
-    ltv_cac_ratio: string;
-    burn_rate: string;
-    runway: string;
-  };
-}
-
-export interface MarketResearch {
-  market_overview: string;
-  tam: { value: string; description: string };
-  sam: { value: string; description: string };
-  som: { value: string; description: string };
-  market_trends: string[];
-  target_segments: string[];
-  customer_needs: string[];
-  regulatory_considerations: string;
-  barriers_to_entry: string[];
-}
-
-export interface CompetitorAnalysis {
-  competitors: Array<{
-    name: string;
-    description: string;
-    strengths: string[];
-    weaknesses: string[];
-    market_position: string;
-    pricing: string;
-    target_audience: string;
-  }>;
-  competitive_advantages: string[];
-  differentiation_strategy: string;
-  threats_from_competitors: string[];
-  recommendations: string[];
-}
-
-export interface PitchDeck {
-  slides: Array<{
-    title: string;
-    content: string;
-    visuals: string;
-    speaker_notes: string;
-  }>;
-  recommended_length: string;
-  key_messages: string[];
-  call_to_action: string;
-}
-
-export interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-}
-
-export interface IdeaState {
-  ideas: Idea[];
-  currentIdea: Idea | null;
-  isLoading: boolean;
-  isGenerating: boolean;
+export interface GenerationSession {
+  _id: string;
+  sessionId: string;
+  businessIdea: string;
+  answers?: any;
+  status: "pending" | "generating" | "completed" | "failed";
+  currentStep?: string;
+  progress?: number;
+  result?: any;
+  errorMessage?: string;
+  userId?: string;
+  createdAt: number;
+  updatedAt: number;
+  completedAt?: number;
 }
 
 export interface SubscriptionPlan {
   id: number;
-  name: string;
+  name: "Free" | "Premium" | "Expert";
   description: string;
   price_monthly: number;
   price_yearly: number;
   features: string[];
+  stripe_price_id_monthly?: string;
+  stripe_price_id_yearly?: string;
   is_popular?: boolean;
+}
+
+export interface UsageLimits {
+  analyses_used: number;
+  analyses_limit: number;
+  ideas_used: number;
+  ideas_limit: number;
+  can_create: boolean;
+  can_save: boolean;
 }

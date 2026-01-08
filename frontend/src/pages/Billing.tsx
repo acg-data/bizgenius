@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardBody, CardHeader, Button, Chip, Divider } from '@heroui/react';
 import { CreditCardIcon, DocumentTextIcon, CalendarIcon } from '@heroicons/react/24/outline';
-import { useAuthStore } from '../store';
+import { useAuth } from '../hooks/useAuth';
+import { useAction } from '../lib/convex';
+import { api } from '../convex/_generated/api';
 
 export default function Billing() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
+  const createPortalSession = useAction(api.stripe.createPortalSession);
   const [isLoading, setIsLoading] = useState(false);
 
   const invoices = [
@@ -18,10 +21,15 @@ export default function Billing() {
   const handleManageSubscription = async () => {
     setIsLoading(true);
     try {
-      const { portal_url } = await import('../services/api').then(m => m.subscriptionService.createPortal());
-      window.location.href = portal_url;
+      const result = await createPortalSession({
+        returnUrl: window.location.href,
+      });
+      if (result.portalUrl) {
+        window.location.href = result.portalUrl;
+      }
     } catch (error) {
       console.error('Error:', error);
+      alert('Unable to open billing portal. Please try again.');
       setIsLoading(false);
     }
   };

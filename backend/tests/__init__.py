@@ -1,1 +1,0 @@
-# BizGenius Backend Tests

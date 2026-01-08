@@ -32,28 +32,124 @@ interface BrandingData {
   isLoading: boolean;
 }
 
-const COMPANY_NAME_QUESTION: Question = {
-  id: 'company_name',
-  question: 'What would you like to name your company?',
-  why_important: 'Your company name is the first impression customers will have. We\'ll generate logo options and color palettes while you continue.',
-  category: 'branding',
-  isCompanyName: true,
-  allow_custom_input: true,
-  example_answer: 'Enter your company name or leave blank for AI suggestions...'
-};
+// 8 canned questions - appear instantly, no API call needed
+const CANNED_QUESTIONS: Question[] = [
+  {
+    id: 'target_customer',
+    question: 'Who is your ideal customer?',
+    why_important: 'Understanding your target audience shapes market research, pricing, and go-to-market strategy.',
+    category: 'target_customer',
+    options: [
+      { value: 'b2c_consumers', label: 'Individual consumers (B2C)' },
+      { value: 'b2b_smb', label: 'Small/medium businesses (B2B SMB)' },
+      { value: 'b2b_enterprise', label: 'Large enterprises (B2B Enterprise)' },
+      { value: 'both', label: 'Both consumers and businesses' },
+      { value: 'other', label: 'Other' }
+    ]
+  },
+  {
+    id: 'problem_solved',
+    question: 'What problem does your business solve?',
+    why_important: 'A clear problem statement drives your value proposition and helps us understand your market opportunity.',
+    category: 'differentiation',
+    allow_custom_input: true,
+    example_answer: 'e.g., "People waste 2+ hours/week on meal planning"'
+  },
+  {
+    id: 'location_market',
+    question: 'Where will you operate?',
+    why_important: 'Geographic scope affects market sizing, regulations, and go-to-market strategy.',
+    category: 'location',
+    options: [
+      { value: 'local', label: 'Local (single city/region)' },
+      { value: 'regional', label: 'Regional (multiple cities/states)' },
+      { value: 'national', label: 'National (one country)' },
+      { value: 'international', label: 'International (multiple countries)' },
+      { value: 'online_global', label: 'Online / Global (no geographic limits)' }
+    ]
+  },
+  {
+    id: 'revenue_model',
+    question: 'How will you make money?',
+    why_important: 'Your revenue model shapes financial projections, pricing strategy, and business model.',
+    category: 'business_model',
+    options: [
+      { value: 'subscription', label: 'Subscription / recurring revenue' },
+      { value: 'one_time', label: 'One-time purchases' },
+      { value: 'marketplace', label: 'Marketplace / transaction fees' },
+      { value: 'advertising', label: 'Advertising / freemium' },
+      { value: 'services', label: 'Services / consulting' },
+      { value: 'other', label: 'Other' }
+    ]
+  },
+  {
+    id: 'differentiation',
+    question: 'What makes you different from alternatives?',
+    why_important: 'Your unique edge defines competitive positioning, messaging, and defensibility.',
+    category: 'competition',
+    allow_custom_input: true,
+    example_answer: 'e.g., "We use AI to cut delivery time by 50%"'
+  },
+  {
+    id: 'business_stage',
+    question: 'What stage is your business at?',
+    why_important: "We'll tailor the plan, financial projections, and recommendations to your current stage.",
+    category: 'timeline',
+    options: [
+      { value: 'idea', label: "Just an idea - haven't started yet" },
+      { value: 'mvp', label: 'Building MVP / prototype' },
+      { value: 'launched', label: 'Launched with early customers' },
+      { value: 'growing', label: 'Growing with revenue' },
+      { value: 'scaling', label: 'Scaling / raising funding' }
+    ]
+  },
+  {
+    id: 'startup_budget',
+    question: "What's your initial budget to get started?",
+    why_important: 'Budget shapes financial projections, funding strategies, and operational recommendations.',
+    category: 'funding',
+    options: [
+      { value: 'bootstrap', label: 'Bootstrapping ($0 - $5K)' },
+      { value: 'small', label: 'Small budget ($5K - $25K)' },
+      { value: 'moderate', label: 'Moderate ($25K - $100K)' },
+      { value: 'funded', label: 'Well-funded ($100K+)' },
+      { value: 'seeking', label: 'Seeking investors' }
+    ]
+  },
+  {
+    id: 'company_name',
+    question: 'What would you like to name your company?',
+    why_important: "Your company name is the first impression customers will have. We'll generate logo options and color palettes while you continue.",
+    category: 'branding',
+    isCompanyName: true,
+    allow_custom_input: true,
+    example_answer: 'Enter your company name or leave blank for AI suggestions...'
+  }
+];
 
-const TOTAL_QUESTIONS = 6;
+const TOTAL_CANNED_QUESTIONS = CANNED_QUESTIONS.length;
 
 export default function Questions() {
   const navigate = useNavigate();
   const location = useLocation();
   const [businessIdea, setBusinessIdea] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
-  const [loadingFirst, setLoadingFirst] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [allQuestionsLoaded, setAllQuestionsLoaded] = useState(false);
+
+  // Initialize answers for canned questions immediately - no loading spinner!
+  const [answers, setAnswers] = useState<Record<string, AnswerState>>(() => {
+    // Pre-initialize answers for all canned questions
+    const initial: Record<string, AnswerState> = {};
+    CANNED_QUESTIONS.forEach(q => {
+      initial[q.id] = { selectedOption: '', customText: '' };
+    });
+    return initial;
+  });
+
+  // AI-generated questions (fetched in background)
+  const [aiQuestions, setAiQuestions] = useState<Question[]>([]);
+  const [aiQuestionsLoading, setAiQuestionsLoading] = useState(false);
+  const aiQuestionsFetchedRef = useRef(false);
+
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [branding, setBranding] = useState<BrandingData>({
     companyName: '',
@@ -75,42 +171,44 @@ export default function Questions() {
     localStorage.setItem('myceo_business_idea', idea);
   }, [location.state, navigate]);
 
+  // Fetch AI-generated questions in background (specific to business idea)
   useEffect(() => {
-    if (!businessIdea || questions.length > 0) return;
+    if (!businessIdea || aiQuestionsFetchedRef.current) return;
+    aiQuestionsFetchedRef.current = true;
 
-    const fetchFirstQuestion = async () => {
-      setLoadingFirst(true);
+    const fetchAiQuestions = async () => {
+      setAiQuestionsLoading(true);
       try {
-        const response = await api.post('/generate/questions', { 
-          idea: businessIdea 
+        const response = await api.post('/generate/questions', {
+          idea: businessIdea,
+          exclude_categories: CANNED_QUESTIONS.map(q => q.category),
+          count: 4 // Request 3-4 AI-generated questions
         });
-        
-        const aiQuestions = response.data.questions?.slice(0, 1) || [];
-        
-        if (aiQuestions.length > 0) {
-          const allQuestions = [aiQuestions[0], COMPANY_NAME_QUESTION];
-          setQuestions(allQuestions);
-          
-          const initialAnswers: Record<string, AnswerState> = {};
-          allQuestions.forEach((q: Question) => {
-            initialAnswers[q.id] = { selectedOption: '', customText: '' };
+
+        const newQuestions = response.data.questions?.filter(
+          (q: Question) => !CANNED_QUESTIONS.some(canned => canned.id === q.id)
+        ) || [];
+
+        if (newQuestions.length > 0) {
+          setAiQuestions(newQuestions);
+          // Add answer states for AI questions
+          const newAnswerStates: Record<string, AnswerState> = {};
+          newQuestions.forEach((q: Question) => {
+            newAnswerStates[q.id] = { selectedOption: '', customText: '' };
           });
-          setAnswers(initialAnswers);
-        } else {
-          setQuestions([COMPANY_NAME_QUESTION]);
-          setAnswers({ [COMPANY_NAME_QUESTION.id]: { selectedOption: '', customText: '' } });
+          setAnswers(prev => ({ ...prev, ...newAnswerStates }));
         }
       } catch (err) {
-        console.error('Failed to fetch first question:', err);
-        setQuestions([COMPANY_NAME_QUESTION]);
-        setAnswers({ [COMPANY_NAME_QUESTION.id]: { selectedOption: '', customText: '' } });
+        console.error('Background AI question fetch failed (non-blocking):', err);
+        // Silently fail - canned questions are sufficient
       } finally {
-        setLoadingFirst(false);
+        setAiQuestionsLoading(false);
       }
     };
 
-    fetchFirstQuestion();
-  }, [businessIdea, questions.length]);
+    // Start fetching immediately in background
+    fetchAiQuestions();
+  }, [businessIdea]);
 
   const generateBrandingInBackground = useCallback(async (companyName: string) => {
     if (brandingGeneratedRef.current || !companyName.trim()) return;
@@ -151,82 +249,9 @@ export default function Questions() {
     }
   }, [businessIdea]);
 
-  const fetchMoreQuestions = useCallback(async () => {
-    if (loadingMore || !businessIdea) return;
-    
-    const nonCompanyQuestions = questions.filter(q => !q.isCompanyName);
-    const targetQuestions = TOTAL_QUESTIONS - 1;
-    
-    if (nonCompanyQuestions.length >= targetQuestions) {
-      setAllQuestionsLoaded(true);
-      return;
-    }
-    
-    setLoadingMore(true);
-    
-    try {
-      const currentAnswers: Record<string, { question: string; answer: string }> = {};
-      questions.forEach(q => {
-        if (q.isCompanyName) return;
-        const answer = answers[q.id];
-        if (answer?.selectedOption || answer?.customText) {
-          const answerText = answer.selectedOption === 'other' 
-            ? answer.customText 
-            : (q.options?.find(o => o.value === answer.selectedOption)?.label || answer.selectedOption || answer.customText);
-          if (answerText) {
-            currentAnswers[q.id] = { question: q.question, answer: answerText };
-          }
-        }
-      });
-
-      const coveredCategories = questions
-        .filter(q => !q.isCompanyName)
-        .map(q => q.category);
-
-      const response = await api.post('/generate/questions', { 
-        idea: businessIdea,
-        previous_answers: currentAnswers,
-        exclude_categories: coveredCategories
-      });
-      
-      const newQuestions = response.data.questions?.filter(
-        (q: Question) => !questions.some(existing => existing.id === q.id)
-      ) || [];
-      
-      if (newQuestions.length > 0) {
-        setQuestions(prev => [...prev, ...newQuestions]);
-        const newAnswerStates: Record<string, AnswerState> = {};
-        newQuestions.forEach((q: Question) => {
-          newAnswerStates[q.id] = { selectedOption: '', customText: '' };
-        });
-        setAnswers(prev => ({ ...prev, ...newAnswerStates }));
-        
-        const totalNonCompany = nonCompanyQuestions.length + newQuestions.length;
-        if (totalNonCompany >= targetQuestions) {
-          setAllQuestionsLoaded(true);
-        }
-      } else {
-        setAllQuestionsLoaded(true);
-      }
-    } catch (err) {
-      console.error('Failed to fetch more questions:', err);
-      setAllQuestionsLoaded(true);
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [businessIdea, questions, answers, loadingMore]);
-
-  useEffect(() => {
-    const nonCompanyQuestions = questions.filter(q => !q.isCompanyName);
-    const hasEnoughQuestions = nonCompanyQuestions.length >= TOTAL_QUESTIONS - 1;
-    
-    if (!hasEnoughQuestions && !loadingMore && !allQuestionsLoaded && businessIdea) {
-      const companyAnswer = answers[COMPANY_NAME_QUESTION.id];
-      if (companyAnswer?.customText?.trim() || currentIndex > 0) {
-        fetchMoreQuestions();
-      }
-    }
-  }, [currentIndex, answers, allQuestionsLoaded, fetchMoreQuestions, questions, loadingMore, businessIdea]);
+  // Combine canned questions with AI questions when available
+  // AI questions appear AFTER all canned questions
+  const allQuestions = [...CANNED_QUESTIONS, ...aiQuestions];
 
   const handleOptionSelect = (questionId: string, optionValue: string) => {
     setAnswers(prev => ({
@@ -266,39 +291,51 @@ export default function Questions() {
     return option?.label || answer.selectedOption;
   };
 
-  const currentQuestion = questions[currentIndex];
+  const currentQuestion = allQuestions[currentIndex];
   const currentAnswer = answers[currentQuestion?.id];
-  
+
   const hasValidAnswer = currentQuestion && (
     currentQuestion.isCompanyName
       ? currentAnswer?.customText?.trim()
       : (!currentQuestion.options || currentQuestion.options.length === 0)
         ? currentAnswer?.customText?.trim()
-        : currentAnswer?.selectedOption && 
+        : currentAnswer?.selectedOption &&
           (currentAnswer.selectedOption !== 'other' || currentAnswer.customText?.trim())
   );
-  
-  const totalDisplayQuestions = Math.max(questions.length, TOTAL_QUESTIONS);
-  const isLastQuestion = currentIndex >= questions.length - 1 && allQuestionsLoaded;
+
+  // Total questions = canned (8) + AI questions (0-4, loading in background)
+  const totalDisplayQuestions = aiQuestionsLoading
+    ? TOTAL_CANNED_QUESTIONS + 3 // Show placeholder count while loading
+    : allQuestions.length;
+
+  // Last question: at end of combined list and AI fetch is done
+  const isLastQuestion = currentIndex >= allQuestions.length - 1 && !aiQuestionsLoading;
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey && hasValidAnswer) {
+      e.preventDefault();
+      handleNext();
+    }
+  };
 
   const handleNext = () => {
     if (!hasValidAnswer) return;
-    
+
     if (currentQuestion?.isCompanyName) {
       const companyName = currentAnswer?.customText?.trim() || '';
       if (companyName && !brandingGeneratedRef.current) {
         generateBrandingInBackground(companyName);
       }
     }
-    
+
     if (isLastQuestion) {
       handleSubmit();
       return;
     }
-    
+
     setIsTransitioning(true);
     setTimeout(() => {
-      if (currentIndex < questions.length - 1) {
+      if (currentIndex < allQuestions.length - 1) {
         setCurrentIndex(prev => prev + 1);
       }
       setIsTransitioning(false);
@@ -318,8 +355,8 @@ export default function Questions() {
   const handleSubmit = () => {
     const answersWithContext: Record<string, { question: string; answer: string }> = {};
     let companyName = '';
-    
-    questions.forEach((q: Question) => {
+
+    allQuestions.forEach((q: Question) => {
       const answerText = getAnswerText(q.id, q);
       if (q.isCompanyName) {
         companyName = answerText;
@@ -396,16 +433,7 @@ export default function Questions() {
     return dimension ? labels[dimension] || dimension : '';
   };
 
-  if (loadingFirst) {
-    return (
-      <div className="bg-apple-bg min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-apple-gray">Crafting your first question...</p>
-        </div>
-      </div>
-    );
-  }
+  // No loadingFirst spinner needed - canned questions appear instantly!
 
   if (!currentQuestion) {
     return (
@@ -438,24 +466,25 @@ export default function Questions() {
             <span className="text-sm font-semibold text-apple-text">
               Question {currentIndex + 1} of {totalDisplayQuestions}
             </span>
-            {(loadingMore || branding.isLoading) && (
+            {(aiQuestionsLoading || branding.isLoading) && (
               <span className="text-xs text-apple-gray flex items-center gap-2">
                 <span className="w-3 h-3 border border-violet-500 border-t-transparent rounded-full animate-spin" />
-                {branding.isLoading ? 'Generating branding...' : 'Loading more...'}
+                {branding.isLoading ? 'Generating branding...' : 'Loading personalized questions...'}
               </span>
             )}
           </div>
           
           <div className="flex gap-1.5">
             {Array.from({ length: totalDisplayQuestions }).map((_, idx) => {
-              const question = questions[idx];
+              const question = allQuestions[idx];
               const answer = question ? answers[question.id] : null;
               const isAnswered = question?.isCompanyName
                 ? answer?.customText?.trim()
-                : answer?.selectedOption && 
+                : answer?.selectedOption &&
                   (answer.selectedOption !== 'other' || answer.customText?.trim());
               const isCurrent = idx === currentIndex;
-              
+              const isPlaceholder = idx >= allQuestions.length; // AI questions not loaded yet
+
               return (
                 <div
                   key={idx}
@@ -464,6 +493,8 @@ export default function Questions() {
                       ? 'bg-green-500'
                       : isCurrent
                       ? 'bg-gradient-to-r from-violet-500 to-indigo-500'
+                      : isPlaceholder
+                      ? 'bg-gray-100 animate-pulse'
                       : 'bg-gray-200'
                   }`}
                 />
@@ -500,6 +531,7 @@ export default function Questions() {
                       type="text"
                       value={currentAnswer?.customText || ''}
                       onChange={(e) => handleCustomTextChange(currentQuestion.id, e.target.value)}
+                      onKeyDown={handleKeyDown}
                       placeholder={currentQuestion.example_answer}
                       className="w-full pl-12 pr-4 py-4 bg-gradient-to-r from-violet-50 to-indigo-50 border-2 border-violet-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 text-apple-text font-medium focus:outline-none transition-all rounded-xl text-lg"
                       autoFocus
@@ -548,6 +580,7 @@ export default function Questions() {
                         type="text"
                         value={currentAnswer?.customText || ''}
                         onChange={(e) => handleCustomTextChange(currentQuestion.id, e.target.value)}
+                        onKeyDown={handleKeyDown}
                         placeholder="Please specify..."
                         className="w-full p-4 bg-white border-2 border-violet-500 focus:ring-4 focus:ring-violet-500/10 text-apple-text font-medium focus:outline-none transition-all rounded-xl text-lg"
                         autoFocus
@@ -559,6 +592,7 @@ export default function Questions() {
                 <textarea
                   value={currentAnswer?.customText || ''}
                   onChange={(e) => handleCustomTextChange(currentQuestion.id, e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder={currentQuestion.example_answer || 'Enter your answer...'}
                   className="w-full h-32 p-4 bg-gray-50 border-2 border-transparent focus:border-violet-500 focus:bg-white text-apple-text font-medium resize-none focus:outline-none transition-all rounded-xl text-lg"
                 />
@@ -582,9 +616,9 @@ export default function Questions() {
             
             <button
               onClick={handleNext}
-              disabled={!hasValidAnswer || (currentIndex >= questions.length - 1 && loadingMore)}
+              disabled={!hasValidAnswer || (currentIndex >= allQuestions.length - 1 && aiQuestionsLoading)}
               className={`flex items-center gap-2 px-8 py-4 rounded-full font-semibold transition-all ${
-                hasValidAnswer && !(currentIndex >= questions.length - 1 && loadingMore)
+                hasValidAnswer && !(currentIndex >= allQuestions.length - 1 && aiQuestionsLoading)
                   ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 shadow-lg hover:shadow-xl hover:scale-[1.02]'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
@@ -594,7 +628,7 @@ export default function Questions() {
                   Generate Plan
                   <ArrowRightIcon className="w-5 h-5" />
                 </>
-              ) : currentIndex >= questions.length - 1 && loadingMore ? (
+              ) : currentIndex >= allQuestions.length - 1 && aiQuestionsLoading ? (
                 <>
                   Loading...
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

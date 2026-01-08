@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { useAuthStore } from './store';
+import { useAuth } from './hooks/useAuth';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -29,22 +28,7 @@ import Questions from './pages/Questions';
 import Branding from './pages/Branding';
 
 function App() {
-  const { setUser, setToken, isAuthenticated, isLoading } = useAuthStore();
-
-  useEffect(() => {
-    const token = localStorage.getItem('bizgenius_token');
-    const userStr = localStorage.getItem('bizgenius_user');
-    
-    if (token && userStr) {
-      setToken(token);
-      try {
-        const user = JSON.parse(userStr);
-        setUser(user);
-      } catch {
-        localStorage.removeItem('bizgenius_user');
-      }
-    }
-  }, [setToken, setUser]);
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return <Loading />;

@@ -25,51 +25,51 @@ import {
 } from '@heroicons/react/24/outline';
 import type { Idea } from '../types';
 
-const mockIdeas = [
+const mockIdeas: Idea[] = [
   {
-    id: 1,
+    _id: '1',
     title: 'AI-Powered Tutoring Platform',
     description: 'An adaptive learning platform that uses AI to personalize education for students of all ages',
     industry: 'EdTech',
     target_market: 'K-12 students, Parents, Schools',
-    user_id: 1,
+    userId: '1',
     business_plan: { executive_summary: 'Test' } as any,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: Date.now(),
+    updated_at: Date.now(),
   },
   {
-    id: 2,
+    _id: '2',
     title: 'Eco-Friendly Packaging Solution',
     description: 'Sustainable packaging alternatives for e-commerce businesses using biodegradable materials',
     industry: 'Sustainability',
     target_market: 'E-commerce businesses, Retailers',
-    user_id: 1,
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    userId: '1',
+    created_at: Date.now() - 86400000,
+    updated_at: Date.now() - 86400000,
   },
   {
-    id: 3,
+    _id: '3',
     title: 'Telemedicine App',
     description: 'Mobile app connecting patients with healthcare providers for virtual consultations',
     industry: 'Healthcare',
     target_market: 'Patients, Healthcare providers, Insurance companies',
-    user_id: 1,
+    userId: '1',
     financial_model: { assumptions: { market_size: 'Test' } } as any,
-    created_at: new Date(Date.now() - 172800000).toISOString(),
-    updated_at: new Date(Date.now() - 172800000).toISOString(),
+    created_at: Date.now() - 172800000,
+    updated_at: Date.now() - 172800000,
   },
   {
-    id: 4,
+    _id: '4',
     title: 'Fitness Tracker SaaS',
     description: 'Comprehensive fitness and wellness platform with AI-powered workout recommendations',
     industry: 'Health & Fitness',
     target_market: 'Fitness enthusiasts, Gyms, Corporate wellness programs',
-    user_id: 1,
+    userId: '1',
     pitch_deck: { slides: [] } as any,
-    created_at: new Date(Date.now() - 259200000).toISOString(),
-    updated_at: new Date(Date.now() - 259200000).toISOString(),
+    created_at: Date.now() - 259200000,
+    updated_at: Date.now() - 259200000,
   },
-] as Idea[];
+];
 
 const industries = ['All', 'EdTech', 'Healthcare', 'Sustainability', 'Health & Fitness', 'Finance', 'E-commerce'];
 
@@ -139,7 +139,7 @@ export default function IdeasList() {
         {filteredIdeas.map((idea) => {
           const status = getStatus(idea);
           return (
-            <Card key={idea.id} className="card-hover">
+            <Card key={idea._id} className="card-hover">
               <CardBody className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <Chip size="sm" color="primary" variant="flat">
@@ -155,7 +155,7 @@ export default function IdeasList() {
                       <DropdownItem
                         key="view"
                         startContent={<EyeIcon className="w-4 h-4" />}
-                        href={`/ideas/${idea.id}`}
+                        href={`/ideas/${idea._id}`}
                       >
                         View Details
                       </DropdownItem>
@@ -221,7 +221,7 @@ export default function IdeasList() {
                   <span className="text-xs text-gray-400">
                     {new Date(idea.created_at).toLocaleDateString()}
                   </span>
-                  <Link to={`/ideas/${idea.id}`}>
+                  <Link to={`/ideas/${idea._id}`}>
                     <Button size="sm" color="primary" variant="light">
                       Continue →
                     </Button>

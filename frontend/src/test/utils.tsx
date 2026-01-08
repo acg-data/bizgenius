@@ -32,32 +32,33 @@ export { customRender as render };
  * Test data factories
  */
 export const createMockUser = (overrides: Partial<User> = {}): User => ({
-  id: 1,
+  _id: '1',
   email: 'test@example.com',
   full_name: 'Test User',
   is_active: true,
   is_verified: false,
   subscription_tier: 'free',
   subscription_status: 'inactive',
-  created_at: new Date().toISOString(),
+  created_at: Date.now(),
+  updated_at: Date.now(),
   ...overrides,
 });
 
 export const createMockIdea = (overrides: Partial<Idea> = {}): Idea => ({
-  id: 1,
+  _id: '1',
   title: 'Test Business Idea',
   description: 'A great business idea for testing purposes.',
   industry: 'Technology',
   target_market: 'Small businesses',
-  user_id: 1,
+  userId: '1',
   business_plan: undefined,
   financial_model: undefined,
   market_research: undefined,
   competitor_analysis: undefined,
   pitch_deck: undefined,
   generated_at: undefined,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+  created_at: Date.now(),
+  updated_at: Date.now(),
   ...overrides,
 });
 
@@ -103,7 +104,7 @@ export const createMockIdeaWithContent = (overrides: Partial<Idea> = {}): Idea =
     key_messages: [],
     call_to_action: 'Test CTA',
   } as any,
-  generated_at: new Date().toISOString(),
+  generated_at: Date.now(),
   ...overrides,
 });
 
