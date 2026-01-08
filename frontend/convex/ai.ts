@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalAction, internalQuery } from "./_generated/server";
+import { action, internalAction, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -8,6 +8,8 @@ const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const PRIMARY_MODEL = "anthropic/claude-3.5-sonnet";
 // Fallback for speed/cost
 const FALLBACK_MODEL = "openai/gpt-4o-mini";
+// Ultra-fast model for instant responses (questions, suggestions)
+const FAST_MODEL = "openai/gpt-4o-mini"; // ~500ms response time
 
 // 8-Section generation order (Tony's Tacos template)
 const SECTION_ORDER = [
@@ -695,3 +697,161 @@ Include 1-2 founders. Include 4-6 hires with priorities. Include 3-4 partners.`,
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// ============================================================================
+// SMART QUESTION GENERATOR - Fast AI-powered questions
+// ============================================================================
+
+export const generateSmartQuestions = action({
+  args: {
+    businessIdea: v.string(),
+    existingCategories: v.optional(v.array(v.string())),
+    count: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { businessIdea, existingCategories = [], count = 4 } = args;
+
+    const systemPrompt = `You are a sharp business strategist who asks the MOST IMPORTANT questions to understand a business idea deeply.
+
+Your job is to generate ${count} highly specific, insightful questions that:
+1. Are DIRECTLY relevant to THIS specific business idea (not generic)
+2. Uncover critical information that will shape the business plan
+3. Cover gaps NOT already addressed by these categories: ${existingCategories.join(", ")}
+4. Feel like questions a savvy investor or experienced entrepreneur would ask
+
+Each question should have:
+- A clear, direct question (not vague)
+- Why it matters for THIS business specifically
+- Smart multiple-choice options that cover the realistic range of answers
+- Allow for custom input when needed
+
+Focus on questions about:
+- Unit economics specific to this business model
+- Key risks unique to this market
+- Regulatory or compliance considerations
+- Customer acquisition channels that fit this business
+- Timing and market conditions
+- Founder/team fit questions
+- Technology or operational moats`;
+
+    const userPrompt = `Business idea: "${businessIdea}"
+
+Generate ${count} highly specific questions for THIS business idea. NOT generic questions.
+
+Return JSON with this EXACT structure:
+{
+  "questions": [
+    {
+      "id": "unique_snake_case_id",
+      "question": "Specific question about THIS business?",
+      "why_important": "Why this matters for THIS specific business idea",
+      "category": "category_name",
+      "mece_dimension": "financial|market|operational|human",
+      "options": [
+        { "value": "option_1", "label": "First realistic option" },
+        { "value": "option_2", "label": "Second realistic option" },
+        { "value": "option_3", "label": "Third realistic option" },
+        { "value": "other", "label": "Other" }
+      ],
+      "allow_custom_input": true,
+      "example_answer": "Example if free-form input is primary"
+    }
+  ]
+}
+
+Make questions SPECIFIC to "${businessIdea}". Reference the actual business in questions and options.
+Include industry-specific terminology where relevant.
+Options should reflect realistic scenarios for THIS type of business.`;
+
+    try {
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": process.env.SITE_URL || "https://bizgenius.app",
+          "X-Title": "BizGenius",
+        },
+        body: JSON.stringify({
+          model: FAST_MODEL,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.8, // Slightly creative for varied questions
+          max_tokens: 2000,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("OpenRouter API error:", errorText);
+        return { questions: [], error: "Failed to generate questions" };
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+        return { questions: [], error: "Empty response" };
+      }
+
+      const parsed = JSON.parse(content);
+      return { questions: parsed.questions || [] };
+    } catch (error: any) {
+      console.error("Smart question generation failed:", error);
+      return { questions: [], error: error.message };
+    }
+  },
+});
+
+// Generate AI insight/suggestion based on partial answers
+export const generateInsight = action({
+  args: {
+    businessIdea: v.string(),
+    currentQuestion: v.string(),
+    partialAnswers: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    const { businessIdea, currentQuestion, partialAnswers = {} } = args;
+
+    const prompt = `Business idea: "${businessIdea}"
+Current question being answered: "${currentQuestion}"
+Answers so far: ${JSON.stringify(partialAnswers)}
+
+Provide a brief (1-2 sentence) smart insight or suggestion that helps the user think about this question in the context of their specific business. Be specific and actionable, not generic.
+
+Return JSON: { "insight": "Your brief, specific insight here" }`;
+
+    try {
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": process.env.SITE_URL || "https://bizgenius.app",
+          "X-Title": "BizGenius",
+        },
+        body: JSON.stringify({
+          model: FAST_MODEL,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.7,
+          max_tokens: 200,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (!response.ok) {
+        return { insight: null };
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+      const parsed = JSON.parse(content || "{}");
+      return { insight: parsed.insight || null };
+    } catch (error) {
+      return { insight: null };
+    }
+  },
+});

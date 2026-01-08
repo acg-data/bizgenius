@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { CommandLineIcon, ArrowRightIcon, ArrowLeftIcon, CheckIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import api from '../services/api';
+import { CommandLineIcon, ArrowRightIcon, ArrowLeftIcon, CheckIcon, SparklesIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { useAction } from '../lib/convex';
+import { api } from '../convex/_generated/api';
 
 interface QuestionOption {
   value: string;
@@ -150,7 +151,16 @@ export default function Questions() {
   const [aiQuestionsLoading, setAiQuestionsLoading] = useState(false);
   const aiQuestionsFetchedRef = useRef(false);
 
+  // AI insight for current question
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+  const lastInsightQuestionRef = useRef<string | null>(null);
+
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Convex actions
+  const generateSmartQuestions = useAction(api.ai.generateSmartQuestions);
+  const generateInsight = useAction(api.ai.generateInsight);
   const [branding, setBranding] = useState<BrandingData>({
     companyName: '',
     logos: [],
@@ -179,13 +189,13 @@ export default function Questions() {
     const fetchAiQuestions = async () => {
       setAiQuestionsLoading(true);
       try {
-        const response = await api.post('/generate/questions', {
-          idea: businessIdea,
-          exclude_categories: CANNED_QUESTIONS.map(q => q.category),
-          count: 4 // Request 3-4 AI-generated questions
+        const result = await generateSmartQuestions({
+          businessIdea,
+          existingCategories: CANNED_QUESTIONS.map(q => q.category),
+          count: 4
         });
 
-        const newQuestions = response.data.questions?.filter(
+        const newQuestions = result.questions?.filter(
           (q: Question) => !CANNED_QUESTIONS.some(canned => canned.id === q.id)
         ) || [];
 
@@ -208,7 +218,7 @@ export default function Questions() {
 
     // Start fetching immediately in background
     fetchAiQuestions();
-  }, [businessIdea]);
+  }, [businessIdea, generateSmartQuestions]);
 
   const generateBrandingInBackground = useCallback(async (companyName: string) => {
     if (brandingGeneratedRef.current || !companyName.trim()) return;
@@ -293,6 +303,40 @@ export default function Questions() {
 
   const currentQuestion = allQuestions[currentIndex];
   const currentAnswer = answers[currentQuestion?.id];
+
+  // Fetch AI insight when question changes (debounced)
+  useEffect(() => {
+    if (!currentQuestion || currentQuestion.id === lastInsightQuestionRef.current) return;
+    lastInsightQuestionRef.current = currentQuestion.id;
+    setAiInsight(null);
+
+    // Only fetch insights after a few questions answered
+    if (currentIndex < 2) return;
+
+    const fetchInsight = async () => {
+      setInsightLoading(true);
+      try {
+        const result = await generateInsight({
+          businessIdea,
+          currentQuestion: currentQuestion.question,
+          partialAnswers: Object.fromEntries(
+            Object.entries(answers)
+              .filter(([_, v]) => v.selectedOption || v.customText)
+              .map(([k, v]) => [k, v.customText || v.selectedOption])
+          )
+        });
+        setAiInsight(result.insight);
+      } catch (err) {
+        // Silently fail
+      } finally {
+        setInsightLoading(false);
+      }
+    };
+
+    // Debounce to avoid too many API calls
+    const timeout = setTimeout(fetchInsight, 500);
+    return () => clearTimeout(timeout);
+  }, [currentQuestion?.id, currentIndex, businessIdea, answers, generateInsight]);
 
   const hasValidAnswer = currentQuestion && (
     currentQuestion.isCompanyName
@@ -521,7 +565,24 @@ export default function Questions() {
               <h2 className="text-2xl md:text-3xl font-semibold text-apple-text mb-3 leading-tight">
                 {currentQuestion.question}
               </h2>
-              <p className="text-apple-gray mb-8">{currentQuestion.why_important}</p>
+              <p className="text-apple-gray mb-4">{currentQuestion.why_important}</p>
+
+              {/* AI Insight */}
+              {(aiInsight || insightLoading) && (
+                <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200">
+                  <div className="flex items-start gap-3">
+                    <LightBulbIcon className={`w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5 ${insightLoading ? 'animate-pulse' : ''}`} />
+                    <div className="flex-1">
+                      <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">AI Insight</span>
+                      {insightLoading ? (
+                        <p className="text-sm text-amber-800 mt-1 animate-pulse">Thinking...</p>
+                      ) : (
+                        <p className="text-sm text-amber-800 mt-1">{aiInsight}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {currentQuestion.isCompanyName ? (
                 <div className="space-y-4">
