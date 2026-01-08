@@ -9,7 +9,7 @@ const PRIMARY_MODEL = "anthropic/claude-3.5-sonnet";
 // Fallback for speed/cost
 const FALLBACK_MODEL = "openai/gpt-4o-mini";
 // Ultra-fast model for instant responses (questions, suggestions)
-const FAST_MODEL = "openrouter/gpt-oss-120b-high"; // Fast + high quality
+const FAST_MODEL = "openai/gpt-oss-120b"; // Fast + high quality
 
 // 8-Section generation order (Tony's Tacos template)
 const SECTION_ORDER = [
