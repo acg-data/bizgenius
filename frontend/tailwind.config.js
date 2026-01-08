@@ -42,6 +42,8 @@ export default {
         'card-hover': '0 8px 30px -4px rgba(0, 0, 0, 0.1), 0 4px 20px -2px rgba(0, 0, 0, 0.06)',
         'input': '0 2px 8px rgba(0, 0, 0, 0.04)',
         'input-focus': '0 0 0 4px rgba(0, 113, 227, 0.15)',
+        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.05)',
+        'glass-lg': '0 25px 50px -12px rgba(0, 0, 0, 0.1)',
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.6s ease-out',
@@ -50,6 +52,8 @@ export default {
         'float': 'float 6s ease-in-out infinite',
         'slide-up': 'slideUp 0.4s ease-out',
         'scale-in': 'scaleIn 0.3s ease-out',
+        'float-blob': 'floatBlob 10s infinite ease-in-out',
+        'float-blob-delayed': 'floatBlob 10s infinite ease-in-out 2s',
       },
       keyframes: {
         fadeInUp: {
@@ -71,6 +75,10 @@ export default {
         scaleIn: {
           '0%': { opacity: '0', transform: 'scale(0.95)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        floatBlob: {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '50%': { transform: 'translate(20px, -20px)' },
         },
       },
     },
