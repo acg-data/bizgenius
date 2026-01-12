@@ -26,6 +26,7 @@ import Generate from './pages/Generate';
 import Results from './pages/Results';
 import Questions from './pages/Questions';
 import Branding from './pages/Branding';
+import Report from './pages/Report';
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -54,6 +55,7 @@ function App() {
       <Route path="/ideas" element={isAuthenticated ? <Layout><IdeasList /></Layout> : <Navigate to="/login" />} />
       <Route path="/ideas/new" element={isAuthenticated ? <Layout><CreateIdea /></Layout> : <Navigate to="/login" />} />
       <Route path="/ideas/:id" element={isAuthenticated ? <Layout><IdeaDetail /></Layout> : <Navigate to="/login" />} />
+      <Route path="/ideas/:id/report" element={isAuthenticated ? <Report /> : <Navigate to="/login" />} />
       <Route path="/subscription" element={isAuthenticated ? <Layout><Subscription /></Layout> : <Navigate to="/login" />} />
       <Route path="/billing" element={isAuthenticated ? <Layout><Billing /></Layout> : <Navigate to="/login" />} />
       <Route path="/profile" element={isAuthenticated ? <Layout><Profile /></Layout> : <Navigate to="/login" />} />
