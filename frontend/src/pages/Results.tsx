@@ -57,16 +57,19 @@ const sectionColors: Record<string, string> = {
 
 export default function Results() {
   const location = window.location;
-  const sessionId = new URLSearchParams(location.search).get('sessionId') || localStorage.getItem('myceo_session_id');
+  const urlParams = new URLSearchParams(location.search);
+  const sessionId = urlParams.get('sessionId') || localStorage.getItem('myceo_session_id');
+
+  // Get tier from URL parameter, fallback to user subscription
+  const urlTier = urlParams.get('tier');
+  const { user } = useAuth();
+  const tier = (urlTier && ['free', 'pro', 'expert'].includes(urlTier)) ? urlTier : (user?.subscription_tier || "free");
 
   const session = useQuery(
     api.sessions.getSessionStatus,
     sessionId ? { sessionId } : "skip"
   );
   const isLoading = sessionId ? session === undefined : false;
-
-  const { user } = useAuth();
-  const tier = user?.subscription_tier || "free";
 
   const saveIdea = useMutation(api.sessions.saveSessionToIdea);
   const [saved, setSaved] = useState(false);
@@ -179,8 +182,12 @@ export default function Results() {
                 </>
               )}
             </button>
-            <span className="bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1.5 rounded-full capitalize">
-              {tier} Plan
+            <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${
+              tier === 'free' ? 'bg-gray-100 text-gray-700' :
+              tier === 'pro' ? 'bg-blue-100 text-blue-700' :
+              'bg-purple-100 text-purple-700'
+            }`}>
+              {tier.charAt(0).toUpperCase() + tier.slice(1)} Plan
             </span>
           </div>
         </div>
@@ -245,11 +252,27 @@ export default function Results() {
             {/* Competitor Landscape */}
             <CompetitorsSection data={result?.competitors} />
 
-            {/* Business Plan */}
-            <BusinessPlanSection data={result?.businessPlan} />
+            {/* Business Plan - May be locked for free tier */}
+            {canAccessSection(tier, "businessPlan") ? (
+              <BusinessPlanSection data={result?.businessPlan} />
+            ) : (
+              <LockedSection
+                title="Business Strategy"
+                description="Get mission, vision, operations plan, and strategic roadmap"
+                icon={BriefcaseIcon}
+              />
+            )}
 
-            {/* Go-To-Market */}
-            <GoToMarketSection data={result?.goToMarket} />
+            {/* Go-to-Market - May be locked for free tier */}
+            {canAccessSection(tier, "goToMarket") ? (
+              <GoToMarketSection data={result?.goToMarket} />
+            ) : (
+              <LockedSection
+                title="Go-to-Market Strategy"
+                description="Get launch plan, customer acquisition channels, and viral mechanics"
+                icon={RocketLaunchIcon}
+              />
+            )}
 
             {/* Financial Model - May be locked for free tier */}
             {canAccessSection(tier, "financial") ? (
@@ -262,7 +285,7 @@ export default function Results() {
               />
             )}
 
-            {/* Pitch Deck - May be locked for free tier */}
+            {/* Pitch Deck - May be locked for expert tier only */}
             {canAccessSection(tier, "pitchDeck") ? (
               <PitchDeckSection data={result?.pitchDeck} />
             ) : (
@@ -270,6 +293,17 @@ export default function Results() {
                 title="Pitch Deck"
                 description="Get investor-ready 10-slide presentation with speaker notes"
                 icon={PresentationChartBarIcon}
+              />
+            )}
+
+            {/* Team & Advisors - May be locked for expert tier only */}
+            {canAccessSection(tier, "team") ? (
+              <TeamSection data={result?.team} />
+            ) : (
+              <LockedSection
+                title="Team & Advisors"
+                description="Get hiring plan, founder profiles, and strategic partners"
+                icon={UserGroupIcon}
               />
             )}
 

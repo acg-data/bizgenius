@@ -1,13 +1,14 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import { ConvexProvider } from 'convex/react'
+import { ConvexAuthProvider } from '@convex-dev/auth/react'
 import * as Sentry from '@sentry/react'
 import convex from './lib/convex'
 import { HeroUIProvider } from '@heroui/react'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
+import { GenerationProvider } from './contexts/GenerationContext'
 import './index.css'
 
 // Initialize Sentry in production
@@ -31,15 +32,17 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ConvexProvider client={convex}>
+      <ConvexAuthProvider client={convex}>
         <HeroUIProvider>
           <ToastProvider>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
+            <GenerationProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </GenerationProvider>
           </ToastProvider>
         </HeroUIProvider>
-      </ConvexProvider>
+      </ConvexAuthProvider>
     </ErrorBoundary>
   </React.StrictMode>,
 )

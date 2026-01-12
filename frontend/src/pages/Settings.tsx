@@ -1,16 +1,28 @@
 import { useState } from 'react';
-import { Card, CardBody, CardHeader, Button, Switch, Divider, Select, SelectItem } from '@heroui/react';
+import { Card, CardBody, CardHeader, Button, Switch, Divider, Select, SelectItem, Chip } from '@heroui/react';
 import {
   BellIcon,
   ShieldCheckIcon,
   GlobeAltIcon,
   TrashIcon,
   ArrowRightOnRectangleIcon,
+  CpuChipIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useGeneration } from '../contexts/GenerationContext';
+import { useQuery } from '../lib/convex';
+import { api } from '../convex/_generated/api';
+import { Provider } from '../convex/providers';
 
 export default function Settings() {
   const { signOut } = useAuthActions();
+  const {
+    currentProvider,
+    fallbackOrder,
+    setActiveProvider,
+    setFallbackOrder,
+  } = useGeneration();
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
@@ -24,6 +36,24 @@ export default function Settings() {
     timezone: 'America/New_York',
     currency: 'USD',
   });
+
+  const { data: costTrends } = useQuery(api.admin.getCostTrends, { days: 7 });
+  const { data: recentGenerations } = useQuery(api.admin.getRecentGenerations, { limit: 10 });
+  const { data: costsByProvider } = useQuery(api.admin.getCostsByProvider, {
+    startDate: Date.now() - 30 * 24 * 60 * 60 * 1000,
+    endDate: Date.now(),
+  });
+
+  const handleProviderChange = async (provider: Provider) => {
+    try {
+      await setActiveProvider(provider);
+    } catch (error) {
+      console.error('Failed to change provider:', error);
+    }
+  };
+
+  const totalCostLast30Days = costsByProvider?.totalCost || 0;
+  const recentCost = costTrends?.reduce((sum, day) => sum + day.cost, 0) || 0;
 
   const handleLogout = async () => {
     await signOut();
@@ -204,6 +234,94 @@ export default function Settings() {
                 <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
               </div>
             </Button>
+</CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-3">
+            <CpuChipIcon className="w-6 h-6 text-primary-500" />
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">AI Provider Settings</h2>
+              <p className="text-sm text-gray-500">Manage AI generation providers and costs</p>
+            </div>
+          </CardHeader>
+          <CardBody className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900">Active Provider</p>
+                <p className="text-sm text-gray-500">Primary AI provider for generation</p>
+              </div>
+              <Select
+                label="Select Provider"
+                value={currentProvider}
+                onChange={(e) => handleProviderChange(e.target.value as Provider)}
+                classNames={{ base: 'max-w-xs' }}
+              >
+                <SelectItem key="novita">Novita AI (Mimo v2 Flash)</SelectItem>
+                <SelectItem key="openrouter">OpenRouter (Claude/GPT)</SelectItem>
+                <SelectItem key="cerebras">Cerebras (GLM 4.7)</SelectItem>
+              </Select>
+            </div>
+
+            <Divider />
+
+            <div>
+              <p className="font-medium text-gray-900 mb-2">Failover Order</p>
+              <p className="text-sm text-gray-500 mb-3">Provider fallback sequence if primary fails</p>
+              <div className="flex gap-2">
+                {fallbackOrder.map((provider, index) => (
+                  <Chip key={provider} variant="flat" color="primary">
+                    {index + 1}. {provider}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+
+            <Divider />
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-gray-900">Total Cost (30 Days)</p>
+                <p className="text-2xl font-bold text-primary-600">${totalCostLast30Days.toFixed(4)}</p>
+              </div>
+              <p className="text-sm text-gray-500">Cost breakdown by provider:</p>
+              {costsByProvider?.byProvider && Object.entries(costsByProvider.byProvider).map(([provider, data]: [string, any]) => (
+                <div key={provider} className="flex justify-between items-center mt-2">
+                  <span className="text-sm text-gray-600 capitalize">{provider}</span>
+                  <span className="text-sm font-medium text-gray-900">${data.totalCost?.toFixed(4) || '0.00'}</span>
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-3">
+            <ChartBarIcon className="w-6 h-6 text-primary-500" />
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Cost Analytics</h2>
+              <p className="text-sm text-gray-500">Track generation costs and trends</p>
+            </div>
+          </CardHeader>
+          <CardBody className="p-6">
+            {recentGenerations && recentGenerations.length > 0 ? (
+              <div className="space-y-3">
+                {recentGenerations.slice(0, 5).map((gen: any) => (
+                  <div key={gen.sessionId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">{gen.sections.length} sections</p>
+                      <p className="text-sm text-gray-500">{gen.provider} - {gen.model}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-primary-600">${gen.totalCost.toFixed(4)}</p>
+                      <p className="text-sm text-gray-500">{gen.totalTokens.toLocaleString()} tokens</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No recent generations</p>
+            )}
           </CardBody>
         </Card>
 
