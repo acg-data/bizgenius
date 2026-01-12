@@ -160,4 +160,29 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_session", ["sessionId"])
     .index("by_idea", ["ideaId"]),
+
+  // Generation Cost Tracking
+  generationCosts: defineTable({
+    sessionId: v.string(),
+    provider: v.union(v.literal("novita"), v.literal("cerebras"), v.literal("openrouter")),
+    model: v.string(),
+    sectionId: v.string(),
+    inputTokens: v.number(),
+    outputTokens: v.number(),
+    cost: v.number(),
+    retryCount: v.optional(v.number()),
+    duration: v.optional(v.number()),
+    timestamp: v.number(),
+  })
+    .index("by_session", ["sessionId"])
+    .index("by_provider", ["provider", "timestamp"])
+    .index("by_timestamp", ["timestamp"]),
+
+  // Admin Provider Settings
+  providerSettings: defineTable({
+    activeProvider: v.union(v.literal("novita"), v.literal("cerebras"), v.literal("openrouter")),
+    fallbackOrder: v.optional(v.array(v.string())),
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.id("users")),
+  }),
 });

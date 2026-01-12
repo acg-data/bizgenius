@@ -1,17 +1,28 @@
 import { v } from "convex/values";
 import { action, internalAction, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
+import {
+  Provider,
+  PROVIDER_CONFIGS,
+  GenerationRequest,
+  GenerationResult,
+  getProvider,
+  calculateCost,
+} from "./providers";
 
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+// Provider failover order: Cerebras → Novita → OpenRouter
+const PROVIDER_FAILOVER_ORDER: Provider[] = ["cerebras", "novita", "openrouter"];
 
-// Primary model for best accuracy
-const PRIMARY_MODEL = "anthropic/claude-3.5-sonnet";
-// Fallback for speed/cost
-const FALLBACK_MODEL = "openai/gpt-4o-mini";
-// Ultra-fast model for instant responses (questions, suggestions)
-const FAST_MODEL = "openai/gpt-oss-120b"; // Fast + high quality
+// Rate limiting configuration
+const RATE_LIMIT_CONFIG = {
+  minDelayBetweenCalls: 2000, // 2 seconds minimum between API calls to same provider
+  maxRetries: 3,
+  exponentialBackoffBase: 1000, // Base delay for exponential backoff (1s)
+};
 
-// 8-Section generation order (Tony's Tacos template)
+// Track last API call time per provider for rate limiting
+const lastCallTime: Record<string, number> = {};
+
 const SECTION_ORDER = [
   { id: "market", name: "Market Research", maxTokens: 2500 },
   { id: "customers", name: "Customer Profiles", maxTokens: 2500 },
@@ -37,22 +48,43 @@ export const runGeneration = internalAction({
     sessionId: v.string(),
   },
   handler: async (ctx, args) => {
+    const totalStartTime = Date.now();
+    console.log(`[DEBUG] ========== GENERATION START ==========`);
+
+    // Check authentication state
+    console.log(`[AUTH-DEBUG] Checking authentication state...`);
+    const identity = await ctx.auth.getUserIdentity();
+    console.log(`[AUTH-DEBUG] User identity:`, {
+      hasIdentity: !!identity,
+      email: identity?.email || 'none',
+      tokenPresent: !!identity?.token,
+      subject: identity?.subject || 'none',
+      timestamp: new Date().toISOString()
+    });
+
+    console.log(`[DEBUG] Starting generation for session: ${args.sessionId}`);
+
     // Get session data
+    console.log(`[DEBUG] Looking up session: ${args.sessionId}`);
     const session = await ctx.runQuery(internal.ai.getSessionInternal, {
       sessionId: args.sessionId,
     });
+    console.log(`[DEBUG] Session lookup result:`, session ? 'FOUND' : 'NOT FOUND');
 
     if (!session) {
+      console.error(`[DEBUG] Session not found: ${args.sessionId}`);
       throw new Error("Session not found");
     }
 
     // Update status to generating
+    console.log(`[DEBUG] Updating session status to generating`);
     await ctx.runMutation(internal.sessions.updateSessionStatus, {
       sessionId: args.sessionId,
       status: "generating",
       currentStep: "market",
       progress: 0,
     });
+    console.log(`[DEBUG] Status update completed`);
 
     const context: GenerationContext = {
       businessIdea: session.businessIdea,
@@ -67,40 +99,61 @@ export const runGeneration = internalAction({
         const section = SECTION_ORDER[i];
         const progress = Math.round(((i + 1) / SECTION_ORDER.length) * 100);
 
-        // Update progress
+        console.log(`[DEBUG] ========== STARTING SECTION ${i+1}/${SECTION_ORDER.length}: ${section.id} ==========`);
+        console.log(`[DEBUG] Section config: maxTokens=${section.maxTokens}, name=${section.name}`);
+
+        console.log(`[DEBUG] Updating session status to ${section.id}, progress=${progress}`);
         await ctx.runMutation(internal.sessions.updateSessionStatus, {
           sessionId: args.sessionId,
           currentStep: section.id,
           progress: Math.round((i / SECTION_ORDER.length) * 100),
         });
+        console.log(`[DEBUG] Status update completed`);
 
-        // Generate section with retry logic
+        console.log(`[DEBUG] Calling generateSectionWithRetry for ${section.id}...`);
         const sectionResult = await generateSectionWithRetry(
           section.id,
           section.maxTokens,
           context,
-          3 // max retries
+          args.sessionId,
+          3
         );
 
-        // Store result and add to context for next sections
+        console.log(`[DEBUG] Section ${section.id} completed successfully`);
         result[section.id] = sectionResult;
         context.previousSections[section.id] = sectionResult;
+
+        console.log(`[DEBUG] ========== COMPLETED SECTION ${section.id} ==========`);
       }
 
       // Mark completed with full result
+      const totalDuration = Date.now() - totalStartTime;
+      console.log(`[DEBUG] ========== ALL SECTIONS COMPLETED IN ${(totalDuration / 1000).toFixed(2)}s ==========`);
+
+      console.log(`[DEBUG] Updating session status to completed`);
       await ctx.runMutation(internal.sessions.updateSessionStatus, {
         sessionId: args.sessionId,
         status: "completed",
         progress: 100,
         result: result,
       });
+      console.log(`[DEBUG] ========== GENERATION COMPLETE ==========`);
     } catch (error: any) {
-      console.error("Generation failed:", error);
+      console.error(`[DEBUG] ========== GENERATION FAILED ==========`);
+      console.error(`[DEBUG] Error:`, error.message);
+      console.error(`[DEBUG] Error stack:`, error.stack);
+      console.error(`[DEBUG] Error type:`, error.constructor.name);
+
+      const totalDuration = Date.now() - totalStartTime;
+      console.log(`[DEBUG] Failed after ${(totalDuration / 1000).toFixed(2)}s`);
+
+      console.log(`[DEBUG] Updating session status to failed`);
       await ctx.runMutation(internal.sessions.updateSessionStatus, {
         sessionId: args.sessionId,
         status: "failed",
         errorMessage: error.message || "Generation failed. Please try again.",
       });
+      console.log(`[DEBUG] ========== GENERATION FAILED MARKED ==========`);
     }
   },
 });
@@ -118,78 +171,205 @@ export const getSessionInternal = internalQuery({
   },
 });
 
-// Generate a single section with retry logic
+// Generate a single section with retry logic and rate limit handling
 async function generateSectionWithRetry(
   sectionId: SectionId,
   maxTokens: number,
   context: GenerationContext,
+  sessionId: string,
   maxRetries: number
-): Promise<any> {
+): Promise<{ content: any; costInfo: any; provider: string; model: string; duration: number; inputTokens: number; outputTokens: number }> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // Use primary model first, fallback on retry
-      const model = attempt === 0 ? PRIMARY_MODEL : FALLBACK_MODEL;
-      return await generateSection(sectionId, maxTokens, context, model);
+      return await generateSection(sectionId, maxTokens, context, sessionId);
     } catch (error: any) {
       lastError = error;
-      console.error(`Attempt ${attempt + 1} failed for ${sectionId}:`, error.message);
-      // Exponential backoff: 1s, 2s, 4s
-      await sleep(1000 * Math.pow(2, attempt));
+
+      // Check if this is a rate limit error
+      const isRateLimit = error.message?.includes('RATE_LIMIT_EXCEEDED') ||
+                         error.message?.includes('429') ||
+                         error.message?.includes('rate limit') ||
+                         error.message?.includes('request rate limit');
+
+      if (isRateLimit) {
+        // Exponential backoff for rate limits (longer delays)
+        const backoffDelay = Math.min(30000, RATE_LIMIT_CONFIG.exponentialBackoffBase * Math.pow(2, attempt));
+        console.log(`[RATE-LIMIT-DEBUG] Rate limit detected on attempt ${attempt + 1}, backing off ${backoffDelay}ms`);
+        await sleep(backoffDelay);
+      } else {
+        // Regular retry with shorter delays
+        const retryDelay = Math.min(5000, RATE_LIMIT_CONFIG.exponentialBackoffBase * Math.pow(1.5, attempt));
+        console.log(`[DEBUG] Attempt ${attempt + 1} failed for ${sectionId}, retrying in ${retryDelay}ms:`, error.message);
+        await sleep(retryDelay);
+      }
     }
   }
 
   throw lastError || new Error(`Failed to generate ${sectionId} after ${maxRetries} attempts`);
 }
 
-// Core generation function
+// Get active provider (first check settings, otherwise use default)
+async function getActiveProvider(): Promise<Provider> {
+  // For now, return first provider in failover order
+  // In the future, this will check the providerSettings table
+  return PROVIDER_FAILOVER_ORDER[0];
+}
+
+// Enhanced generation function with provider abstraction and failover
 async function generateSection(
   sectionId: SectionId,
   maxTokens: number,
   context: GenerationContext,
-  model: string
-): Promise<any> {
+  sessionId: string
+): Promise<{ content: any; costInfo: any; provider: string; model: string; duration: number }> {
   const systemPrompt = getSystemPrompt(sectionId);
   const userPrompt = buildUserPrompt(sectionId, context);
 
-  const response = await fetch(OPENROUTER_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": process.env.SITE_URL || "https://bizgenius.app",
-      "X-Title": "BizGenius",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.7,
-      max_tokens: maxTokens,
-      response_format: { type: "json_object" },
-    }),
-  });
+  console.log(`[DEBUG] Building request for ${sectionId} (maxTokens: ${maxTokens})`);
+  console.log(`[DEBUG] System prompt length: ${systemPrompt.length} chars`);
+  console.log(`[DEBUG] User prompt length: ${userPrompt.length} chars`);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenRouter API error (${response.status}): ${errorText}`);
+  const request: GenerationRequest = {
+    model: "",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+    maxTokens: maxTokens,
+    response_format: { type: "json_object" },
+  };
+
+  // Try each provider in failover order
+  for (const provider of PROVIDER_FAILOVER_ORDER) {
+    try {
+      // Rate limiting: Check if we need to wait before calling this provider
+      const timeSinceLastCall = Date.now() - (lastCallTime[provider] || 0);
+      const minDelay = RATE_LIMIT_CONFIG.minDelayBetweenCalls;
+
+      if (timeSinceLastCall < minDelay) {
+        const delayNeeded = minDelay - timeSinceLastCall;
+        console.log(`[RATE-LIMIT-DEBUG] Sleeping ${delayNeeded}ms before ${provider} call to avoid rate limits`);
+        await sleep(delayNeeded);
+      }
+
+      console.log(`[DEBUG] Attempting ${sectionId} with ${provider}...`);
+      const providerInstance = getProvider(provider);
+      const config = PROVIDER_CONFIGS[provider];
+
+      request.model = config.models.primary;
+      console.log(`[DEBUG] Using model: ${request.model}`);
+
+      const startTime = Date.now();
+      const result: GenerationResult = await providerInstance.generate(request, provider);
+      const duration = Date.now() - startTime;
+
+      // Update last call time for rate limiting
+      lastCallTime[provider] = Date.now();
+
+      console.log(`[DEBUG] ${provider} API call took ${duration}ms`);
+
+      if (result.success && result.content) {
+        console.log(`[DEBUG] ${provider} returned content, parsing JSON...`);
+
+        let parsedContent;
+        try {
+          // Try direct JSON parse first
+          parsedContent = JSON.parse(result.content);
+          console.log(`[DEBUG] Successfully parsed JSON directly from ${provider}`);
+        } catch (parseError) {
+          console.log(`[DEBUG] Direct JSON parse failed for ${provider}, attempting fallback parsing...`);
+
+          // Fallback 1: Some providers return JSON in markdown code blocks
+          const jsonMatch = result.content.match(/```json\s*([\s\S]*?)\s*```/);
+          if (jsonMatch) {
+            try {
+              parsedContent = JSON.parse(jsonMatch[1]);
+              console.log(`[DEBUG] Successfully parsed JSON from markdown block`);
+            } catch (fallbackError) {
+              console.log(`[DEBUG] Markdown fallback failed, trying other approaches...`);
+            }
+          }
+
+          // Fallback 2: Some providers return JSON without code blocks but with extra text
+          if (!parsedContent) {
+            // Try to extract JSON from the response by finding JSON-like structures
+            const jsonStart = result.content.indexOf('{');
+            const jsonEnd = result.content.lastIndexOf('}');
+            if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+              const potentialJson = result.content.substring(jsonStart, jsonEnd + 1);
+              try {
+                parsedContent = JSON.parse(potentialJson);
+                console.log(`[DEBUG] Successfully parsed JSON from extracted content`);
+              } catch (extractError) {
+                console.log(`[DEBUG] JSON extraction failed, trying regex approach...`);
+              }
+            }
+          }
+
+          // Fallback 3: Try to find and parse any valid JSON in the response
+          if (!parsedContent) {
+            const jsonRegex = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+            const matches = result.content.match(jsonRegex);
+            if (matches) {
+              for (const match of matches) {
+                try {
+                  parsedContent = JSON.parse(match);
+                  console.log(`[DEBUG] Successfully parsed JSON using regex:`, match.substring(0, 50) + '...');
+                  break;
+                } catch (regexError) {
+                  continue;
+                }
+              }
+            }
+          }
+
+          // If all parsing attempts failed
+          if (!parsedContent) {
+            console.error(`[DEBUG] All JSON parsing attempts failed for ${provider}`);
+            console.error(`[DEBUG] Response preview:`, result.content.substring(0, 300));
+            throw new Error(`Failed to parse ${provider} response as JSON: ${result.content.substring(0, 200)}`);
+          }
+        }
+
+        const costInfo = calculateCost(
+          provider,
+          request.model,
+          result.inputTokens || 0,
+          result.outputTokens || 0
+        );
+
+        console.log(`[DEBUG] ✓ ${sectionId} generated with ${provider} ($${costInfo.totalCost})`);
+        return {
+          content: parsedContent,
+          costInfo,
+          provider,
+          model: request.model,
+          duration,
+          inputTokens: result.inputTokens || 0,
+          outputTokens: result.outputTokens || 0
+        };
+      } else {
+        console.log(`[DEBUG] ${provider} call failed - no success or content`);
+      }
+    } catch (error: any) {
+      // Handle rate limiting with exponential backoff
+      if (error.message?.includes('RATE_LIMIT_EXCEEDED') ||
+          error.message?.includes('429') ||
+          error.message?.includes('rate limit')) {
+        console.log(`[RATE-LIMIT-DEBUG] ${provider} rate limit detected, implementing exponential backoff`);
+        // Rate limiting is handled by the retry logic, continue to next provider
+      }
+
+      console.error(`[DEBUG] ✗ ${sectionId} failed with ${provider}:`, error.message);
+      // Continue to next provider
+    }
   }
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error("Empty response from AI model");
-  }
-
-  try {
-    return JSON.parse(content);
-  } catch (e) {
-    throw new Error(`Failed to parse AI response as JSON: ${content.substring(0, 200)}`);
-  }
+  console.error(`[DEBUG] All providers failed for ${sectionId}`);
+  throw new Error(`Failed to generate ${sectionId} with all providers`);
 }
 
 // System prompts for each section
@@ -764,44 +944,197 @@ Include industry-specific terminology where relevant.
 Options should reflect realistic scenarios for THIS type of business.`;
 
     try {
-      const response = await fetch(OPENROUTER_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": process.env.SITE_URL || "https://bizgenius.app",
-          "X-Title": "BizGenius",
-        },
-        body: JSON.stringify({
-          model: FAST_MODEL,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          temperature: 0.8, // Slightly creative for varied questions
-          max_tokens: 2000,
-          response_format: { type: "json_object" },
-        }),
-      });
+      // Use provider abstraction with failover
+      const request: GenerationRequest = {
+        model: "", // Will be set by provider
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.8,
+        maxTokens: 2000,
+        response_format: { type: "json_object" },
+      };
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("OpenRouter API error:", errorText);
-        return { questions: [], error: "Failed to generate questions" };
+      let generatedQuestions = [];
+      let lastError = null;
+
+      // Try each provider in failover order
+      for (const provider of PROVIDER_FAILOVER_ORDER) {
+        try {
+          const providerInstance = getProvider(provider);
+          const config = PROVIDER_CONFIGS[provider];
+
+          request.model = config.models.fast;
+
+          const result = await providerInstance.generate(request, provider);
+
+          if (result.success && result.content) {
+            const parsed = JSON.parse(result.content);
+            generatedQuestions = parsed.questions || [];
+            console.log(`✓ Generated ${generatedQuestions.length} questions with ${provider}`);
+            break;
+          }
+        } catch (error: any) {
+          lastError = error;
+          console.error(`✗ Question generation failed with ${provider}:`, error.message);
+        }
       }
 
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
-
-      if (!content) {
-        return { questions: [], error: "Empty response" };
+      if (generatedQuestions.length === 0) {
+        return { questions: [], error: lastError?.message || "Failed to generate questions" };
       }
 
-      const parsed = JSON.parse(content);
-      return { questions: parsed.questions || [] };
+      return { questions: generatedQuestions };
     } catch (error: any) {
       console.error("Smart question generation failed:", error);
       return { questions: [], error: error.message };
+    }
+  },
+});
+
+// Public wrapper for generation (for testing)
+export const runGenerationPublic = action({
+  args: {
+    sessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      console.log(`[DEBUG] Starting generation for session: ${args.sessionId}`);
+
+      // Call the internal generation function
+      await ctx.runAction(internal.ai.runGeneration, args);
+
+      console.log(`[DEBUG] Generation completed successfully for session: ${args.sessionId}`);
+      return { success: true };
+    } catch (error: any) {
+      console.error(`[DEBUG] Generation failed for session ${args.sessionId}:`, error.message);
+      console.error(`[DEBUG] Full error:`, error);
+      throw error;
+    }
+  },
+});
+
+// Public version of full generation (bypasses internal action limitations)
+export const runFullGeneration = action({
+  args: {
+    sessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const totalStartTime = Date.now();
+    console.log(`[DEBUG] ========== STARTING PUBLIC FULL GENERATION ==========`);
+
+    // Get session data (use internal API)
+    const session = await ctx.runQuery(internal.ai.getSessionInternal, {
+      sessionId: args.sessionId,
+    });
+
+    if (!session) {
+      console.error(`[DEBUG] Session not found: ${args.sessionId}`);
+      throw new Error("Session not found");
+    }
+
+    console.log(`[DEBUG] Session found, status: ${session.status}, progress: ${session.progress}`);
+    console.log(`[DEBUG] Business idea:`, session.businessIdea?.substring(0, 100) + '...');
+
+    const context: GenerationContext = {
+      businessIdea: session.businessIdea,
+      answers: session.answers || {},
+      previousSections: {},
+    };
+
+    const result: Record<string, any> = {};
+
+    try {
+      for (let i = 0; i < SECTION_ORDER.length; i++) {
+        const section = SECTION_ORDER[i];
+        const progress = Math.round(((i + 1) / SECTION_ORDER.length) * 100);
+
+        console.log(`[DEBUG] ========== SECTION ${i+1}/${SECTION_ORDER.length}: ${section.id} ==========`);
+
+        // Add progressive delays between sections to prevent rate limiting
+        // Section 1: 0s, Section 2: 2s, Section 3: 4s, etc. (exponential but reasonable)
+        if (i > 0) {
+          const sectionDelay = Math.min(8000, i * 2000); // Max 8s delay, 2s per section
+          console.log(`[RATE-LIMIT-DEBUG] Delaying ${sectionDelay}ms before section ${i+1} to prevent rate limits`);
+          await sleep(sectionDelay);
+        }
+
+        await ctx.runMutation(internal.sessions.updateSessionStatus, {
+          sessionId: args.sessionId,
+          status: "generating",
+          currentStep: section.id,
+          progress: progress,
+        });
+        console.log(`[DEBUG] Updated session status to ${section.id}, progress=${progress}`);
+
+        const sectionResult = await generateSectionWithRetry(
+          section.id,
+          section.maxTokens,
+          context,
+          args.sessionId,
+          RATE_LIMIT_CONFIG.maxRetries
+        );
+
+        console.log(`[DEBUG] Section ${section.id} completed successfully`);
+
+        // Extract content and save cost data
+        result[section.id] = sectionResult.content;
+
+        // Save cost tracking data
+        await ctx.runMutation(internal.admin.saveGenerationCost, {
+          sessionId: args.sessionId,
+          provider: sectionResult.provider,
+          model: sectionResult.model,
+          sectionId: section.id,
+          inputTokens: sectionResult.inputTokens,
+          outputTokens: sectionResult.outputTokens,
+          cost: sectionResult.costInfo.totalCost,
+          retryCount: 0,
+          duration: sectionResult.duration,
+        });
+
+        console.log(`[DEBUG] Saved cost data: $${sectionResult.costInfo.totalCost} (${sectionResult.provider})`);
+        context.previousSections[section.id] = sectionResult.content;
+
+        // Cost tracking is handled within generateSection now
+        console.log(`[DEBUG] ========== COMPLETED SECTION ${section.id} ==========`);
+      }
+
+      // Mark completed with full result
+      const totalDuration = Date.now() - totalStartTime;
+      console.log(`[DEBUG] ========== ALL SECTIONS COMPLETED IN ${(totalDuration / 1000).toFixed(2)}s ==========`);
+
+      console.log(`[DEBUG] Updating session status to completed`);
+        await ctx.runMutation(internal.sessions.updateSessionStatus, {
+          sessionId: args.sessionId,
+          status: "completed",
+          progress: 100,
+          result: result,
+      });
+      console.log(`[DEBUG] ========== GENERATION COMPLETE ==========`);
+
+      console.log(`[DEBUG] Full generation completed successfully`);
+      return { success: true, sessionId: args.sessionId, duration: totalDuration };
+
+    } catch (error: any) {
+      console.error(`[DEBUG] ========== GENERATION FAILED ==========`);
+      console.error(`[DEBUG] Error:`, error.message);
+      console.error(`[DEBUG] Error type:`, error.constructor.name);
+      console.error(`[DEBUG] Error stack:`, error.stack);
+
+      const totalDuration = Date.now() - totalStartTime;
+      console.error(`[DEBUG] Failed after ${(totalDuration / 1000).toFixed(2)}s`);
+
+      console.log(`[DEBUG] Updating session status to failed`);
+      await ctx.runMutation(internal.sessions.updateSessionStatus, {
+        sessionId: args.sessionId,
+        status: "failed",
+        errorMessage: error.message || "Generation failed. Please try again.",
+      });
+      console.log(`[DEBUG] ========== GENERATION FAILED MARKED ==========`);
+
+      throw error;
     }
   },
 });
@@ -825,31 +1158,34 @@ Provide a brief (1-2 sentence) smart insight or suggestion that helps the user t
 Return JSON: { "insight": "Your brief, specific insight here" }`;
 
     try {
-      const response = await fetch(OPENROUTER_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": process.env.SITE_URL || "https://bizgenius.app",
-          "X-Title": "BizGenius",
-        },
-        body: JSON.stringify({
-          model: FAST_MODEL,
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.7,
-          max_tokens: 200,
-          response_format: { type: "json_object" },
-        }),
-      });
+      const request: GenerationRequest = {
+        model: "", // Will be set by provider
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        maxTokens: 200,
+        response_format: { type: "json_object" },
+      };
 
-      if (!response.ok) {
-        return { insight: null };
+      // Try each provider in failover order
+      for (const provider of PROVIDER_FAILOVER_ORDER) {
+        try {
+          const providerInstance = getProvider(provider);
+          const config = PROVIDER_CONFIGS[provider];
+
+          request.model = config.models.fast;
+
+          const result = await providerInstance.generate(request, provider);
+
+          if (result.success && result.content) {
+            const parsed = JSON.parse(result.content || "{}");
+            return { insight: parsed.insight || null };
+          }
+        } catch (error) {
+          console.error(`✗ Insight generation failed with ${provider}`);
+        }
       }
 
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
-      const parsed = JSON.parse(content || "{}");
-      return { insight: parsed.insight || null };
+      return { insight: null };
     } catch (error) {
       return { insight: null };
     }
