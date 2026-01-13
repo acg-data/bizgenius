@@ -13,6 +13,7 @@ export default defineSchema({
     // Account status
     isActive: v.optional(v.boolean()),
     isVerified: v.optional(v.boolean()),
+    isAdmin: v.optional(v.boolean()),
 
     // Subscription (Stripe integration)
     subscriptionTier: v.optional(v.union(v.literal("free"), v.literal("premium"), v.literal("expert"))),

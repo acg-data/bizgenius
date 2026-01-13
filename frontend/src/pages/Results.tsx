@@ -56,9 +56,14 @@ const sectionColors: Record<string, string> = {
 };
 
 export default function Results() {
-  const location = window.location;
-  const urlParams = new URLSearchParams(location.search);
-  const sessionId = urlParams.get('sessionId') || localStorage.getItem('myceo_session_id');
+  // Safe window access for SSR compatibility
+  const getUrlParams = () => {
+    if (typeof window === 'undefined') return new URLSearchParams();
+    return new URLSearchParams(window.location.search);
+  };
+
+  const urlParams = getUrlParams();
+  const sessionId = urlParams.get('sessionId') || (typeof window !== 'undefined' ? localStorage.getItem('myceo_session_id') : null);
 
   // Get tier from URL parameter, fallback to user subscription
   const urlTier = urlParams.get('tier');
@@ -307,8 +312,7 @@ export default function Results() {
               />
             )}
 
-            {/* Team & Operations */}
-            <TeamSection data={result?.team} />
+
           </div>
 
           {/* Footer CTA */}

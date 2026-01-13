@@ -1,6 +1,23 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, MutationCtx } from './_generated/server';
 import { Provider } from './providers';
+
+// Helper function to verify admin access
+async function requireAdmin(ctx: MutationCtx): Promise<void> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error('Authentication required');
+  }
+
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_email', (q) => q.eq('email', identity.email!))
+    .first();
+
+  if (!user || !user.isAdmin) {
+    throw new Error('Admin access required');
+  }
+}
 
 // Get current provider settings
 export const getProviderSettings = query({
@@ -30,7 +47,7 @@ export const setActiveProvider = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // TODO: Add authentication check for admin/owner
+    await requireAdmin(ctx);
 
     const existing = await ctx.db.query('providerSettings').first();
 
@@ -63,7 +80,7 @@ export const setFallbackOrder = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // TODO: Add authentication check for admin/owner
+    await requireAdmin(ctx);
 
     const existing = await ctx.db.query('providerSettings').first();
 

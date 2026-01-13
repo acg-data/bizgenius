@@ -2,7 +2,10 @@ import { ConvexProvider, ConvexReactClient, useQuery as useConvexQuery, useMutat
 import { api } from "../convex/_generated/api";
 
 // Create the Convex client
-const convexUrl = import.meta.env.VITE_CONVEX_URL || "https://acrobatic-monitor-529.convex.cloud";
+const convexUrl = import.meta.env.VITE_CONVEX_URL;
+if (!convexUrl) {
+  throw new Error('VITE_CONVEX_URL environment variable is required. Check your .env file.');
+}
 const convex = new ConvexReactClient(convexUrl);
 
 // Re-export hooks with proper typing

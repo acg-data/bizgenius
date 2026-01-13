@@ -6,7 +6,7 @@ export const SUBSCRIPTION_LIMITS = {
     maxIdeas: 2,
     hasExport: false,
   },
-  pro: {
+  premium: {
     analysesPerMonth: 10,
     // Pro tier: 6 of 8 sections (adds businessPlan, goToMarket, financial)
     sectionsUnlocked: ["market", "customers", "competitors", "businessPlan", "goToMarket", "financial"],
@@ -23,12 +23,12 @@ export const SUBSCRIPTION_LIMITS = {
   },
 } as const;
 
-export function getLimitsForUser(tier: "free" | "pro" | "expert") {
+export function getLimitsForUser(tier: "free" | "premium" | "expert") {
   return SUBSCRIPTION_LIMITS[tier] || SUBSCRIPTION_LIMITS.free;
 }
 
 export function canAccessSection(
-  tier: "free" | "pro" | "expert",
+  tier: "free" | "premium" | "expert",
   section: string
 ): boolean {
   const limits = getLimitsForUser(tier);
@@ -37,7 +37,7 @@ export function canAccessSection(
   return sections.includes(section);
 }
 
-export function redactPremiumSections(result: any, tier: "free" | "pro" | "expert") {
+export function redactPremiumSections(result: any, tier: "free" | "premium" | "expert") {
   if (tier !== "free") return result;
 
   const PREMIUM_SECTIONS = [

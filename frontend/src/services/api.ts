@@ -1,7 +1,15 @@
-import { useQuery, useMutation, useAction } from "../lib/convex";
-import { api } from "../convex/_generated/api";
+/**
+ * API Service Layer
+ *
+ * NOTE: For Convex operations, components should use the hooks directly:
+ *   import { useMutation, useQuery, useAction } from '../lib/convex';
+ *   import { api } from '../convex/_generated/api';
+ *
+ * This file provides HTTP-based API calls for features not yet migrated to Convex.
+ */
 
-// Simple HTTP wrapper for branding endpoints (stubs for now)
+// HTTP wrapper for branding endpoints (stub implementations)
+// TODO: Migrate branding features to Convex backend
 const httpApi = {
   async post(endpoint: string, data: any): Promise<{ data: any }> {
     // Stub implementations for branding features
@@ -10,7 +18,7 @@ const httpApi = {
       const words = data.business_idea?.split(' ').slice(0, 3) || ['My', 'Business'];
       const suffixes = ['AI', 'Labs', 'Co', 'HQ', 'Pro'];
       const names = suffixes.map((suffix, i) =>
-        `${words[i % words.length]}${suffix}`
+        words[i % words.length] + suffix
       );
       return { data: { names } };
     }
@@ -36,72 +44,15 @@ const httpApi = {
     if (endpoint === '/branding/random-palette') {
       const lockedColors = data.locked_colors || [];
       const palette = lockedColors.map((c: string | null) =>
-        c || `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`
+        c || '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
       );
       return { data: { palette } };
     }
 
-    throw new Error(`Unknown endpoint: ${endpoint}`);
+    throw new Error('Unknown endpoint: ' + endpoint);
   },
 };
 
-export const sessionService = {
-  create: (idea: string, answers: any) =>
-    useMutation(api.sessions.createSession),
-
-  getStatus: (sessionId: string) =>
-    useQuery(api.sessions.getSessionStatus, { sessionId }),
-
-  saveToIdea: (sessionId: string, title: string, description: string) =>
-    useMutation(api.sessions.saveSessionToIdea),
-
-  retry: (sessionId: string) =>
-    useMutation(api.sessions.retrySession),
-};
-
-export const ideaService = {
-  getAll: () => useQuery(api.ideas.listIdeas),
-
-  getOne: (id: string) => useQuery(api.ideas.getIdea, { id }),
-
-  create: (data: { title: string; description: string; industry?: string; targetMarket?: string }) =>
-    useMutation(api.ideas.createIdea),
-
-  delete: (id: string) => useMutation(api.ideas.deleteIdea),
-
-  update: (id: string, updates: { title?: string; description?: string; industry?: string; target_market?: string }) =>
-    useMutation(api.ideas.updateIdea),
-};
-
-export const authService = {
-  login: () => window.location.href = "/api/auth/login",
-
-  logout: () => window.location.href = "/api/auth/logout",
-};
-
-// Stripe payment service
-export const stripeService = {
-  createCheckout: (tier: "premium" | "expert", billing: "monthly" | "yearly", successUrl?: string, cancelUrl?: string) =>
-    useAction(api.stripe.createCheckoutSession),
-
-  createPortal: (returnUrl?: string) =>
-    useAction(api.stripe.createPortalSession),
-
-  getStatus: () =>
-    useQuery(api.stripe.getSubscriptionStatus),
-};
-
-// Alias for backwards compatibility
-export const subscriptionService = {
-  ...stripeService,
-};
-
 export default {
-  sessionService,
-  ideaService,
-  authService,
-  subscriptionService,
-  stripeService,
-  // HTTP wrapper for branding endpoints
   post: httpApi.post,
 };
