@@ -53,7 +53,7 @@ export default function Layout({ children }: LayoutProps) {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-sans antialiased">
       <Navbar
         maxWidth="full"
         classNames={{

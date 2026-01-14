@@ -35,7 +35,7 @@ export default function Billing() {
   };
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 font-sans antialiased">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Billing</h1>
         <p className="text-gray-500 mt-1">Manage your subscription and view invoices</p>
