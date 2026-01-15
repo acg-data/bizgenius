@@ -95,7 +95,7 @@ export interface SWOT {
 export interface CompetitorLandscape {
   positioning: PositioningMatrix;
   list: Competitor[];
-  swot: SWOT;
+  // swot moved to GapAnalysis
   competitiveAdvantage: string;
 }
 
@@ -269,9 +269,13 @@ export interface GenerationResult {
   market: MarketResearch;
   customers: CustomerProfiles;
   competitors: CompetitorLandscape;
+  brandArchetype: BrandArchetype;
+  brandBook: BrandBook;
   businessPlan: BusinessPlan;
+  gapAnalysis: GapAnalysis;
   goToMarket: GoToMarket;
   financial: FinancialModel;
+  legalCompliance: LegalCompliance;
   pitchDeck: PitchDeck;
   team: TeamOperations;
 }
@@ -283,9 +287,13 @@ export const GENERATION_STEPS = [
   { key: "market", label: "Market Research", icon: "chart" },
   { key: "customers", label: "Customer Profiles", icon: "users" },
   { key: "competitors", label: "Competitor Landscape", icon: "target" },
+  { key: "brandArchetype", label: "Brand Archetype", icon: "sparkles" },
+  { key: "brandBook", label: "Brand Book", icon: "palette" },
   { key: "businessPlan", label: "Business Plan", icon: "briefcase" },
+  { key: "gapAnalysis", label: "Gap Analysis", icon: "scale" },
   { key: "goToMarket", label: "Go-To-Market", icon: "rocket" },
   { key: "financial", label: "Financial Model", icon: "dollar" },
+  { key: "legalCompliance", label: "Legal & Compliance", icon: "shield" },
   { key: "pitchDeck", label: "Pitch Deck", icon: "presentation" },
   { key: "team", label: "Team & Operations", icon: "people" },
 ] as const;

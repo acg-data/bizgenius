@@ -18,17 +18,19 @@ const BRANDING_KEY = 'myceo_branding';
 
 const STEP_ORDER = [
   'market',
-  'competitors', 
-  'icp',
-  'business',
-  'executive',
+  'customers',
+  'competitors',
+  'brandArchetype',
+  'brandBook',
+  'businessPlan',
+  'gapAnalysis',
+  'goToMarket',
   'financial',
-  'gtm',
-  'team',
-  'risk',
-  'action',
-  'pitch'
+  'legalCompliance',
+  'pitchDeck',
+  'team'
 ];
+
 
 export default function Generate() {
   const location = useLocation();
@@ -397,8 +399,8 @@ export default function Generate() {
               
               <div className="bg-apple-bg rounded-xl p-6 mb-8">
                 <h3 className="font-medium text-apple-text mb-4">What's Included</h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-                  {['Executive Summary', 'Market Research', 'Business Plan', 'Financial Model', 'Competitor Analysis', 'Go-to-Market', 'Team Plan', 'Risk Assessment', '90-Day Plan', 'Pitch Deck'].map((item) => (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  {['Market Research', 'Customer Profiles', 'Competitor Analysis', 'Brand Archetype', 'Brand Book', 'Business Strategy', 'Gap Analysis', 'Go-to-Market', 'Financial Model', 'Legal & Compliance', 'Pitch Deck', 'Team & Ops'].map((item) => (
                     <div key={item} className="flex items-center gap-2">
                       <CheckIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
                       <span className="text-apple-gray">{item}</span>
@@ -431,20 +433,22 @@ export default function Generate() {
 
 function getStepLabel(stepId: string): string {
   const labels: Record<string, string> = {
-    'market': 'Market Opportunity',
-    'competitors': 'Competitor Research',
-    'icp': 'Ideal Customer Profile',
-    'business': 'Business Strategy',
-    'executive': 'Executive Summary',
-    'financial': 'Financial Projections',
-    'gtm': 'Go-to-Market Plan',
-    'team': 'Team & Hiring',
-    'risk': 'Risk Assessment',
-    'action': '90-Day Action Plan',
-    'pitch': 'Pitch Deck'
+    'market': 'Market Research',
+    'customers': 'Customer Profiles',
+    'competitors': 'Competitor Analysis',
+    'brandArchetype': 'Brand Archetype',
+    'brandBook': 'Brand Book',
+    'businessPlan': 'Business Strategy',
+    'gapAnalysis': 'Gap Analysis',
+    'goToMarket': 'Go-to-Market',
+    'financial': 'Financial Model',
+    'legalCompliance': 'Legal & Compliance',
+    'pitchDeck': 'Pitch Deck',
+    'team': 'Team & Ops'
   };
   return labels[stepId] || stepId;
 }
+
 
 function LoadingSpinner() {
   return (

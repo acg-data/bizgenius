@@ -12,6 +12,10 @@ import {
   RiskAssessmentData,
   PitchDeckData,
   TeamOpsData,
+  BrandArchetypeData,
+  BrandBookData,
+  GapAnalysisData,
+  LegalComplianceData,
 } from '../types/report';
 
 // Color schemes for customer profiles
@@ -49,6 +53,10 @@ export function mapIdeaToReportData(idea: Idea): ReportData {
     riskAssessment: mapRiskAssessment(idea),
     pitchDeck: mapPitchDeck(idea),
     teamOps: mapTeamOps(idea),
+    brandArchetype: mapBrandArchetype(idea),
+    brandBook: mapBrandBook(idea),
+    gapAnalysis: mapGapAnalysis(idea),
+    legalCompliance: mapLegalCompliance(idea),
   };
 }
 
@@ -429,3 +437,59 @@ function mapTeamOps(idea: Idea): TeamOpsData {
 }
 
 export default mapIdeaToReportData;
+
+function mapBrandArchetype(idea: Idea): BrandArchetypeData | undefined {
+  const archetype = (idea as any).brandArchetype;
+  if (!archetype) return undefined;
+
+  return {
+    primaryArchetype: archetype.primaryArchetype || {
+      name: 'Creator',
+      rank: 1,
+      definition: 'Innovator who brings new ideas to life',
+      humanNeed: 'Self-expression and innovation',
+      personalityTraits: ['Creative', 'Innovative', 'Visionary'],
+    },
+    secondaryArchetypes: archetype.secondaryArchetypes || [],
+    emotionalBenefits: archetype.emotionalBenefits || [],
+    coreInsight: archetype.coreInsight || '',
+  };
+}
+
+function mapBrandBook(idea: Idea): BrandBookData | undefined {
+  const brandBook = (idea as any).brandBook;
+  if (!brandBook) return undefined;
+
+  return {
+    mission: brandBook.mission,
+    vision: brandBook.vision,
+    coreValues: brandBook.coreValues || [],
+    colorPalette: brandBook.colorPalette,
+    typography: brandBook.typography,
+    brandVoice: brandBook.brandVoice || [],
+  };
+}
+
+function mapGapAnalysis(idea: Idea): GapAnalysisData | undefined {
+  const gapAnalysis = (idea as any).gapAnalysis;
+  if (!gapAnalysis) return undefined;
+
+  return {
+    competitiveMetrics: gapAnalysis.competitiveMetrics || [],
+    swot: gapAnalysis.swot,
+    portersFiveForces: gapAnalysis.portersFiveForces || [],
+    strategicGaps: gapAnalysis.strategicGaps || [],
+  };
+}
+
+function mapLegalCompliance(idea: Idea): LegalComplianceData | undefined {
+  const legalCompliance = (idea as any).legalCompliance;
+  if (!legalCompliance) return undefined;
+
+  return {
+    riskMatrix: legalCompliance.riskMatrix || [],
+    pestel: legalCompliance.pestel || [],
+    complianceStatus: legalCompliance.complianceStatus || [],
+    keyRegulations: legalCompliance.keyRegulations || [],
+  };
+}

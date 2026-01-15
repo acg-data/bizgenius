@@ -192,6 +192,11 @@ export const saveSessionToIdea = mutation({
       actionPlan: result.action_plan,
       pitchDeck: result.pitch_deck,
       localBusinessData: result.local_business_data,
+      // New branddeck sections
+      brandArchetype: result.brandArchetype,
+      brandBook: result.brandBook,
+      gapAnalysis: result.gapAnalysis,
+      legalCompliance: result.legalCompliance,
       generatedAt: session.completedAt || Date.now(),
       createdAt: Date.now(),
       updatedAt: Date.now(),

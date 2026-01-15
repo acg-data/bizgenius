@@ -76,6 +76,10 @@ export default function Report() {
     generated_at: idea.generated_at,
     created_at: idea.created_at,
     updated_at: idea.updated_at,
+    brandArchetype: idea.brandArchetype,
+    brandBook: idea.brandBook,
+    gapAnalysis: idea.gapAnalysis,
+    legalCompliance: idea.legalCompliance,
   });
 
   return <BusinessReport data={reportData} onBack={handleBack} />;

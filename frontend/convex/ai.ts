@@ -27,9 +27,13 @@ const SECTION_ORDER = [
   { id: "market", name: "Market Research", maxTokens: 2500 },
   { id: "customers", name: "Customer Profiles", maxTokens: 2500 },
   { id: "competitors", name: "Competitor Landscape", maxTokens: 2500 },
+  { id: "brandArchetype", name: "Brand Archetype", maxTokens: 2500 },
+  { id: "brandBook", name: "Brand Book", maxTokens: 2500 },
   { id: "businessPlan", name: "Business Plan", maxTokens: 2500 },
+  { id: "gapAnalysis", name: "Gap Analysis", maxTokens: 2500 },
   { id: "goToMarket", name: "Go-To-Market", maxTokens: 2500 },
   { id: "financial", name: "Financial Model", maxTokens: 3000 },
+  { id: "legalCompliance", name: "Legal & Compliance", maxTokens: 2500 },
   { id: "pitchDeck", name: "Pitch Deck", maxTokens: 3500 },
   { id: "team", name: "Team & Operations", maxTokens: 2000 },
 ] as const;
@@ -388,7 +392,7 @@ Create 3 distinct customer personas that represent different segments.`,
     competitors: `You are a competitive intelligence analyst who creates thorough competitor landscapes.
 You analyze positioning, identify gaps, and assess competitive dynamics.
 Always respond with valid JSON. Include a 2x2 positioning matrix with realistic competitor placements.
-Create a comprehensive SWOT analysis based on the market and competitive context.`,
+Focus on competitor strengths, weaknesses, and market positioning.`,
 
     businessPlan: `You are a business strategist who creates executable business plans.
 Focus on vision, mission, quarterly roadmaps, and operational details.
@@ -414,6 +418,26 @@ Include visual suggestions for each slide to guide presentation design.`,
 Define founder roles, hiring priorities, and operational partnerships.
 Always respond with valid JSON. Include realistic salary ranges.
 Prioritize hires as critical, important, or nice-to-have.`,
+  
+    brandArchetype: `You are a brand strategist expert in Jungian archetypal branding and brand personality frameworks.
+Your job is to identify the most fitting brand archetypes that will resonate with the target audience.
+Always respond with valid JSON. Analyze the 12 classic archetypes and rank them by fit.
+Consider the emotional connection, market differentiation, and trust-building potential.`,
+
+    brandBook: `You are a brand identity specialist with expertise in visual systems and brand guidelines.
+Your job is to create cohesive brand guidelines including mission, vision, colors, typography, and voice.
+Always respond with valid JSON. Suggest specific color palettes with hex codes.
+Create guidelines that are practical and implementable.`,
+
+    gapAnalysis: `You are a strategic analyst specializing in competitive positioning and market gaps.
+Your job is to perform SWOT analysis, Porter's Five Forces analysis, and identify strategic opportunities.
+Always respond with valid JSON. Be specific about competitive intensity levels.
+Identify actionable gaps in the market that the business can exploit.`,
+
+    legalCompliance: `You are a business compliance consultant with regulatory and legal expertise.
+Your job is to identify relevant regulations, compliance requirements, and legal risks.
+Always respond with valid JSON. Include PESTEL analysis factors.
+Focus on industry-specific regulations and compliance milestones.`,
   };
 
   return prompts[sectionId];
@@ -528,16 +552,10 @@ Return JSON with this EXACT structure:
       "marketShare": "X%"
     }
   ],
-  "swot": {
-    "strengths": ["Your strength 1", "Your strength 2", "Your strength 3"],
-    "weaknesses": ["Your weakness 1", "Your weakness 2"],
-    "opportunities": ["Opportunity 1", "Opportunity 2", "Opportunity 3"],
-    "threats": ["Threat 1", "Threat 2"]
-  },
   "competitiveAdvantage": "One sentence describing your unique competitive edge"
 }
 
-X and Y values should be between 0 and 1. Include 3-4 competitors. SWOT should be about the user's business.`,
+X and Y values should be between 0 and 1. Include 3-4 competitors.`,
 
     businessPlan: `${baseContext}
 
@@ -868,6 +886,207 @@ Return JSON with this EXACT structure:
 }
 
 Include 1-2 founders. Include 4-6 hires with priorities. Include 3-4 partners.`,
+    brandArchetype: `${baseContext}
+
+MARKET CONTEXT:
+${JSON.stringify(previousSections.market || {}, null, 2)}
+
+CUSTOMER PROFILES:
+${JSON.stringify(previousSections.customers || {}, null, 2)}
+
+COMPETITORS:
+${JSON.stringify(previousSections.competitors || {}, null, 2)}
+
+Identify the brand archetype that best fits this business.
+
+Return JSON with this EXACT structure:
+{
+  "primaryArchetype": {
+    "name": "Archetype Name (e.g., 'The Creator')",
+    "rank": 1,
+    "definition": "How this archetype manifests in the brand",
+    "humanNeed": "The psychological need this archetype fulfills",
+    "personalityTraits": ["Trait 1", "Trait 2", "Trait 3", "Trait 4"]
+  },
+  "secondaryArchetypes": [
+    {
+      "name": "Second Archetype Name",
+      "rank": 2,
+      "definition": "How this archetype complements the primary",
+      "humanNeed": "The secondary psychological need fulfilled",
+      "personalityTraits": ["Trait 1", "Trait 2", "Trait 3"]
+    },
+    {
+      "name": "Third Archetype Name",
+      "rank": 3,
+      "definition": "Tertiary archetype influence",
+      "humanNeed": "Additional psychological connection",
+      "personalityTraits": ["Trait 1", "Trait 2", "Trait 3"]
+    }
+  ],
+  "emotionalBenefits": [
+    "Emotional Connection benefit",
+    "Brand Consistency benefit",
+    "Market Differentiation benefit",
+    "Trust & Loyalty benefit"
+  ],
+  "coreInsight": "A unique insight about why this archetype combination is perfect for this business"
+}
+
+Choose from the 12 classic archetypes: Creator, Caregiver, Sage, Ruler, Jester, Lover, Everyman, Outlaw/Rebel, Magician, Hero, Explorer, Innocent.`,
+    brandBook: `${baseContext}
+
+BRAND ARCHETYPE:
+${JSON.stringify(previousSections.brandArchetype || {}, null, 2)}
+
+CUSTOMERS:
+${JSON.stringify(previousSections.customers || {}, null, 2)}
+
+Create comprehensive brand guidelines for this business.
+
+Return JSON with this EXACT structure:
+{
+  "mission": "Clear mission statement (1-2 sentences)",
+  "vision": "Inspiring vision statement (1-2 sentences)",
+  "coreValues": ["Value 1", "Value 2", "Value 3", "Value 4", "Value 5"],
+  "colorPalette": {
+    "primary": { "hex": "#XXXXXX", "name": "Color Name" },
+    "secondary": { "hex": "#XXXXXX", "name": "Color Name" },
+    "accent": { "hex": "#XXXXXX", "name": "Color Name" },
+    "light": { "hex": "#XXXXXX", "name": "Color Name" },
+    "dark": { "hex": "#XXXXXX", "name": "Color Name" }
+  },
+  "typography": {
+    "heading": "Suggested heading font family",
+    "body": "Suggested body font family",
+    "accent": "Suggested accent font family"
+  },
+  "brandVoice": ["Professional", "Approachable", "Innovative", "Trustworthy"]
+}
+
+Colors should match the brand archetype and appeal to the target customer profiles. Use real hex color codes.`,
+    gapAnalysis: `${baseContext}
+
+MARKET:
+${JSON.stringify(previousSections.market || {}, null, 2)}
+
+COMPETITORS:
+${JSON.stringify(previousSections.competitors || {}, null, 2)}
+
+BUSINESS PLAN:
+${JSON.stringify(previousSections.businessPlan || {}, null, 2)}
+
+Perform comprehensive gap analysis including SWOT and Porter's Five Forces.
+
+Return JSON with this EXACT structure:
+{
+  "competitiveMetrics": [
+    { "label": "Key Metric 1", "value": "XX%" },
+    { "label": "Key Metric 2", "value": "$X.XM" },
+    { "label": "Key Metric 3", "value": "XXX+" },
+    { "label": "Key Metric 4", "value": "XX" }
+  ],
+  "swot": {
+    "strengths": ["Strength 1", "Strength 2", "Strength 3", "Strength 4"],
+    "weaknesses": ["Weakness 1", "Weakness 2", "Weakness 3"],
+    "opportunities": ["Opportunity 1", "Opportunity 2", "Opportunity 3", "Opportunity 4"],
+    "threats": ["Threat 1", "Threat 2", "Threat 3"]
+  },
+  "portersFiveForces": [
+    {
+      "name": "Competitive Rivalry",
+      "intensity": "High",
+      "factors": ["Factor 1", "Factor 2", "Factor 3"]
+    },
+    {
+      "name": "Supplier Power",
+      "intensity": "Medium",
+      "factors": ["Factor 1", "Factor 2", "Factor 3"]
+    },
+    {
+      "name": "Buyer Power",
+      "intensity": "High",
+      "factors": ["Factor 1", "Factor 2", "Factor 3"]
+    },
+    {
+      "name": "Threat of Substitution",
+      "intensity": "Medium",
+      "factors": ["Factor 1", "Factor 2", "Factor 3"]
+    },
+    {
+      "name": "Threat of New Entry",
+      "intensity": "Low",
+      "factors": ["Factor 1", "Factor 2", "Factor 3"]
+    }
+  ],
+  "strategicGaps": ["Gap 1 the business can exploit", "Gap 2 opportunity", "Gap 3 market need"]
+}
+
+Intensity should be "High", "Medium", or "Low". Be specific about competitive dynamics.`,
+    legalCompliance: `${baseContext}
+
+MARKET:
+${JSON.stringify(previousSections.market || {}, null, 2)}
+
+BUSINESS PLAN:
+${JSON.stringify(previousSections.businessPlan || {}, null, 2)}
+
+FINANCIAL:
+${JSON.stringify(previousSections.financial || {}, null, 2)}
+
+Analyze legal and compliance requirements for this business.
+
+Return JSON with this EXACT structure:
+{
+  "riskMatrix": [
+    {
+      "category": "Regulatory Changes",
+      "severity": "HIGH",
+      "description": "Description of the risk",
+      "mitigation": "Mitigation strategy"
+    },
+    {
+      "category": "Data Security",
+      "severity": "MEDIUM",
+      "description": "Description of the risk",
+      "mitigation": "Mitigation strategy (e.g., SOC 2 compliance)"
+    },
+    {
+      "category": "Third-party Dependencies",
+      "severity": "MEDIUM",
+      "description": "Description of the risk",
+      "mitigation": "Mitigation strategy"
+    },
+    {
+      "category": "Market Competition",
+      "severity": "LOW",
+      "description": "Description of the risk",
+      "mitigation": "Mitigation strategy"
+    }
+  ],
+  "pestel": [
+    { "category": "Political", "factors": ["Factor 1", "Factor 2", "Factor 3"] },
+    { "category": "Economic", "factors": ["Factor 1", "Factor 2", "Factor 3"] },
+    { "category": "Social", "factors": ["Factor 1", "Factor 2", "Factor 3"] },
+    { "category": "Technological", "factors": ["Factor 1", "Factor 2", "Factor 3"] },
+    { "category": "Environmental", "factors": ["Factor 1", "Factor 2", "Factor 3"] },
+    { "category": "Legal", "factors": ["Factor 1", "Factor 2", "Factor 3"] }
+  ],
+  "complianceStatus": [
+    { "name": "GDPR Compliance", "status": "Not Started", "progress": 0 },
+    { "name": "Industry Certification", "status": "Not Started", "progress": 0 },
+    { "name": "Data Privacy", "status": "Not Started", "progress": 0 },
+    { "name": "Financial Regulations", "status": "Not Started", "progress": 0 }
+  ],
+  "keyRegulations": [
+    { "domain": "Employment Laws", "requirements": ["Requirement 1", "Requirement 2"] },
+    { "domain": "Tax Compliance", "requirements": ["Requirement 1", "Requirement 2"] },
+    { "domain": "Data Privacy", "requirements": ["Requirement 1", "Requirement 2"] },
+    { "domain": "Industry Specific", "requirements": ["Requirement 1", "Requirement 2"] }
+  ]
+}
+
+Severity should be "HIGH", "MEDIUM", or "LOW". Status should be "Compliant", "In Progress", or "Not Started".`,
   };
 
   return prompts[sectionId];

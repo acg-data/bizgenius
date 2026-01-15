@@ -214,6 +214,99 @@ export interface TeamOpsData {
 }
 
 // Complete Report Data structure
+
+// Brand Archetype data
+export interface Archetype {
+  name: string;
+  rank: number;
+  definition: string;
+  humanNeed: string;
+  personalityTraits: string[];
+}
+
+export interface BrandArchetypeData {
+  primaryArchetype: Archetype;
+  secondaryArchetypes: Archetype[];
+  emotionalBenefits: string[];
+  coreInsight: string;
+}
+
+// Brand Book data
+export interface ColorPaletteItem {
+  hex: string;
+  name: string;
+}
+
+export interface BrandBookData {
+  mission?: string;
+  vision?: string;
+  coreValues?: string[];
+  colorPalette?: {
+    primary: ColorPaletteItem;
+    secondary: ColorPaletteItem;
+    accent: ColorPaletteItem;
+    light: ColorPaletteItem;
+    dark: ColorPaletteItem;
+  };
+  typography?: {
+    heading: string;
+    body: string;
+    accent: string;
+  };
+  brandVoice?: string[];
+}
+
+// Gap Analysis data
+export interface SWOT {
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+}
+
+export interface PorterForce {
+  name: string;
+  intensity: "High" | "Medium" | "Low";
+  factors: string[];
+}
+
+export interface GapAnalysisData {
+  competitiveMetrics?: Array<{ label: string; value: string }>;
+  swot?: SWOT;
+  portersFiveForces?: PorterForce[];
+  strategicGaps?: string[];
+}
+
+// Legal Compliance data
+export interface RiskMatrixItem {
+  category: string;
+  severity: "HIGH" | "MEDIUM" | "LOW";
+  description: string;
+  mitigation: string;
+}
+
+export interface PESTELFactor {
+  category: string;
+  factors: string[];
+}
+
+export interface ComplianceStatusItem {
+  name: string;
+  status: "Compliant" | "In Progress" | "Not Started";
+  progress: number;
+}
+
+export interface KeyRegulation {
+  domain: string;
+  requirements: string[];
+}
+
+export interface LegalComplianceData {
+  riskMatrix?: RiskMatrixItem[];
+  pestel?: PESTELFactor[];
+  complianceStatus?: ComplianceStatusItem[];
+  keyRegulations?: KeyRegulation[];
+}
 export interface ReportData {
   ideaTitle: string;
   ideaIcon?: string;
@@ -229,6 +322,10 @@ export interface ReportData {
   riskAssessment: RiskAssessmentData;
   pitchDeck: PitchDeckData;
   teamOps: TeamOpsData;
+  brandArchetype?: BrandArchetypeData;
+  brandBook?: BrandBookData;
+  gapAnalysis?: GapAnalysisData;
+  legalCompliance?: LegalComplianceData;
 }
 
 // Report sections configuration
@@ -243,5 +340,9 @@ export const REPORT_SECTIONS: ReportSectionConfig[] = [
   { id: 'finance', label: 'Financial Model', icon: 'ArrowTrendingUpIcon', title: 'Financial Projections' },
   { id: 'risk-assessment', label: 'Risk Assessment', icon: 'ShieldExclamationIcon', title: 'Risk Analysis & Mitigation' },
   { id: 'pitch', label: 'Pitch Deck', icon: 'PresentationChartBarIcon', title: 'Investor Slide Deck' },
+  { id: 'brand-archetype', label: 'Brand Archetype', icon: 'SparklesIcon', title: 'Brand Personality' },
+  { id: 'brand-book', label: 'Brand Book', icon: 'SwatchIcon', title: 'Brand Guidelines' },
+  { id: 'gap-analysis', label: 'Gap Analysis', icon: 'ScaleIcon', title: 'Strategic Analysis' },
+  { id: 'legal-compliance', label: 'Legal & Compliance', icon: 'ShieldCheckIcon', title: 'Regulatory Requirements' },
   { id: 'team', label: 'Team & Ops', icon: 'UserGroupIcon', title: 'Organizational Structure' },
 ];

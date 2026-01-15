@@ -13,6 +13,10 @@ import FinancialModel from './sections/FinancialModel';
 import RiskAssessment from './sections/RiskAssessment';
 import PitchDeck from './sections/PitchDeck';
 import TeamOps from './sections/TeamOps';
+import BrandArchetype from './sections/BrandArchetype';
+import BrandBook from './sections/BrandBook';
+import GapAnalysis from './sections/GapAnalysis';
+import LegalCompliance from './sections/LegalCompliance';
 
 interface BusinessReportProps {
   data: ReportData;
@@ -65,6 +69,14 @@ export default function BusinessReport({ data, onBack }: BusinessReportProps) {
         return <RiskAssessment data={data.riskAssessment} />;
       case 'pitch':
         return <PitchDeck data={data.pitchDeck} />;
+      case 'brand-archetype':
+        return <BrandArchetype data={data.brandArchetype} />;
+      case 'brand-book':
+        return <BrandBook data={data.brandBook} />;
+      case 'gap-analysis':
+        return <GapAnalysis data={data.gapAnalysis} />;
+      case 'legal-compliance':
+        return <LegalCompliance data={data.legalCompliance} />;
       case 'team':
         return <TeamOps data={data.teamOps} />;
       default:

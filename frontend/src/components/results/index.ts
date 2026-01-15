@@ -1,8 +1,12 @@
 export { MarketSection } from './MarketSection';
 export { CustomersSection } from './CustomersSection';
 export { CompetitorsSection } from './CompetitorsSection';
+export { BrandArchetypeSection } from './BrandArchetypeSection';
+export { BrandBookSection } from './BrandBookSection';
 export { BusinessPlanSection } from './BusinessPlanSection';
+export { GapAnalysisSection } from './GapAnalysisSection';
 export { GoToMarketSection } from './GoToMarketSection';
 export { FinancialSection } from './FinancialSection';
+export { LegalComplianceSection } from './LegalComplianceSection';
 export { PitchDeckSection } from './PitchDeckSection';
 export { TeamSection } from './TeamSection';
