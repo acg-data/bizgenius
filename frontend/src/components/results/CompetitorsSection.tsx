@@ -1,4 +1,4 @@
-import { BuildingOfficeIcon, ShieldCheckIcon, ExclamationTriangleIcon, LightBulbIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { BuildingOfficeIcon } from '@heroicons/react/24/outline';
 import type { CompetitorLandscape } from '../../types/generation';
 
 interface CompetitorsSectionProps {
@@ -66,65 +66,6 @@ export function CompetitorsSection({ data }: CompetitorsSectionProps) {
           </div>
         )}
 
-        {/* SWOT Analysis */}
-        {data.swot && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">SWOT Analysis</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {/* Strengths */}
-              <div className="bg-green-50 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <ShieldCheckIcon className="w-5 h-5 text-green-600" />
-                  <h4 className="font-semibold text-green-900">Strengths</h4>
-                </div>
-                <ul className="space-y-1">
-                  {data.swot.strengths?.map((item, idx) => (
-                    <li key={idx} className="text-sm text-green-800">{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Weaknesses */}
-              <div className="bg-red-50 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <XCircleIcon className="w-5 h-5 text-red-600" />
-                  <h4 className="font-semibold text-red-900">Weaknesses</h4>
-                </div>
-                <ul className="space-y-1">
-                  {data.swot.weaknesses?.map((item, idx) => (
-                    <li key={idx} className="text-sm text-red-800">{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Opportunities */}
-              <div className="bg-blue-50 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <LightBulbIcon className="w-5 h-5 text-blue-600" />
-                  <h4 className="font-semibold text-blue-900">Opportunities</h4>
-                </div>
-                <ul className="space-y-1">
-                  {data.swot.opportunities?.map((item, idx) => (
-                    <li key={idx} className="text-sm text-blue-800">{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Threats */}
-              <div className="bg-amber-50 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <ExclamationTriangleIcon className="w-5 h-5 text-amber-600" />
-                  <h4 className="font-semibold text-amber-900">Threats</h4>
-                </div>
-                <ul className="space-y-1">
-                  {data.swot.threats?.map((item, idx) => (
-                    <li key={idx} className="text-sm text-amber-800">{item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Competitor List */}

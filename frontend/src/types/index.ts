@@ -38,6 +38,11 @@ export interface Idea {
   action_plan?: any;
   pitch_deck?: any;
   local_business_data?: any;
+// New branddeck sections
+  brandArchetype?: any;
+  brandBook?: any;
+  gapAnalysis?: any;
+  legalCompliance?: any;
 
   generated_at?: number;
   created_at: number;

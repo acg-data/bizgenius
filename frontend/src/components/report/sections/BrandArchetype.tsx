@@ -20,7 +20,7 @@ interface BrandArchetypeData {
 }
 
 interface BrandArchetypeProps {
-  data: BrandArchetypeData;
+  data?: BrandArchetypeData;
 }
 
 export default function BrandArchetype({ data }: BrandArchetypeProps) {

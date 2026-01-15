@@ -166,8 +166,8 @@ export default function Generate() {
     navigate('/results', { state: { result: session?.result, businessIdea, branding } });
   };
   
-  const setSessionId = (id: string) => {
-    localStorage.setItem(SESSION_KEY, id);
+  const setSessionId = (id: string | null) => {
+    if (id) { localStorage.setItem(SESSION_KEY, id); } else { localStorage.removeItem(SESSION_KEY); }
     window.location.reload();
   };
   

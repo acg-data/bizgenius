@@ -20,7 +20,7 @@ interface BrandBookData {
 }
 
 interface BrandBookProps {
-  data: BrandBookData;
+  data?: BrandBookData;
 }
 
 export default function BrandBook({ data }: BrandBookProps) {

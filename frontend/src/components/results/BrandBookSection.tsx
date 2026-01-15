@@ -56,7 +56,7 @@ export function BrandBookSection({ data }: BrandBookSectionProps) {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Color Palette</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {Object.entries(data.colorPalette).map(([key, color]) => (
+            {Object.entries(data.colorPalette).map(([key, color]: [string, { hex: string; name: string }]) => (
               <div key={key} className="text-center">
                 <div
                   className="w-full h-20 rounded-xl shadow-inner mb-2 border border-gray-200"

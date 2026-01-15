@@ -23,7 +23,7 @@ interface LegalComplianceData {
 }
 
 interface LegalComplianceProps {
-  data: LegalComplianceData;
+  data?: LegalComplianceData;
 }
 
 export default function LegalCompliance({ data }: LegalComplianceProps) {

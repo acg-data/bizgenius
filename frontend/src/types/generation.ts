@@ -265,6 +265,109 @@ export interface TeamOperations {
 // -----------------------------------------------------------------------------
 // Complete Generation Result
 // -----------------------------------------------------------------------------
+// Section 9: Brand Archetype
+// -----------------------------------------------------------------------------
+export interface Archetype {
+  name: string;
+  rank: number;
+  definition: string;
+  humanNeed: string;
+  personalityTraits: string[];
+}
+
+export interface BrandArchetype {
+  primaryArchetype: Archetype;
+  secondaryArchetypes: Archetype[];
+  emotionalBenefits: string[];
+  coreInsight: string;
+}
+
+// -----------------------------------------------------------------------------
+// Section 10: Brand Book
+// -----------------------------------------------------------------------------
+export interface ColorPaletteItem {
+  hex: string;
+  name: string;
+}
+
+export interface ColorPalette {
+  primary: ColorPaletteItem;
+  secondary: ColorPaletteItem;
+  accent: ColorPaletteItem;
+  light: ColorPaletteItem;
+  dark: ColorPaletteItem;
+}
+
+export interface Typography {
+  heading: string;
+  body: string;
+  accent: string;
+}
+
+export interface BrandBook {
+  mission: string;
+  vision: string;
+  coreValues: string[];
+  colorPalette: ColorPalette;
+  typography: Typography;
+  brandVoice: string[];
+}
+
+// -----------------------------------------------------------------------------
+// Section 11: Gap Analysis
+// -----------------------------------------------------------------------------
+export interface PorterForce {
+  name: string;
+  intensity: "High" | "Medium" | "Low";
+  factors: string[];
+}
+
+export interface CompetitiveMetric {
+  label: string;
+  value: string;
+}
+
+export interface GapAnalysis {
+  competitiveMetrics: CompetitiveMetric[];
+  swot: SWOT;
+  portersFiveForces: PorterForce[];
+  strategicGaps: string[];
+}
+
+// -----------------------------------------------------------------------------
+// Section 12: Legal & Compliance
+// -----------------------------------------------------------------------------
+export interface RiskMatrixItem {
+  category: string;
+  severity: "HIGH" | "MEDIUM" | "LOW";
+  description: string;
+  mitigation: string;
+}
+
+export interface PESTELFactor {
+  category: string;
+  factors: string[];
+}
+
+export interface ComplianceStatus {
+  name: string;
+  status: "Compliant" | "In Progress" | "Not Started";
+  progress: number;
+}
+
+export interface KeyRegulation {
+  domain: string;
+  requirements: string[];
+}
+
+export interface LegalCompliance {
+  riskMatrix: RiskMatrixItem[];
+  pestel: PESTELFactor[];
+  complianceStatus: ComplianceStatus[];
+  keyRegulations: KeyRegulation[];
+}
+
+// -----------------------------------------------------------------------------
 export interface GenerationResult {
   market: MarketResearch;
   customers: CustomerProfiles;

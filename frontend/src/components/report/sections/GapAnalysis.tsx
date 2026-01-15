@@ -17,7 +17,7 @@ interface GapAnalysisData {
 }
 
 interface GapAnalysisProps {
-  data: GapAnalysisData;
+  data?: GapAnalysisData;
 }
 
 export default function GapAnalysis({ data }: GapAnalysisProps) {
