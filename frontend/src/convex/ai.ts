@@ -11,7 +11,7 @@ import {
 } from "./providers";
 
 // Provider failover order: Cerebras → Novita → OpenRouter
-const PROVIDER_FAILOVER_ORDER: Provider[] = ["cerebras", "novita", "openrouter"];
+const PROVIDER_FAILOVER_ORDER: Provider[] = ["openrouter", "novita", "cerebras"];
 
 // Rate limiting configuration
 const RATE_LIMIT_CONFIG = {
@@ -27,9 +27,13 @@ const SECTION_ORDER = [
   { id: "market", name: "Market Research", maxTokens: 2500 },
   { id: "customers", name: "Customer Profiles", maxTokens: 2500 },
   { id: "competitors", name: "Competitor Landscape", maxTokens: 2500 },
+  { id: "brandArchetype", name: "Brand Archetype", maxTokens: 2000 },
+  { id: "brandBook", name: "Brand Book", maxTokens: 2200 },
   { id: "businessPlan", name: "Business Plan", maxTokens: 2500 },
+  { id: "gapAnalysis", name: "Gap Analysis", maxTokens: 2200 },
   { id: "goToMarket", name: "Go-To-Market", maxTokens: 2500 },
   { id: "financial", name: "Financial Model", maxTokens: 3000 },
+  { id: "legalCompliance", name: "Legal & Compliance", maxTokens: 2000 },
   { id: "pitchDeck", name: "Pitch Deck", maxTokens: 3500 },
   { id: "team", name: "Team & Operations", maxTokens: 2000 },
 ] as const;
@@ -120,8 +124,9 @@ export const runGeneration = internalAction({
         );
 
         console.log(`[DEBUG] Section ${section.id} completed successfully`);
-        result[section.id] = sectionResult;
-        context.previousSections[section.id] = sectionResult;
+        result[section.id] = sectionResult.content;
+        context.previousSections[section.id] = sectionResult.content;
+
 
         console.log(`[DEBUG] ========== COMPLETED SECTION ${section.id} ==========`);
       }
@@ -131,6 +136,7 @@ export const runGeneration = internalAction({
       console.log(`[DEBUG] ========== ALL SECTIONS COMPLETED IN ${(totalDuration / 1000).toFixed(2)}s ==========`);
 
       console.log(`[DEBUG] Updating session status to completed`);
+      console.log(`[DEBUG] Generation result keys:`, Object.keys(result));
       await ctx.runMutation(internal.sessions.updateSessionStatus, {
         sessionId: args.sessionId,
         status: "completed",
@@ -390,10 +396,26 @@ You analyze positioning, identify gaps, and assess competitive dynamics.
 Always respond with valid JSON. Include a 2x2 positioning matrix with realistic competitor placements.
 Create a comprehensive SWOT analysis based on the market and competitive context.`,
 
+    brandArchetype: `You are a brand strategist specializing in archetype-driven brand identity systems.
+Define a clear archetype and voice system that fits the business and target market.
+Always respond with valid JSON. Be specific and consistent with tone and messaging.`,
+
+    brandBook: `You are a creative director assembling a concise but concrete brand book.
+Define name, mission, vision, values, positioning, and visual guidelines.
+Always respond with valid JSON and provide realistic, usable design guidance.`,
+
     businessPlan: `You are a business strategist who creates executable business plans.
 Focus on vision, mission, quarterly roadmaps, and operational details.
 Always respond with valid JSON. Include realistic supply chain considerations.
 Plans should be specific enough to execute, not generic platitudes.`,
+
+    gapAnalysis: `You are an operations strategist identifying gaps between current and desired state.
+Focus on execution gaps, risks, and practical remediation steps.
+Always respond with valid JSON. Use clear priority and impact labels.`,
+
+    legalCompliance: `You are a compliance analyst focused on early-stage business risk.
+Identify legal, regulatory, IP, and data-handling considerations.
+Always respond with valid JSON and prioritize concrete actions.`,
 
     goToMarket: `You are a go-to-market strategist who designs customer acquisition strategies.
 Focus on CAC, LTV, channel strategy, and launch phases.
@@ -539,6 +561,59 @@ Return JSON with this EXACT structure:
 
 X and Y values should be between 0 and 1. Include 3-4 competitors. SWOT should be about the user's business.`,
 
+    brandArchetype: `${baseContext}
+
+MARKET CONTEXT:
+${JSON.stringify(previousSections.market || {}, null, 2)}
+
+CUSTOMER CONTEXT:
+${JSON.stringify(previousSections.customers || {}, null, 2)}
+
+Define a clear brand archetype and messaging system for this business.
+
+Return JSON with this EXACT structure:
+{
+  "archetype": "The Sage",
+  "description": "Brief explanation of why this archetype fits",
+  "tone": ["insightful", "clear", "authoritative"],
+  "voiceAttributes": [
+    { "trait": "Analytical", "description": "How this shows up in messaging" },
+    { "trait": "Supportive", "description": "How this shows up in messaging" }
+  ],
+  "brandPromise": "One sentence promise to customers",
+  "taglineIdeas": ["Tagline 1", "Tagline 2", "Tagline 3"]
+}
+
+Keep tone and archetype consistent with the market and personas.`,
+
+    brandBook: `${baseContext}
+
+BRAND ARCHETYPE:
+${JSON.stringify(previousSections.brandArchetype || {}, null, 2)}
+
+Define a concise brand book with mission, vision, values, and visuals.
+
+Return JSON with this EXACT structure:
+{
+  "brandName": "Brand name",
+  "mission": "One sentence mission",
+  "vision": "One sentence vision",
+  "values": ["Value 1", "Value 2", "Value 3"],
+  "positioning": {
+    "targetAudience": "Primary target audience",
+    "marketCategory": "Category definition",
+    "differentiator": "Primary differentiator"
+  },
+  "visualGuidelines": {
+    "primaryColors": ["#1E3A8A", "#9333EA"],
+    "secondaryColors": ["#F3F4F6", "#111827"],
+    "fontPairing": ["Inter", "Playfair Display"],
+    "logoNotes": "Short guidance for logo direction"
+  }
+}
+
+Make visual guidance practical and usable.`,
+
     businessPlan: `${baseContext}
 
 MARKET:
@@ -595,6 +670,32 @@ Return JSON with this EXACT structure:
 
 Include 4 quarters in the roadmap. Include 2-3 supply chain categories.`,
 
+    gapAnalysis: `${baseContext}
+
+BUSINESS PLAN:
+${JSON.stringify(previousSections.businessPlan || {}, null, 2)}
+
+Identify gaps between current and desired state for execution.
+
+Return JSON with this EXACT structure:
+{
+  "currentState": "Short summary of current position",
+  "desiredState": "Short summary of target state",
+  "gaps": [
+    {
+      "gap": "Gap description",
+      "impact": "High",
+      "priority": "Critical",
+      "solution": "Concrete remediation step",
+      "timeline": "0-3 months"
+    }
+  ],
+  "topRisks": ["Risk 1", "Risk 2"],
+  "assumptionsToValidate": ["Assumption 1", "Assumption 2"]
+}
+
+Make gaps specific and actionable.`,
+
     goToMarket: `${baseContext}
 
 CUSTOMERS:
@@ -638,7 +739,7 @@ Return JSON with this EXACT structure:
   }
 }
 
-Include 3-4 channels. Include 3 launch phases (soft launch, public launch, growth).`,
+Include 3-4 channels. Include 3 launch phases (soft launch, public launch, growth).` ,
 
     financial: `${baseContext}
 
@@ -723,6 +824,32 @@ Return JSON with this EXACT structure:
 }
 
 Revenue numbers should be integers. Provide realistic projections based on the market size.`,
+
+    legalCompliance: `${baseContext}
+
+BUSINESS PLAN:
+${JSON.stringify(previousSections.businessPlan || {}, null, 2)}
+
+Identify legal and compliance considerations for this business.
+
+Return JSON with this EXACT structure:
+{
+  "regulatoryRisks": [
+    {
+      "area": "Data privacy",
+      "risk": "Risk description",
+      "mitigation": "Mitigation action"
+    }
+  ],
+  "requiredPolicies": ["Terms of Service", "Privacy Policy"],
+  "recommendedActions": [
+    { "action": "Consult legal counsel", "priority": "High" }
+  ],
+  "ipConsiderations": ["Trademark the brand name"],
+  "dataHandlingNotes": "Short summary"
+}
+
+Keep actions specific and practical.`,
 
     pitchDeck: `${baseContext}
 
@@ -887,9 +1014,14 @@ export const generateSmartQuestions = action({
     businessIdea: v.string(),
     existingCategories: v.optional(v.array(v.string())),
     count: v.optional(v.number()),
+    companyContext: v.optional(v.any()),
+    mode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { businessIdea, existingCategories = [], count = 4 } = args;
+    void args.companyContext;
+    void args.mode;
+
 
     const systemPrompt = `You are a sharp business strategist who asks the MOST IMPORTANT questions to understand a business idea deeply.
 
@@ -1105,7 +1237,8 @@ export const runFullGeneration = action({
       const totalDuration = Date.now() - totalStartTime;
       console.log(`[DEBUG] ========== ALL SECTIONS COMPLETED IN ${(totalDuration / 1000).toFixed(2)}s ==========`);
 
-      console.log(`[DEBUG] Updating session status to completed`);
+       console.log(`[DEBUG] Updating session status to completed`);
+       console.log(`[DEBUG] Generation result keys:`, Object.keys(result));
         await ctx.runMutation(internal.sessions.updateSessionStatus, {
           sessionId: args.sessionId,
           status: "completed",

@@ -36,7 +36,7 @@ export const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
   openrouter: {
     name: 'openrouter',
     models: {
-      primary: 'anthropic/claude-3.5-sonnet',
+      primary: 'minimax/minimax-m2.1',
       fallback: 'openai/gpt-4o-mini',
       fast: 'openai/gpt-oss-120b',
     },
@@ -80,7 +80,8 @@ export const PRICING: Record<Provider, { [model: string]: { input: number; outpu
     'anthropic/claude-3.5-sonnet': { input: 3.00, output: 15.00 }, // $3.00 input, $15.00 output per million tokens
     'openai/gpt-4o-mini': { input: 0.15, output: 0.60 },
     'openai/gpt-oss-120b': { input: 0.08, output: 0.24 },
-  },
+    'minimax/minimax-m2.1': { input: 0.27, output: 1.12 },
+  }
 };
 
 export function calculateCost(

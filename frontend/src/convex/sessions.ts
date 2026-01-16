@@ -13,8 +13,11 @@ export const createSession = mutation({
     idea: v.string(),
     answers: v.optional(v.any()),
     branding: v.optional(v.any()),
+    mode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    void args.mode;
+
     const identity = await ctx.auth.getUserIdentity();
 
     // Find user if authenticated

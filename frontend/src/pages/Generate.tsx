@@ -96,6 +96,7 @@ export default function Generate() {
   
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
+  const [hasStartedSession, setHasStartedSession] = useState(false);
   
   const existingSessionId = localStorage.getItem(SESSION_KEY);
 
@@ -196,7 +197,15 @@ export default function Generate() {
       setError(session.errorMessage || 'Generation failed. Please try again.');
     }
   }, [session?.status, session?.errorMessage, session?.result]);
-  
+
+  // Start a new session if we don't have one and we have a business idea
+  useEffect(() => {
+    if (businessIdea && !existingSessionId && !isSessionLoading && !hasStartedSession) {
+      setHasStartedSession(true);
+      startSessionGeneration();
+    }
+  }, [businessIdea, existingSessionId, isSessionLoading, hasStartedSession]);
+
   if (!businessIdea) {
     return (
       <div className="bg-apple-bg min-h-screen font-sans antialiased">
@@ -224,13 +233,6 @@ export default function Generate() {
         </div>
       </div>
     );
-  }
-  
-  if (!existingSessionId && !isSessionLoading) {
-    useEffect(() => {
-      startSessionGeneration();
-    }, []);
-    return null;
   }
   
   if (isSessionLoading) {
