@@ -44,6 +44,8 @@ interface GenerationContext {
   businessIdea: string;
   answers: Record<string, any>;
   previousSections: Record<string, any>;
+  mode: "idea" | "existing";
+  scrapedData?: any;
 }
 
 // Main generation entry point - called by sessions.ts
@@ -94,6 +96,8 @@ export const runGeneration = internalAction({
       businessIdea: session.businessIdea,
       answers: session.answers || {},
       previousSections: {},
+      mode: session.mode || "idea",
+      scrapedData: session.scrapedData,
     };
 
     const result: Record<string, any> = {};
@@ -445,7 +449,27 @@ Focus on industry-specific regulations and compliance milestones.`,
 
 // Build user prompts with context from previous sections
 function buildUserPrompt(sectionId: SectionId, context: GenerationContext): string {
-  const { businessIdea, answers, previousSections } = context;
+  const { businessIdea, answers, previousSections, mode, scrapedData } = context;
+
+  // Mode-specific context injection
+  const modeContext = mode === "existing"
+    ? `
+ANALYSIS MODE: EXISTING COMPANY
+This is a real, operating business. Focus on:
+- Finding REAL competitors (search for actual company names)
+- Identifying growth and optimization opportunities
+- Competitive intelligence and market positioning
+- Actionable improvements, not validation
+
+${scrapedData ? `COMPANY DATA (from website):
+${JSON.stringify(scrapedData, null, 2)}` : ""}`
+    : `
+ANALYSIS MODE: NEW BUSINESS IDEA
+This is a concept being explored. Focus on:
+- Market validation and opportunity sizing
+- Theoretical competitive landscape
+- Customer discovery and persona development
+- Feasibility and go-to-market planning`;
 
   // Format answers into readable context
   let answersContext = "";
@@ -457,7 +481,9 @@ ${Object.entries(answers).map(([key, value]) => `- ${key}: ${value}`).join("\n")
   }
 
   const baseContext = `
-BUSINESS IDEA:
+${modeContext}
+
+BUSINESS DESCRIPTION:
 ${businessIdea}
 ${answersContext}`;
 
@@ -1106,9 +1132,11 @@ export const generateSmartQuestions = action({
     businessIdea: v.string(),
     existingCategories: v.optional(v.array(v.string())),
     count: v.optional(v.number()),
+    mode: v.optional(v.union(v.literal("idea"), v.literal("existing"))),
+    companyContext: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const { businessIdea, existingCategories = [], count = 4 } = args;
+    const { businessIdea, existingCategories = [], count = 5, mode = "idea", companyContext } = args;
 
     const systemPrompt = `You are a sharp business strategist who asks the MOST IMPORTANT questions to understand a business idea deeply.
 
@@ -1260,6 +1288,8 @@ export const runFullGeneration = action({
       businessIdea: session.businessIdea,
       answers: session.answers || {},
       previousSections: {},
+      mode: (session.mode as "idea" | "existing") || "idea",
+      scrapedData: session.scrapedData,
     };
 
     const result: Record<string, any> = {};
@@ -1407,6 +1437,75 @@ Return JSON: { "insight": "Your brief, specific insight here" }`;
       return { insight: null };
     } catch (error) {
       return { insight: null };
+    }
+  },
+});
+
+
+// Scrape and analyze a company website
+export const scrapeWebsite = action({
+  args: {
+    url: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { url } = args;
+    console.log("[SCRAPE] Starting website analysis for:", url);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; myCEO Bot/1.0)",
+          "Accept": "text/html,application/xhtml+xml",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch website: " + response.status);
+      }
+
+      const html = await response.text();
+      console.log("[SCRAPE] Fetched", html.length, "characters");
+
+      const systemPrompt = "You are an expert at analyzing company websites. Extract structured business information from HTML. Always respond with valid JSON.";
+      
+      const userPrompt = "Analyze this company website HTML and extract:
+
+" + html.substring(0, 40000) + "
+
+Return JSON: { \"name\": \"Company name\", \"description\": \"What they do\", \"services\": [], \"targetCustomers\": \"\", \"differentiators\": [], \"industry\": \"\", \"location\": \"\", \"teamSize\": \"\", \"foundedYear\": \"\", \"keyMetrics\": [] }";
+
+      const request: GenerationRequest = {
+        model: "",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        maxTokens: 1500,
+        response_format: { type: "json_object" },
+      };
+
+      for (const provider of PROVIDER_FAILOVER_ORDER) {
+        try {
+          const providerInstance = getProvider(provider);
+          const config = PROVIDER_CONFIGS[provider];
+          request.model = config.models.fast;
+
+          const result = await providerInstance.generate(request, provider);
+          if (result.success && result.content) {
+            const parsed = JSON.parse(result.content);
+            console.log("[SCRAPE] Success with", provider);
+            return { success: true, data: parsed };
+          }
+        } catch (error: any) {
+          console.error("[SCRAPE] Failed with", provider, error.message);
+        }
+      }
+
+      return { success: false, error: "Failed to analyze website" };
+    } catch (error: any) {
+      console.error("[SCRAPE] Error:", error.message);
+      return { success: false, error: error.message };
     }
   },
 });

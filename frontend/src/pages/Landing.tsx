@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { SparklesIcon, ArrowRightIcon, CommandLineIcon, CheckIcon, ChartBarIcon, DocumentTextIcon, RocketLaunchIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ArrowRightIcon, CommandLineIcon, CheckIcon, ChartBarIcon, DocumentTextIcon, RocketLaunchIcon, UserCircleIcon, LightBulbIcon, BuildingOfficeIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
+
+type BusinessMode = "idea" | "existing";
 import { useAuth } from '../hooks/useAuth';
 
 const TYPEWRITER_PHRASES = [
@@ -20,6 +22,8 @@ export default function Landing() {
   const [charIndex, setCharIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [tickerText, setTickerText] = useState('Live: Dog Walking App (Austin) - $420K projected revenue');
+  const [mode, setMode] = useState<BusinessMode>("idea");
+  const [websiteUrl, setWebsiteUrl] = useState('');
 
   const handleSubmit = () => {
     if (!businessIdea.trim()) return;
@@ -156,12 +160,60 @@ export default function Landing() {
               />
               <button
                 onClick={handleSubmit}
-                disabled={!businessIdea.trim()}
-                className={`w-12 h-12 rounded-xl bg-apple-text text-white flex items-center justify-center hover:bg-gray-800 transition-all duration-200 shadow-lg ${!businessIdea.trim() ? 'opacity-40 cursor-not-allowed' : 'group-hover:scale-105'}`}
+                disabled={!businessIdea.trim() || (mode === "existing" && !websiteUrl.trim())}
+                className={`w-12 h-12 rounded-xl bg-apple-text text-white flex items-center justify-center hover:bg-gray-800 transition-all duration-200 shadow-lg ${(!businessIdea.trim() || (mode === "existing" && !websiteUrl.trim())) ? 'opacity-40 cursor-not-allowed' : 'group-hover:scale-105'}`}
               >
                 <ArrowRightIcon className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Mode Toggle */}
+            <div className="flex justify-center gap-2 mt-6 mb-4">
+              <button
+                onClick={() => setMode("idea")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  mode === "idea"
+                    ? "bg-violet-600 text-white shadow-lg"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                <LightBulbIcon className="w-4 h-4" />
+                New Idea
+              </button>
+              <button
+                onClick={() => setMode("existing")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  mode === "existing"
+                    ? "bg-emerald-600 text-white shadow-lg"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                <BuildingOfficeIcon className="w-4 h-4" />
+                Existing Company
+              </button>
+            </div>
+
+            {/* Website URL Input for Existing Company */}
+            {mode === "existing" && (
+              <div className="mt-4 animate-fade-in">
+                <div className="bg-white rounded-xl shadow-soft p-2 flex items-center gap-2 border border-gray-200">
+                  <div className="pl-3 pr-1 text-gray-400">
+                    <GlobeAltIcon className="w-5 h-5" />
+                  </div>
+                  <input
+                    type="url"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    placeholder="https://yourcompany.com"
+                    className="flex-1 h-10 bg-transparent text-base text-apple-text font-medium focus:outline-none placeholder-gray-400"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  We'll analyze your website to understand your business better
+                </p>
+              </div>
+            )}
+
             <div className="mt-4 text-xs font-medium text-gray-400">
               Press <kbd className="font-sans border border-gray-300 rounded px-1.5 py-0.5 mx-1 bg-white">Enter</kbd> to generate
             </div>

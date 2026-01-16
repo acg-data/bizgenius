@@ -11,6 +11,9 @@ function generateSessionId(): string {
 export const createSession = mutation({
   args: {
     idea: v.string(),
+    mode: v.optional(v.union(v.literal("idea"), v.literal("existing"))),
+    websiteUrl: v.optional(v.string()),
+    scrapedData: v.optional(v.any()),
     answers: v.optional(v.any()),
     branding: v.optional(v.any()),
   },
@@ -45,6 +48,9 @@ export const createSession = mutation({
       sessionId,
       userId,
       businessIdea: args.idea,
+      mode: args.mode || "idea",
+      websiteUrl: args.websiteUrl,
+      scrapedData: args.scrapedData,
       answers: args.answers,
       branding: args.branding,
       status: "pending",

@@ -81,6 +81,18 @@ export default function Generate() {
     }
     return null;
   }, [location.state]);
+
+  const mode = useMemo(() => {
+    return location.state?.mode || 'idea';
+  }, [location.state]);
+
+  const websiteUrl = useMemo(() => {
+    return location.state?.websiteUrl || '';
+  }, [location.state]);
+
+  const scrapedData = useMemo(() => {
+    return location.state?.scrapedData || null;
+  }, [location.state]);
   
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
@@ -130,6 +142,9 @@ export default function Generate() {
     try {
       const result = await createSession({
         idea: businessIdea,
+        mode: mode as "idea" | "existing",
+        websiteUrl: websiteUrl || undefined,
+        scrapedData: scrapedData || undefined,
         answers: Object.keys(answers).length > 0 ? answers : undefined
       });
       

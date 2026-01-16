@@ -4,6 +4,8 @@ import { CommandLineIcon, ArrowRightIcon, ArrowLeftIcon, CheckIcon, LightBulbIco
 import { useAction } from '../lib/convex';
 import { api } from '../convex/_generated/api';
 
+type BusinessMode = 'idea' | 'existing';
+
 interface QuestionOption {
   value: string;
   label: string;
@@ -93,6 +95,10 @@ export default function Questions() {
   const navigate = useNavigate();
   const location = useLocation();
   const [businessIdea, setBusinessIdea] = useState('');
+  const [mode, setMode] = useState<BusinessMode>('idea');
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [scrapedData, setScrapedData] = useState<any>(null);
+  const [isScraping, setIsScraping] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Initialize answers for canned questions immediately - no loading spinner!
@@ -120,10 +126,13 @@ export default function Questions() {
   // Convex actions
   const generateSmartQuestions = useAction(api.ai.generateSmartQuestions);
   const generateInsight = useAction(api.ai.generateInsight);
+  const scrapeWebsite = useAction(api.ai.scrapeWebsite);
   // Branding removed - not needed for plan generation
 
   useEffect(() => {
     const idea = location.state?.businessIdea || localStorage.getItem('myceo_business_idea');
+    const modeFromState = (location.state?.mode as BusinessMode) || 'idea';
+    const websiteUrlFromState = location.state?.websiteUrl || '';
     
     if (!idea) {
       navigate('/');
@@ -132,7 +141,22 @@ export default function Questions() {
 
     setBusinessIdea(idea);
     localStorage.setItem('myceo_business_idea', idea);
-  }, [location.state, navigate]);
+    setMode(modeFromState);
+    setWebsiteUrl(websiteUrlFromState);
+    
+    // If existing company mode, scrape the website
+    if (modeFromState === 'existing' && websiteUrlFromState) {
+      setIsScraping(true);
+      scrapeWebsite({ url: websiteUrlFromState })
+        .then(result => {
+          if (result.success) {
+            setScrapedData(result.data);
+          }
+        })
+        .catch(err => console.error('Scrape failed:', err))
+        .finally(() => setIsScraping(false));
+    }
+  }, [location.state, navigate, scrapeWebsite]);
 
   // Fetch AI-generated questions in background (specific to business idea)
   useEffect(() => {
@@ -144,8 +168,10 @@ export default function Questions() {
       try {
         const result = await generateSmartQuestions({
           businessIdea,
-          existingCategories: CANNED_QUESTIONS.map(q => q.category),
-          count: 4
+          existingCategories: mode === 'existing' ? [] : CANNED_QUESTIONS.map(q => q.category),
+          count: 5,
+          mode,
+          companyContext: scrapedData
         });
 
         const newQuestions = result.questions?.filter(
@@ -320,6 +346,9 @@ export default function Questions() {
     navigate('/generate', {
       state: {
         businessIdea,
+        mode,
+        websiteUrl: mode === 'existing' ? websiteUrl : undefined,
+        scrapedData: mode === 'existing' ? scrapedData : undefined,
         answers: answersWithContext
       }
     });
@@ -329,6 +358,9 @@ export default function Questions() {
     navigate('/generate', {
       state: {
         businessIdea,
+        mode,
+        websiteUrl: mode === 'existing' ? websiteUrl : undefined,
+        scrapedData: mode === 'existing' ? scrapedData : undefined,
         answers: {}
       }
     });

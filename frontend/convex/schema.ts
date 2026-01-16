@@ -78,6 +78,9 @@ export default defineSchema({
 
     // Input data
     businessIdea: v.string(),
+    mode: v.optional(v.union(v.literal("idea"), v.literal("existing"))),  // Triage mode
+    websiteUrl: v.optional(v.string()),  // Company website URL for existing mode
+    scrapedData: v.optional(v.any()),  // Scraped website data
     answers: v.optional(v.any()),
     branding: v.optional(v.any()),
 
