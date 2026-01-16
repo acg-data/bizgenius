@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { useQuery as useConvexQuery, useMutation as useConvexMutation } from 'convex/react';
-import { useConvexAuth } from '@convex-dev/auth/react';
+import { useAuth } from '../hooks/useAuth';
 import { api } from '../convex/_generated/api';
 import { Provider } from '../convex/providers';
 
@@ -20,7 +20,7 @@ interface GenerationContextType {
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
 
 export function GenerationProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useConvexAuth();
+  const { isAuthenticated } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
