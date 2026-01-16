@@ -23,16 +23,14 @@ export default function Landing() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [tickerText, setTickerText] = useState('Live: Dog Walking App (Austin) - $420K projected revenue');
   const [mode, setMode] = useState<BusinessMode>("idea");
-  const [websiteUrl, setWebsiteUrl] = useState('');
-
+  
   const handleSubmit = () => {
     if (!businessIdea.trim()) return;
-    if (mode === "existing" && !websiteUrl.trim()) return;
     navigate('/questions', {
       state: {
-        businessIdea: businessIdea.trim(),
+        businessIdea: mode === "existing" ? undefined : businessIdea.trim(),
         mode,
-        websiteUrl: mode === "existing" ? websiteUrl.trim() : undefined
+        websiteUrl: mode === "existing" ? businessIdea.trim() : undefined
       }
     });
   };
@@ -153,29 +151,8 @@ export default function Landing() {
 
           {/* Floating Input */}
           <div className="max-w-2xl mx-auto relative group mb-16 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <div className="bg-white rounded-2xl shadow-float p-2 flex items-center gap-2 border border-gray-100/50 transition-all duration-300 ring-4 ring-transparent focus-within:ring-primary-500/10">
-              <div className="pl-4 pr-2 text-gray-400">
-                <SparklesIcon className="w-5 h-5" />
-              </div>
-              <input
-                type="text"
-                value={businessIdea}
-                onChange={(e) => setBusinessIdea(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                placeholder={placeholder || "Describe your business idea..."}
-                className="flex-1 h-14 bg-transparent text-lg md:text-xl text-apple-text font-medium focus:outline-none placeholder-gray-400"
-              />
-              <button
-                onClick={handleSubmit}
-                disabled={!businessIdea.trim() || (mode === "existing" && !websiteUrl.trim())}
-                className={`w-12 h-12 rounded-xl bg-apple-text text-white flex items-center justify-center hover:bg-gray-800 transition-all duration-200 shadow-lg ${(!businessIdea.trim() || (mode === "existing" && !websiteUrl.trim())) ? 'opacity-40 cursor-not-allowed' : 'group-hover:scale-105'}`}
-              >
-                <ArrowRightIcon className="w-5 h-5" />
-              </button>
-            </div>
-
             {/* Mode Toggle */}
-            <div className="flex justify-center gap-2 mt-6 mb-4">
+            <div className="flex justify-center gap-2 mb-6">
               <button
                 onClick={() => setMode("idea")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
@@ -200,27 +177,29 @@ export default function Landing() {
               </button>
             </div>
 
-            {/* Website URL Input for Existing Company */}
-            {mode === "existing" && (
-              <div className="mt-4 animate-fade-in">
-                <div className="bg-white rounded-xl shadow-soft p-2 flex items-center gap-2 border border-gray-200">
-                  <div className="pl-3 pr-1 text-gray-400">
-                    <GlobeAltIcon className="w-5 h-5" />
-                  </div>
-                  <input
-                    type="url"
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                    placeholder="https://yourcompany.com"
-                    className="flex-1 h-10 bg-transparent text-base text-apple-text font-medium focus:outline-none placeholder-gray-400"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-2 text-center">
-                  We'll analyze your website to understand your business better
-                </p>
+            <div className="bg-white rounded-2xl shadow-float p-2 flex items-center gap-2 border border-gray-100/50 transition-all duration-300 ring-4 ring-transparent focus-within:ring-primary-500/10">
+              <div className="pl-4 pr-2 text-gray-400">
+                <SparklesIcon className="w-5 h-5" />
               </div>
-            )}
+              <input
+                type="text"
+                value={businessIdea}
+                onChange={(e) => setBusinessIdea(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                placeholder={mode === "existing" ? "google.com, facebook.com, stripe.com..." : (placeholder || "Describe your business idea...")}
+                className="flex-1 h-14 bg-transparent text-lg md:text-xl text-apple-text font-medium focus:outline-none placeholder-gray-400"
+              />
+              <button
+                onClick={handleSubmit}
+                disabled={!businessIdea.trim()}
+                className={`w-12 h-12 rounded-xl bg-apple-text text-white flex items-center justify-center hover:bg-gray-800 transition-all duration-200 shadow-lg ${(!businessIdea.trim()) ? 'opacity-40 cursor-not-allowed' : 'group-hover:scale-105'}`}
+              >
+                <ArrowRightIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            
+            
 
             <div className="mt-4 text-xs font-medium text-gray-400">
               Press <kbd className="font-sans border border-gray-300 rounded px-1.5 py-0.5 mx-1 bg-white">Enter</kbd> to generate
