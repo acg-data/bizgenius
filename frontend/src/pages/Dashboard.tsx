@@ -1,11 +1,8 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Card,
   CardBody,
   CardHeader,
-  Button,
-  Chip,
   Table,
   TableHeader,
   TableColumn,
@@ -19,8 +16,6 @@ import {
   DocumentTextIcon,
   ChartBarIcon,
   ArrowTrendingUpIcon,
-  ClockIcon,
-  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { useQuery, useMutation } from '../lib/convex';
 import { api } from '../convex/_generated/api';

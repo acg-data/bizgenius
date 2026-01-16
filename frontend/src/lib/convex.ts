@@ -1,5 +1,4 @@
 import { ConvexProvider, ConvexReactClient, useQuery as useConvexQuery, useMutation as useConvexMutation, useAction as useConvexAction } from "convex/react";
-import { api } from "../convex/_generated/api";
 
 // Create the Convex client
 const convexUrl = import.meta.env.VITE_CONVEX_URL;

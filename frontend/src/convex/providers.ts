@@ -1,5 +1,3 @@
-import { v } from 'convex/values';
-
 // Provider types
 export type Provider = 'novita' | 'cerebras' | 'openrouter';
 
@@ -153,8 +151,6 @@ export abstract class BaseProvider {
         body: JSON.stringify(body),
       });
 
-      const duration = Date.now() - startTime;
-
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`${this.config.name} API error:`, errorText);
@@ -184,7 +180,6 @@ export abstract class BaseProvider {
         outputTokens,
       };
     } catch (error: any) {
-      const duration = Date.now() - startTime;
       console.error(`${this.config.name} request failed:`, error);
       return {
         success: false,

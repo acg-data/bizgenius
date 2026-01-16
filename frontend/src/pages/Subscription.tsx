@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Card, CardBody, CardHeader, Button } from '@heroui/react';
-import { CheckIcon, LockClosedIcon, SparklesIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import { Card, CardBody, Button } from '@heroui/react';
+import { CheckIcon, SparklesIcon, CreditCardIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useQuery, useAction } from '../lib/convex';
 import { api } from '../convex/_generated/api';
@@ -17,7 +17,6 @@ export default function Subscription() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const currentTier = subscription_tier || "free";
-  const limits = getLimitsForUser(currentTier);
 
   const handleSubscribe = async (tier: "premium" | "expert", billing: "monthly" | "yearly") => {
     setIsProcessing(true);
@@ -76,7 +75,7 @@ export default function Subscription() {
     );
   }
   
-  const PlanCard = ({ plan, isCurrent, onSelect, billing }) => {
+  const PlanCard = ({ plan, isCurrent, onSelect }) => {
     return (
       <Card className={`${
         isCurrent 
@@ -221,13 +220,11 @@ export default function Subscription() {
                     plan={plan}
                     isCurrent={isCurrent}
                     onSelect={handleSubscribePremiumMonthly}
-                    billing="monthly"
                   />
                   <PlanCard
                     plan={plan}
                     isCurrent={isCurrent}
                     onSelect={handleSubscribePremiumYearly}
-                    billing="yearly"
                   />
                 </div>
               );
@@ -240,13 +237,11 @@ export default function Subscription() {
                     plan={plan}
                     isCurrent={isCurrent}
                     onSelect={handleSubscribeExpertMonthly}
-                    billing="monthly"
                   />
                   <PlanCard
                     plan={plan}
                     isCurrent={isCurrent}
                     onSelect={handleSubscribeExpertYearly}
-                    billing="yearly"
                   />
                 </div>
               );

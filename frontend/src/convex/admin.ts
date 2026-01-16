@@ -218,14 +218,14 @@ export const getCostTrends = query({
     }
 
     // Fill in missing days
-    const result = [];
+    const result: { date: string; cost: number; count: number; tokens: number }[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       result.push({
         date,
-        cost: byDay[date]?.cost || 0,
-        count: byDay[date]?.count || 0,
-        tokens: byDay[date]?.tokens || 0,
+        cost: byDay[date]?.cost ?? 0,
+        count: byDay[date]?.count ?? 0,
+        tokens: byDay[date]?.tokens ?? 0,
       });
     }
 

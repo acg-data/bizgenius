@@ -21,7 +21,6 @@ export default function Settings() {
     currentProvider,
     fallbackOrder,
     setActiveProvider,
-    setFallbackOrder,
   } = useGeneration();
   const [notifications, setNotifications] = useState({
     email: true,
@@ -53,7 +52,6 @@ export default function Settings() {
   };
 
   const totalCostLast30Days = costsByProvider?.totalCost || 0;
-  const recentCost = costTrends?.reduce((sum, day) => sum + day.cost, 0) || 0;
 
   const handleLogout = async () => {
     await signOut();

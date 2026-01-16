@@ -97,7 +97,6 @@ export default function Generate() {
   
   const createSession = useMutation(api.sessions.createSession);
   const retrySession = useMutation(api.sessions.retrySession);
-  const saveToIdea = useMutation(api.sessions.saveSessionToIdea);
   
   const steps: GenerationStep[] = useMemo(() => {
     if (!session?.currentStep) {

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, action, internalMutation, internalQuery } from "./_generated/server";
+import { query, action, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 // Stripe API URLs

@@ -211,7 +211,7 @@ async function generateSectionWithRetry(
 }
 
 // Get active provider (first check settings, otherwise use default)
-async function getActiveProvider(): Promise<Provider> {
+async function _getActiveProvider(): Promise<Provider> {
   // For now, return first provider in failover order
   // In the future, this will check the providerSettings table
   return PROVIDER_FAILOVER_ORDER[0];
@@ -222,8 +222,8 @@ async function generateSection(
   sectionId: SectionId,
   maxTokens: number,
   context: GenerationContext,
-  sessionId: string
-): Promise<{ content: any; costInfo: any; provider: string; model: string; duration: number }> {
+  sessionId: string,
+): Promise<{ content: any; costInfo: any; provider: string; model: string; duration: number; inputTokens: number; outputTokens: number }> {
   const systemPrompt = getSystemPrompt(sectionId);
   const userPrompt = buildUserPrompt(sectionId, context);
 
@@ -957,7 +957,7 @@ Options should reflect realistic scenarios for THIS type of business.`;
       };
 
       let generatedQuestions = [];
-      let lastError = null;
+      let lastError: Error | null = null;
 
       // Try each provider in failover order
       for (const provider of PROVIDER_FAILOVER_ORDER) {
@@ -1082,7 +1082,7 @@ export const runFullGeneration = action({
         result[section.id] = sectionResult.content;
 
         // Save cost tracking data
-        await ctx.runMutation(internal.admin.saveGenerationCost, {
+        await ctx.runMutation((internal as any).admin.saveGenerationCost, {
           sessionId: args.sessionId,
           provider: sectionResult.provider,
           model: sectionResult.model,

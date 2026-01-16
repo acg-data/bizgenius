@@ -18,7 +18,7 @@ export const createSession = mutation({
     const identity = await ctx.auth.getUserIdentity();
 
     // Find user if authenticated
-    let userId = undefined;
+    let userId = undefined as any;
     if (identity) {
       const user = await ctx.db
         .query("users")

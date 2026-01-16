@@ -104,7 +104,7 @@ const CustomerSection = ({ data, tier }) => {
             <div key={segment} className="text-center">
               <div className="relative w-24 h-24 mx-auto mb-3">
                 <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-900">{percentage}%</span>
+                  <span className="text-2xl font-bold text-gray-900">{String(percentage)}%</span>
                 </div>
               </div>
               <h4 className="font-medium text-gray-900 mb-1">{segment.replace(/([A-Z])/g, ' $1').trim()}</h4>

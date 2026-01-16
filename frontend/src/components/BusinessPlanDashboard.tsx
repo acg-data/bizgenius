@@ -1,27 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../convex/_generated/api';
 import { useQuery } from '../lib/convex';
+import SectionRenderer from './SectionRenderer';
 import {
-  Home,
-  Layout,
-  Users,
-  Megaphone,
-  BarChart2,
-  Compass,
-  FlaskConical,
-  PenTool,
-  GitCompare,
-  ChevronDown,
-  MoreHorizontal,
-  Download,
   TrendingUp,
+  Users,
+  GitCompare,
   Target,
   Rocket,
   DollarSign,
   Presentation,
   UserCheck,
-  CheckCircle,
-  Circle
+  ChevronDown,
+  Download
 } from 'lucide-react';
 
 // Business Plan Sections Configuration
