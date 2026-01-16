@@ -28,7 +28,7 @@ export default function Landing() {
     if (!businessIdea.trim()) return;
     navigate('/questions', {
       state: {
-        businessIdea: mode === "existing" ? undefined : businessIdea.trim(),
+        businessIdea: businessIdea.trim(),
         mode,
         websiteUrl: mode === "existing" ? businessIdea.trim() : undefined
       }
