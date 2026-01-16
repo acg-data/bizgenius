@@ -27,7 +27,14 @@ export default function Landing() {
 
   const handleSubmit = () => {
     if (!businessIdea.trim()) return;
-    navigate('/questions', { state: { businessIdea: businessIdea.trim() } });
+    if (mode === "existing" && !websiteUrl.trim()) return;
+    navigate('/questions', {
+      state: {
+        businessIdea: businessIdea.trim(),
+        mode,
+        websiteUrl: mode === "existing" ? websiteUrl.trim() : undefined
+      }
+    });
   };
 
   useEffect(() => {
@@ -204,6 +211,7 @@ export default function Landing() {
                     type="url"
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                     placeholder="https://yourcompany.com"
                     className="flex-1 h-10 bg-transparent text-base text-apple-text font-medium focus:outline-none placeholder-gray-400"
                   />
