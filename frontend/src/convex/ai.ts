@@ -10,7 +10,7 @@ import {
   calculateCost,
 } from "./providers";
 
-// Provider failover order: Cerebras → Novita → OpenRouter
+// Provider failover order: OpenRouter → Novita → Cerebras
 const PROVIDER_FAILOVER_ORDER: Provider[] = ["openrouter", "novita", "cerebras"];
 
 // Rate limiting configuration

@@ -10,8 +10,8 @@ export const getProviderSettings = query({
     if (!settings) {
       // Return default settings
       return {
-        activeProvider: 'novita' as Provider,
-        fallbackOrder: ['novita', 'openrouter', 'cerebras'],
+        activeProvider: 'openrouter' as Provider,
+        fallbackOrder: ['openrouter', 'novita', 'cerebras'],
         updatedAt: Date.now(),
       };
     }
@@ -42,7 +42,7 @@ export const setActiveProvider = mutation({
     } else {
       await ctx.db.insert('providerSettings', {
         activeProvider: args.provider,
-        fallbackOrder: ['novita', 'openrouter', 'cerebras'],
+        fallbackOrder: ['openrouter', 'novita', 'cerebras'],
         updatedAt: Date.now(),
       });
     }
@@ -74,7 +74,7 @@ export const setFallbackOrder = mutation({
       });
     } else {
       await ctx.db.insert('providerSettings', {
-        activeProvider: 'novita',
+        activeProvider: 'openrouter',
         fallbackOrder: args.order,
         updatedAt: Date.now(),
       });

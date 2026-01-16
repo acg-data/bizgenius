@@ -36,9 +36,9 @@ export const PROVIDER_CONFIGS: Record<Provider, ProviderConfig> = {
   openrouter: {
     name: 'openrouter',
     models: {
-      primary: 'minimax/minimax-m2.1',
-      fallback: 'openai/gpt-4o-mini',
-      fast: 'openai/gpt-oss-120b',
+      primary: 'xiaomi/mimo-v2-flash:free',
+      fallback: 'xiaomi/mimo-v2-flash:free',
+      fast: 'xiaomi/mimo-v2-flash:free',
     },
     baseUrl: 'https://openrouter.ai/api/v1',
     apiKeyEnv: 'OPENROUTER_API_KEY',
@@ -77,6 +77,7 @@ export const PRICING: Record<Provider, { [model: string]: { input: number; outpu
     'zai-glm-46': { input: 0.12, output: 0.35 },
   },
   openrouter: {
+    'xiaomi/mimo-v2-flash:free': { input: 0, output: 0 },
     'anthropic/claude-3.5-sonnet': { input: 3.00, output: 15.00 }, // $3.00 input, $15.00 output per million tokens
     'openai/gpt-4o-mini': { input: 0.15, output: 0.60 },
     'openai/gpt-oss-120b': { input: 0.08, output: 0.24 },

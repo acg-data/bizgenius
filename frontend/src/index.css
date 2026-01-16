@@ -36,6 +36,185 @@ body {
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
 
+  .monitor-shell {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    background-color: #f3f4f6;
+    padding: 5vh 10vw;
+    box-sizing: border-box;
+  }
+
+  .monitor-frame {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+  }
+
+  .monitor-sidebar {
+    width: 260px;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .monitor-dots {
+    padding: 16px;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .monitor-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .monitor-dot.red { background: #f87171; }
+  .monitor-dot.yellow { background: #facc15; }
+  .monitor-dot.green { background: #4ade80; }
+
+  .monitor-company {
+    margin: 0 16px 32px 16px;
+    padding: 8px;
+    border: 1px solid #f3f4f6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.2s;
+  }
+
+  .monitor-company:hover { background-color: #f9fafb; }
+
+  .monitor-avatar {
+    width: 32px;
+    height: 32px;
+    background-color: #2563eb;
+    color: white;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  .monitor-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 8px;
+  }
+
+  .monitor-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .monitor-nav-item:hover {
+    background-color: #f9fafb;
+    color: #111827;
+  }
+
+  .monitor-nav-item.active {
+    background-color: #eff6ff;
+    color: #2563eb;
+  }
+
+  .monitor-nav-item svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+  }
+
+  .monitor-main {
+    flex: 1;
+    background-color: #f8fafc;
+    padding: 32px;
+    overflow-y: auto;
+  }
+
+  .monitor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+  }
+
+  .monitor-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .monitor-header p {
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .monitor-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .monitor-badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #22c55e;
+    position: relative;
+  }
+
+  .monitor-badge-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: inherit;
+    animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  .monitor-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.08);
+  }
+
+  .monitor-card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 12px;
+  }
+}
+
+
   .glass-card {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(20px) saturate(180%);

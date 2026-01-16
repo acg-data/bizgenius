@@ -33,8 +33,8 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
   const setActiveProviderMutation = useConvexMutation(api.admin.setActiveProvider);
   const setFallbackOrderMutation = useConvexMutation(api.admin.setFallbackOrder);
 
-  const currentProvider = providerSettings?.activeProvider || 'novita';
-  const fallbackOrder = providerSettings?.fallbackOrder || ['novita', 'openrouter', 'cerebras'];
+  const currentProvider = providerSettings?.activeProvider || 'openrouter';
+  const fallbackOrder = providerSettings?.fallbackOrder || ['openrouter', 'novita', 'cerebras'];
 
   const setActiveProvider = async (provider: Provider) => {
     try {

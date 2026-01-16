@@ -87,42 +87,28 @@ export default function BusinessReport({ data, onBack }: BusinessReportProps) {
   const currentSection = REPORT_SECTIONS.find(s => s.id === activeSection) || REPORT_SECTIONS[0];
 
   return (
-    <div className="min-h-screen bg-apple-bg relative overflow-hidden">
-      {/* Animated background blobs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="blob absolute w-96 h-96 rounded-full bg-blue-200/30 blur-3xl -top-48 -left-48 animate-float-blob" />
-        <div className="blob absolute w-80 h-80 rounded-full bg-purple-200/30 blur-3xl top-1/2 -right-40 animate-float-blob-delayed" />
-        <div className="blob absolute w-72 h-72 rounded-full bg-green-200/20 blur-3xl bottom-0 left-1/3 animate-float-blob" />
-      </div>
+    <div className="min-h-screen bg-apple-bg">
+      <div className="monitor-shell">
+        <div className="monitor-frame">
+          <ReportSidebar
+            sections={REPORT_SECTIONS}
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+            ideaTitle={data.ideaTitle}
+            generatedAt={data.generatedAt}
+            onDownload={handleDownloadPDF}
+            onBack={onBack}
+          />
 
-      {/* Main container */}
-      <div className="relative z-10 flex min-h-screen">
-        {/* Sidebar */}
-        <ReportSidebar
-          sections={REPORT_SECTIONS}
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-          ideaTitle={data.ideaTitle}
-          generatedAt={data.generatedAt}
-          onDownload={handleDownloadPDF}
-          onBack={onBack}
-        />
-
-        {/* Main content */}
-        <div className="flex-1 ml-72 p-8">
-          <div
-            ref={reportRef}
-            className="glass-report-panel rounded-3xl p-8 max-w-5xl mx-auto shadow-glass-lg"
-          >
+          <main className="monitor-main" ref={reportRef}>
             <ReportHeader
-              icon={currentSection.icon}
               title={currentSection.title}
             />
 
             <div className="mt-8 animate-fade-in">
               {renderSection()}
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </div>
