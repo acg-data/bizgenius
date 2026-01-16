@@ -228,7 +228,8 @@ const BusinessPlanDashboard = () => {
 
   // Get business plan data
   const sessionId = 'current-session-id'; // This would come from your routing/state
-  const { data: session, isLoading } = useQuery(api.sessions.getSessionStatus, { sessionId });
+  const session = useQuery(api.sessions.getSessionStatus, { sessionId });
+  const isLoading = session === undefined;
 
   const config = TIER_CONFIG[tier];
   const availableSections = businessPlanSections.slice(0, config.maxSections);

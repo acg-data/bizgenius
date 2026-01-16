@@ -24,10 +24,11 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
-  const { data: providerSettings, isLoading: isLoadingSettings } = useConvexQuery(
+  const providerSettings = useConvexQuery(
     api.admin.getProviderSettings,
     isAuthenticated ? undefined : 'skip'
   );
+  const isLoadingSettings = providerSettings === undefined;
 
   const setActiveProviderMutation = useConvexMutation(api.admin.setActiveProvider);
   const setFallbackOrderMutation = useConvexMutation(api.admin.setFallbackOrder);
