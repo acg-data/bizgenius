@@ -1,5 +1,4 @@
 interface ReportHeaderProps {
-interface ReportHeaderProps {
   title: string;
 }
 
