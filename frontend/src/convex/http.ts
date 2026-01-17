@@ -78,6 +78,18 @@ async function verifyStripeSignature(
   }
 }
 
+// Health check
+http.route({
+  path: "/health",
+  method: "GET",
+  handler: httpAction(async () => {
+    return new Response(JSON.stringify({ status: "ok" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }),
+});
+
 // Stripe Webhook Handler
 http.route({
   path: "/stripe/webhook",
