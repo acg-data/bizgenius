@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Card, CardBody, Button, Switch, Chip } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { CheckIcon, SparklesIcon, FireIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useQuery, useAction } from '../lib/convex';
