@@ -14,6 +14,7 @@ const STORAGE_KEY = 'myceo_pending_idea';
 const RESULT_KEY = 'myceo_analysis_result';
 const ANSWERS_KEY = 'myceo_answers';
 const SESSION_KEY = 'myceo_session_id';
+const SESSION_IDEA_KEY = 'myceo_session_idea';
 const BRANDING_KEY = 'myceo_branding';
 
 const STEP_ORDER = [
@@ -99,14 +100,16 @@ export default function Generate() {
   const [hasStartedSession, setHasStartedSession] = useState(false);
   
   const existingSessionId = localStorage.getItem(SESSION_KEY);
+  const existingSessionIdea = localStorage.getItem(SESSION_IDEA_KEY);
+  const isSameIdea = existingSessionIdea && businessIdea && existingSessionIdea === businessIdea;
 
   // Convex useQuery returns data directly (or undefined while loading)
   // Use "skip" as second arg to skip the query when no sessionId
   const session = useQuery(
     api.sessions.getSessionStatus,
-    existingSessionId ? { sessionId: existingSessionId } : "skip"
+    existingSessionId && isSameIdea ? { sessionId: existingSessionId } : "skip"
   );
-  const isSessionLoading = existingSessionId ? session === undefined : false;
+  const isSessionLoading = existingSessionId && isSameIdea ? session === undefined : false;
   
   const createSession = useMutation(api.sessions.createSession);
   const retrySession = useMutation(api.sessions.retrySession);
@@ -135,11 +138,11 @@ export default function Generate() {
   const progress = (completedSteps / steps.length) * 100;
   
   const isGenerating = !isComplete && session?.status === 'generating';
-  const isResuming = !!existingSessionId && isGenerating;
+  const isResuming = !!existingSessionId && isSameIdea && isGenerating;
   
   const startSessionGeneration = async () => {
     if (!businessIdea) return;
-    
+
     try {
       const result = await createSession({
         idea: businessIdea,
@@ -148,9 +151,9 @@ export default function Generate() {
         scrapedData: scrapedData || undefined,
         answers: Object.keys(answers).length > 0 ? answers : undefined
       });
-      
+
       setSessionId(result.sessionId);
-      localStorage.setItem(SESSION_KEY, result.sessionId);
+      localStorage.setItem(SESSION_IDEA_KEY, businessIdea);
       setError(null);
     } catch (err: any) {
       console.error('Failed to start generation:', err);
@@ -161,14 +164,15 @@ export default function Generate() {
   const handleRetry = async () => {
     setError(null);
     setIsComplete(false);
-    
-    if (existingSessionId) {
+
+    if (existingSessionId && isSameIdea) {
       try {
         await retrySession({ sessionId: existingSessionId });
         setError(null);
       } catch (err: any) {
         console.error('Failed to retry:', err);
         localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(SESSION_IDEA_KEY);
         setSessionId(null);
         startSessionGeneration();
       }
@@ -182,7 +186,12 @@ export default function Generate() {
   };
   
   const setSessionId = (id: string | null) => {
-    if (id) { localStorage.setItem(SESSION_KEY, id); } else { localStorage.removeItem(SESSION_KEY); }
+    if (id) {
+      localStorage.setItem(SESSION_KEY, id);
+    } else {
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(SESSION_IDEA_KEY);
+    }
     window.location.reload();
   };
   
@@ -200,11 +209,15 @@ export default function Generate() {
 
   // Start a new session if we don't have one and we have a business idea
   useEffect(() => {
-    if (businessIdea && !existingSessionId && !isSessionLoading && !hasStartedSession) {
+    if (!businessIdea) return;
+
+    const shouldStartNew = !existingSessionId || !isSameIdea;
+
+    if (shouldStartNew && !isSessionLoading && !hasStartedSession) {
       setHasStartedSession(true);
       startSessionGeneration();
     }
-  }, [businessIdea, existingSessionId, isSessionLoading, hasStartedSession]);
+  }, [businessIdea, existingSessionId, isSameIdea, isSessionLoading, hasStartedSession]);
 
   if (!businessIdea) {
     return (
