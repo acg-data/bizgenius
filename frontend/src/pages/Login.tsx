@@ -142,6 +142,7 @@ export default function Login() {
                 startContent={<EnvelopeIcon className="w-4 h-4 text-gray-400" />}
                 isRequired
                 size="lg"
+                labelPlacement="outside"
               />
               
               <Input
@@ -162,6 +163,7 @@ export default function Login() {
                 isRequired
                 size="lg"
                 type={isVisible ? 'text' : 'password'}
+                labelPlacement="outside"
               />
               
               <div className="flex items-center justify-between">

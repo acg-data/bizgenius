@@ -4,6 +4,12 @@
   publish = "dist"
 
 [[redirects]]
+  from = "/api/auth/*"
+  to = "https://scrupulous-meadowlark-77.convex.cloud/api/auth/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

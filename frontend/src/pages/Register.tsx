@@ -164,6 +164,7 @@ export default function Register() {
                 onValueChange={(value) => setFormData({ ...formData, fullName: value })}
                 startContent={<UserIcon className="w-4 h-4 text-gray-400" />}
                 size="lg"
+                labelPlacement="outside"
               />
               
               <Input
@@ -175,6 +176,7 @@ export default function Register() {
                 startContent={<EnvelopeIcon className="w-4 h-4 text-gray-400" />}
                 isRequired
                 size="lg"
+                labelPlacement="outside"
               />
               
               <Input
@@ -195,6 +197,7 @@ export default function Register() {
                 isRequired
                 size="lg"
                 type={isVisible ? 'text' : 'password'}
+                labelPlacement="outside"
               />
               
               <Input
@@ -206,6 +209,7 @@ export default function Register() {
                 isRequired
                 size="lg"
                 type={isVisible ? 'text' : 'password'}
+                labelPlacement="outside"
               />
               
               <div className="text-xs text-gray-500">
