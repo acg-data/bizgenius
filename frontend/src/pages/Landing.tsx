@@ -25,7 +25,27 @@ export default function Landing() {
   const [mode, setMode] = useState<BusinessMode>("idea");
   
   const handleSubmit = () => {
-    if (!businessIdea.trim()) return;
+    if (!businessIdea.trim() || isLoading) return;
+
+    if (!isAuthenticated) {
+      const params = new URLSearchParams();
+      params.set('idea', businessIdea.trim());
+      params.set('redirect', '/questions');
+      params.set('mode', mode);
+
+      if (mode === 'existing') {
+        params.set('websiteUrl', businessIdea.trim());
+      }
+
+      const intentId = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `intent_${Date.now()}`;
+      params.set('intent', intentId);
+
+      navigate(`/login?${params.toString()}`);
+      return;
+    }
+
     navigate('/questions', {
       state: {
         businessIdea: businessIdea.trim(),

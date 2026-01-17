@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Input, Card, CardBody, CardHeader, Divider, Checkbox } from '@heroui/react';
 import { SparklesIcon, EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { useAuthActions } from "@convex-dev/auth/react";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signIn } = useAuthActions();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +22,21 @@ export default function Login() {
 
     try {
       await signIn("password", { email, password, flow: "signIn" });
-      navigate('/dashboard');
+      const redirect = searchParams.get('redirect') || '/ideas';
+      const idea = searchParams.get('idea');
+      const mode = searchParams.get('mode');
+      const websiteUrl = searchParams.get('websiteUrl');
+
+      const redirectParams = new URLSearchParams();
+      if (idea) redirectParams.set('idea', idea);
+      if (mode) redirectParams.set('mode', mode);
+      if (websiteUrl) redirectParams.set('websiteUrl', websiteUrl);
+
+      const target = redirectParams.toString()
+        ? `${redirect}?${redirectParams.toString()}`
+        : redirect;
+
+      navigate(target);
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');
     } finally {
@@ -34,6 +49,21 @@ export default function Login() {
     setError('');
     try {
       await signIn("google");
+      const redirect = searchParams.get('redirect') || '/ideas';
+      const idea = searchParams.get('idea');
+      const mode = searchParams.get('mode');
+      const websiteUrl = searchParams.get('websiteUrl');
+
+      const redirectParams = new URLSearchParams();
+      if (idea) redirectParams.set('idea', idea);
+      if (mode) redirectParams.set('mode', mode);
+      if (websiteUrl) redirectParams.set('websiteUrl', websiteUrl);
+
+      const target = redirectParams.toString()
+        ? `${redirect}?${redirectParams.toString()}`
+        : redirect;
+
+      navigate(target);
     } catch (err: any) {
       setError(err.message || 'Google sign-in failed');
       setIsGoogleLoading(false);
@@ -196,7 +226,7 @@ export default function Login() {
             <div className="text-center">
               <p className="text-gray-500">
                 Don't have an account?{' '}
-                <Link to="/register" className="text-primary-600 font-semibold hover:text-primary-700">
+                <Link to={`/register?${searchParams.toString()}`} className="text-primary-600 font-semibold hover:text-primary-700">
                   Sign up free
                 </Link>
               </p>

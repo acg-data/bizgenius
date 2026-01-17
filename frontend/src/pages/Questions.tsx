@@ -130,9 +130,10 @@ export default function Questions() {
   // Branding removed - not needed for plan generation
 
   useEffect(() => {
-    const idea = location.state?.businessIdea || localStorage.getItem('myceo_business_idea');
-    const modeFromState = (location.state?.mode as BusinessMode) || 'idea';
-    const websiteUrlFromState = location.state?.websiteUrl || '';
+    const params = new URLSearchParams(location.search);
+    const idea = location.state?.businessIdea || params.get('idea') || localStorage.getItem('myceo_business_idea');
+    const modeFromState = (location.state?.mode as BusinessMode) || (params.get('mode') as BusinessMode) || 'idea';
+    const websiteUrlFromState = location.state?.websiteUrl || params.get('websiteUrl') || '';
     
     if (!idea) {
       navigate('/');
@@ -146,7 +147,6 @@ export default function Questions() {
     
     // If existing company mode, scrape the website
     if (modeFromState === 'existing' && websiteUrlFromState) {
-
       scrapeWebsite({ url: websiteUrlFromState })
         .then(result => {
           if (result.success) {
@@ -154,9 +154,8 @@ export default function Questions() {
           }
         })
         .catch(err => console.error('Scrape failed:', err))
-
     }
-  }, [location.state, navigate, scrapeWebsite]);
+  }, [location.state, location.search, navigate, scrapeWebsite]);
 
   // Fetch AI-generated questions in background (specific to business idea)
   useEffect(() => {
