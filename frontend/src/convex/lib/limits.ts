@@ -1,21 +1,21 @@
 export const SUBSCRIPTION_LIMITS = {
   free: {
     analysesPerMonth: 1,
-    // Free tier: 3 of 8 sections (market, customers, competitors)
+    // Free tier: 3 sections (market, customers, competitors)
     sectionsUnlocked: ["market", "customers", "competitors"],
     maxIdeas: 2,
     hasExport: false,
   },
   premium: {
     analysesPerMonth: 10,
-    // Pro tier: 6 of 8 sections (adds businessPlan, goToMarket, financial)
-    sectionsUnlocked: ["market", "customers", "competitors", "businessPlan", "goToMarket", "financial"],
+    // Premium tier: 7 sections (adds businessPlan, goToMarket, financial, riskAssessment, team)
+    sectionsUnlocked: ["market", "customers", "competitors", "businessPlan", "goToMarket", "financial", "riskAssessment", "team"],
     maxIdeas: 20,
     hasExport: true,
   },
   expert: {
     analysesPerMonth: -1, // unlimited
-    sectionsUnlocked: ["all"], // All 8 sections
+    sectionsUnlocked: ["all"], // All sections
     maxIdeas: -1, // unlimited
     hasExport: true,
     prioritySupport: true,
@@ -64,7 +64,7 @@ function getSectionPreview(section: string, data: any): any {
     return {
       available_years: projections.length || 5,
       has_break_even: !!data?.summary?.breakEvenMonths,
-      has_funding_needs: !!data?.fundingNeeds,
+      has_funding_strategy: !!data?.fundingNeeds,
     };
   } else if (section === "pitchDeck") {
     const slides = data?.slides || [];

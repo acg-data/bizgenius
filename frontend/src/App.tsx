@@ -27,7 +27,6 @@ import Results from './pages/Results';
 import Questions from './pages/Questions';
 import Branding from './pages/Branding';
 import Report from './pages/Report';
-import App2 from './pages/App-2';
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -39,7 +38,6 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route path="/app-2" element={<App2 />} />
       <Route path="/questions" element={<Questions />} />
       <Route path="/branding" element={<Branding />} />
       <Route path="/generate" element={<Generate />} />

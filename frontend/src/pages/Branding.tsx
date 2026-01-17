@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { CommandLineIcon, ArrowRightIcon, ArrowLeftIcon, LockClosedIcon, LockOpenIcon, ArrowPathIcon, CheckIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import api from '../services/api';
 
 interface BrandingData {
   companyName: string;
@@ -10,6 +9,22 @@ interface BrandingData {
 }
 
 const STORAGE_KEY = 'myceo_branding';
+
+// Local company name generator (client-side fallback)
+function generateCompanyNames(businessIdea: string, count: number = 5): string[] {
+  const words = businessIdea.split(' ').slice(0, 3);
+  const suffixes = ['AI', 'Labs', 'Co', 'HQ', 'Pro', 'Tech', 'Systems', 'Solutions'];
+  return Array.from({ length: count }, (_, i) => 
+    `${words[i % words.length] || 'My'}${suffixes[i % suffixes.length]}`
+  );
+}
+
+// Predefined color palettes
+const DEFAULT_PALETTES = [
+  ['#1D1D1F', '#F5F5F7', '#0066CC', '#34C759', '#FF9500'],
+  ['#2C3E50', '#ECF0F1', '#3498DB', '#2ECC71', '#E74C3C'],
+  ['#1A1A2E', '#EEEEF0', '#4A90D9', '#50C878', '#FF6B6B'],
+];
 
 export default function Branding() {
   const navigate = useNavigate();
@@ -52,21 +67,13 @@ export default function Branding() {
     }
   }, [location.state, navigate]);
 
-  const fetchNameSuggestions = useCallback(async () => {
+  const fetchNameSuggestions = useCallback(() => {
     if (!businessIdea || loadingNames) return;
     setLoadingNames(true);
     
-    try {
-      const response = await api.post('/branding/company-names', { 
-        business_idea: businessIdea,
-        count: 5
-      });
-      setSuggestedNames(response.data.names || []);
-    } catch (err) {
-      console.error('Failed to fetch name suggestions:', err);
-    } finally {
-      setLoadingNames(false);
-    }
+    // Generate names client-side
+    setSuggestedNames(generateCompanyNames(businessIdea, 5));
+    setLoadingNames(false);
   }, [businessIdea, loadingNames]);
 
   useEffect(() => {
@@ -80,55 +87,30 @@ export default function Branding() {
     setLoadingLogos(true);
     setLogoError(null);
     
-    try {
-      const response = await api.post('/branding/logo-variations', {
-        company_name: companyName,
-        business_idea: businessIdea,
-        count: 4
-      });
-      setLogos(response.data.logos || []);
-    } catch (err) {
-      console.error('Failed to generate logos:', err);
-      setLogoError('Failed to generate logos. Please try again.');
-    } finally {
-      setLoadingLogos(false);
-    }
+    // Placeholder: logos would be generated server-side
+    // For now, show a message that logo generation requires backend
+    setLogos([null, null, null, null]);
+    setLogoError('Logo generation requires AI service configuration');
+    setLoadingLogos(false);
   };
 
   const fetchPaletteSuggestions = async () => {
     if (!businessIdea || loadingPalettes) return;
     setLoadingPalettes(true);
     
-    try {
-      const response = await api.post('/branding/color-palettes', {
-        business_idea: businessIdea,
-        count: 3
-      });
-      setSuggestedPalettes(response.data.palettes || []);
-    } catch (err) {
-      console.error('Failed to fetch palette suggestions:', err);
-    } finally {
-      setLoadingPalettes(false);
-    }
+    // Use predefined palettes
+    setSuggestedPalettes(DEFAULT_PALETTES);
+    setLoadingPalettes(false);
   };
 
-  const shuffleUnlockedColors = async () => {
-    try {
-      const lockedColorValues = colors.map((c, i) => lockedColors[i] ? c : null);
-      const response = await api.post('/branding/random-palette', {
-        locked_colors: lockedColorValues
-      });
-      setColors(response.data.palette);
-    } catch (err) {
-      console.error('Failed to shuffle colors:', err);
-      const newColors = [...colors];
-      for (let i = 0; i < 5; i++) {
-        if (!lockedColors[i]) {
-          newColors[i] = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
-        }
+  const shuffleUnlockedColors = () => {
+    const newColors = [...colors];
+    for (let i = 0; i < 5; i++) {
+      if (!lockedColors[i]) {
+        newColors[i] = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
       }
-      setColors(newColors);
     }
+    setColors(newColors);
   };
 
   const toggleColorLock = (index: number) => {

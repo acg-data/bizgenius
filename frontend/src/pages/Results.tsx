@@ -68,7 +68,7 @@ export default function Results() {
   // Get tier from URL parameter, fallback to user subscription
   const urlTier = urlParams.get('tier');
   const { user } = useAuth();
-  const tier = (urlTier && ['free', 'pro', 'expert'].includes(urlTier)) ? urlTier : (user?.subscription_tier || "free");
+  const tier = (urlTier && ['free', 'premium', 'expert'].includes(urlTier)) ? urlTier : (user?.subscription_tier || "free");
 
   const session = useQuery(
     api.sessions.getSessionStatus,
@@ -189,7 +189,7 @@ export default function Results() {
             </button>
             <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${
               tier === 'free' ? 'bg-gray-100 text-gray-700' :
-              tier === 'pro' ? 'bg-blue-100 text-blue-700' :
+              tier === 'premium' ? 'bg-blue-100 text-blue-700' :
               'bg-purple-100 text-purple-700'
             }`}>
               {tier.charAt(0).toUpperCase() + tier.slice(1)} Plan

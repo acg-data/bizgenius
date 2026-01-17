@@ -7,64 +7,12 @@ region: nyc
 
 # Services
 services:
-  # Backend API Service
-  - name: backend
-    dockerfile_path: backend/Dockerfile
-    source_dir: backend
-    github:
-      repo: your-org/bizgenius
-      branch: main
-      deploy_on_push: true
-
-    instance_count: 1
-    instance_size_slug: basic-xxs
-
-    http_port: 8000
-
-    routes:
-      - path: /api
-      - path: /health
-      - path: /docs
-      - path: /redoc
-
-    health_check:
-      http_path: /health
-      initial_delay_seconds: 10
-      period_seconds: 30
-
-    envs:
-      - key: ENVIRONMENT
-        value: production
-      - key: DEBUG
-        value: "false"
-      - key: SECRET_KEY
-        type: SECRET
-        value: ${SECRET_KEY}
-      - key: DATABASE_URL
-        type: SECRET
-        value: ${DATABASE_URL}
-      - key: OPENROUTER_API_KEY
-        type: SECRET
-        value: ${OPENROUTER_API_KEY}
-      - key: STRIPE_SECRET_KEY
-        type: SECRET
-        value: ${STRIPE_SECRET_KEY}
-      - key: STRIPE_WEBHOOK_SECRET
-        type: SECRET
-        value: ${STRIPE_WEBHOOK_SECRET}
-      - key: CORS_ORIGINS
-        value: '["https://bizgenius.app","https://www.bizgenius.app"]'
-
-    alerts:
-      - rule: DEPLOYMENT_FAILED
-      - rule: DOMAIN_FAILED
-
   # Frontend Static Site
   - name: frontend
     dockerfile_path: frontend/Dockerfile
     source_dir: frontend
     github:
-      repo: your-org/bizgenius
+      repo: acg-data/bizgenius
       branch: main
       deploy_on_push: true
 
@@ -77,8 +25,10 @@ services:
       - path: /
 
     envs:
-      - key: VITE_API_BASE_URL
-        value: ${APP_URL}/api/v1
+      - key: VITE_CONVEX_URL
+        value: ${CONVEX_URL}
+      - key: VITE_SENTRY_DSN
+        value: ${SENTRY_DSN}
 
     alerts:
       - rule: DEPLOYMENT_FAILED

@@ -30,7 +30,26 @@ export const setActiveProvider = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // TODO: Add authentication check for admin/owner
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Must be authenticated to change provider settings");
+    }
+
+    // Get user to check admin status
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check if user is admin (expert tier users are considered admins for now)
+    const tier = user.subscriptionTier || "free";
+    if (tier !== "expert") {
+      throw new Error("Only expert tier users can change provider settings");
+    }
 
     const existing = await ctx.db.query('providerSettings').first();
 
@@ -38,12 +57,14 @@ export const setActiveProvider = mutation({
       await ctx.db.patch(existing._id, {
         activeProvider: args.provider,
         updatedAt: Date.now(),
+        updatedBy: user._id,
       });
     } else {
       await ctx.db.insert('providerSettings', {
         activeProvider: args.provider,
         fallbackOrder: ['openrouter', 'novita', 'cerebras'],
         updatedAt: Date.now(),
+        updatedBy: user._id,
       });
     }
 
@@ -63,7 +84,26 @@ export const setFallbackOrder = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // TODO: Add authentication check for admin/owner
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Must be authenticated to change fallback order");
+    }
+
+    // Get user to check admin status
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check if user is admin (expert tier users are considered admins for now)
+    const tier = user.subscriptionTier || "free";
+    if (tier !== "expert") {
+      throw new Error("Only expert tier users can change fallback order");
+    }
 
     const existing = await ctx.db.query('providerSettings').first();
 
@@ -71,12 +111,14 @@ export const setFallbackOrder = mutation({
       await ctx.db.patch(existing._id, {
         fallbackOrder: args.order,
         updatedAt: Date.now(),
+        updatedBy: user._id,
       });
     } else {
       await ctx.db.insert('providerSettings', {
         activeProvider: 'openrouter',
         fallbackOrder: args.order,
         updatedAt: Date.now(),
+        updatedBy: user._id,
       });
     }
 

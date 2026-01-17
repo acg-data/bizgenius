@@ -44,7 +44,7 @@ export default defineSchema({
     targetMarket: v.optional(v.string()),
     location: v.optional(v.string()),
 
-    // All 11 analysis sections (stored as JSON objects)
+    // All analysis sections (stored as JSON objects)
     executiveSummary: v.optional(v.any()),
     marketResearch: v.optional(v.any()),
     businessPlan: v.optional(v.any()),
@@ -56,6 +56,10 @@ export default defineSchema({
     actionPlan: v.optional(v.any()),
     pitchDeck: v.optional(v.any()),
     localBusinessData: v.optional(v.any()),
+    brandArchetype: v.optional(v.any()),
+    brandBook: v.optional(v.any()),
+    gapAnalysis: v.optional(v.any()),
+    legalCompliance: v.optional(v.any()),
 
     // Metadata
     generatedAt: v.optional(v.number()),
