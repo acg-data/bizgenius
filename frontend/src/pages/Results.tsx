@@ -17,6 +17,11 @@ import {
   PresentationChartBarIcon,
   UserGroupIcon,
   LockClosedIcon,
+  PaintBrushIcon,
+  SwatchIcon,
+  ScaleIcon,
+  ShieldCheckIcon,
+  Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import { canAccessSection } from '../convex/lib/limits';
 import type { GenerationResult } from '../types/generation';
@@ -37,9 +42,13 @@ const sectionIcons: Record<string, React.ComponentType<{ className?: string }>> 
   market: ChartBarIcon,
   customers: UsersIcon,
   competitors: BuildingOfficeIcon,
+  brandArchetype: PaintBrushIcon,
+  brandBook: SwatchIcon,
   businessPlan: BriefcaseIcon,
+  gapAnalysis: ScaleIcon,
   goToMarket: RocketLaunchIcon,
   financial: BanknotesIcon,
+  legalCompliance: ShieldCheckIcon,
   pitchDeck: PresentationChartBarIcon,
   team: UserGroupIcon,
 };
@@ -48,9 +57,13 @@ const sectionColors: Record<string, string> = {
   market: 'text-blue-600',
   customers: 'text-green-600',
   competitors: 'text-orange-600',
+  brandArchetype: 'text-indigo-600',
+  brandBook: 'text-fuchsia-600',
   businessPlan: 'text-purple-600',
+  gapAnalysis: 'text-slate-600',
   goToMarket: 'text-cyan-600',
   financial: 'text-emerald-600',
+  legalCompliance: 'text-red-600',
   pitchDeck: 'text-pink-600',
   team: 'text-violet-600',
 };
@@ -201,10 +214,11 @@ export default function Results() {
       {/* Sidebar Navigation */}
       <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white/60 backdrop-blur-sm border-r border-gray-200 p-4 hidden lg:block overflow-y-auto">
         <div className="space-y-1">
-          {GENERATION_STEPS.map((step) => {
-            const Icon = sectionIcons[step.key];
+            {GENERATION_STEPS.map((step) => {
+            const Icon = sectionIcons[step.key] || Squares2X2Icon;
             const isActive = activeSection === step.key;
             const isLocked = !canAccessSection(tier, step.key);
+            const iconColor = sectionColors[step.key] || 'text-gray-400';
 
             return (
               <button
@@ -216,7 +230,7 @@ export default function Results() {
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? sectionColors[step.key] : 'text-gray-400'}`} />
+                <Icon className={`w-5 h-5 ${isActive ? iconColor : 'text-gray-400'}`} />
                 <span className="font-medium text-sm">{step.label}</span>
                 {isLocked && (
                   <LockClosedIcon className="w-4 h-4 text-gray-400 ml-auto" />
