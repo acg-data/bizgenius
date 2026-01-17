@@ -1,31 +1,34 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Card, CardBody, Button } from '@heroui/react';
-import { CheckIcon, SparklesIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import { Card, CardBody, Button, Switch, Chip } from '@heroui/react';
+import { CheckIcon, SparklesIcon, FireIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useQuery, useAction } from '../lib/convex';
 import { api } from '../convex/_generated/api';
-
 import { subscriptionPlans } from '../store';
 
 export default function Subscription() {
   const navigate = useNavigate();
   const { user, subscription_tier } = useAuth();
-  // Convex useQuery returns data directly
   const usage = useQuery(api.users.checkUsageLimits, {});
   const createCheckoutSession = useAction(api.stripe.createCheckoutSession);
-  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
+  const [processingPlanId, setProcessingPlanId] = useState<number | null>(null);
 
   const currentTier = subscription_tier || "free";
 
-  const handleSubscribe = async (tier: "premium" | "expert", billing: "monthly" | "yearly") => {
-    setIsProcessing(true);
+  const handleSubscribe = async (tier: "premium" | "expert") => {
+    // Map tier name to ID for loading state
+    const planId = tier === 'premium' ? 2 : 3;
+    setProcessingPlanId(planId);
+    
     try {
       const result = await createCheckoutSession({
         tier,
-        billing,
+        billing: billingInterval,
         successUrl: `${window.location.origin}/dashboard?checkout=success`,
-        cancelUrl: `${window.location.origin}/pricing?checkout=canceled`,
+        cancelUrl: `${window.location.origin}/subscription?checkout=canceled`,
       });
 
       if (result.checkoutUrl) {
@@ -34,275 +37,190 @@ export default function Subscription() {
     } catch (error) {
       console.error("Checkout failed:", error);
       alert("Failed to start checkout. Please try again.");
-      setIsProcessing(false);
+      setProcessingPlanId(null);
     }
   };
 
-  const handleSubscribePremiumMonthly = () => handleSubscribe("premium", "monthly");
-  const handleSubscribePremiumYearly = () => handleSubscribe("premium", "yearly");
-  const handleSubscribeExpertMonthly = () => handleSubscribe("expert", "monthly");
-  const handleSubscribeExpertYearly = () => handleSubscribe("expert", "yearly");
-  
   const handleManageSubscription = () => {
     navigate('/billing');
   };
   
   if (!user) {
     return (
-      <div className="bg-apple-bg min-h-screen font-sans antialiased">
-        <nav className="fixed top-0 w-full z-50 glass-panel">
-          <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
-              <SparklesIcon className="w-5 h-5 text-apple-text" />
-              <span className="text-lg tracking-tight">myCEO</span>
-            </Link>
+      <div className="bg-apple-bg min-h-screen font-sans antialiased flex flex-col items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-12 text-center max-w-md w-full">
+          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <SparklesIcon className="w-8 h-8 text-blue-600" />
           </div>
-        </nav>
-        
-        <div className="max-w-2xl mx-auto px-6 pt-32 pb-16">
-          <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-12 text-center">
-            <h1 className="text-2xl font-semibold text-apple-text mb-4">Sign in to Upgrade</h1>
-            <p className="text-apple-gray mb-8">Please log in to view and manage your subscription</p>
-            <Link 
-              to="/login"
-              className="inline-flex items-center gap-2 bg-apple-text text-white font-medium px-6 py-3 rounded-full hover:bg-gray-800 transition-all"
-            >
-              Log In
-            </Link>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to Upgrade</h1>
+          <p className="text-gray-500 mb-8">Please log in to view and manage your subscription plan.</p>
+          <Link 
+            to="/login?redirect=subscription"
+            className="block w-full bg-blue-600 text-white font-medium px-6 py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+          >
+            Log In
+          </Link>
         </div>
       </div>
     );
   }
-  
-  const PlanCard = ({ plan, isCurrent, onSelect }) => {
-    return (
-      <Card className={`${
-        isCurrent 
-          ? 'border-4xl border-primary-500 bg-primary-50' 
-          : 'border border-gray-200 hover:border-primary-300'
-      } transition-all`}>
-        <CardBody className="p-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-2xl font-bold text-apple-text">{plan.name}</h3>
-              <p className="text-sm text-apple-gray mt-1">{plan.description}</p>
-            </div>
-            {isCurrent && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-                Current
-              </span>
-            )}
-          </div>
-          
-          <div className="mb-6">
-            <div className="text-4xl font-bold text-apple-text mb-2">
-              {plan.price_monthly === 0 ? 'Free' : `$${plan.price_monthly}`}
-              {plan.price_monthly > 0 && '/month'}
-            </div>
-            {plan.price_yearly > 0 && (
-              <div className="text-sm text-apple-gray">
-                <span className="line-through">${plan.price_yearly}</span>
-                <span className="ml-2">${plan.price_yearly * 0.8}</span>/year
-              </div>
-            )}
-          </div>
-          
-          <ul className="space-y-3 mb-8">
-            {plan.features.map((feature, idx) => (
-              <li key={idx} className="flex items-start gap-3 text-sm text-apple-gray">
-                <CheckIcon className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-          
-          {!isCurrent && (
-            <Button
-              color="primary"
-              size="lg"
-              className="w-full font-semibold"
-              onClick={onSelect}
-              disabled={isProcessing}
-            >
-              {isProcessing && plan.id === 1 ? 'Processing...' : 'Upgrade to Premium'}
-            </Button>
-          )}
-        </CardBody>
-      </Card>
-    );
-  };
-  
+
   return (
-    <div className="bg-apple-bg min-h-screen font-sans antialiased">
-      <nav className="fixed top-0 w-full z-50 glass-panel">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <SparklesIcon className="w-5 h-5 text-apple-text" />
-            <span className="text-lg tracking-tight">myCEO</span>
-          </Link>
-          <span className="text-sm font-medium text-apple-gray">
-            Subscription Plans
-          </span>
+    <div className="bg-gray-50 min-h-screen font-sans antialiased pb-20">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 pt-24 pb-12 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Upgrade your Plan</h1>
+          <p className="text-xl text-gray-500 mb-8">Unlock unlimited analysis, export capabilities, and expert tools.</p>
+          
+          {/* Billing Toggle */}
+          <div className="inline-flex items-center bg-gray-100 p-1 rounded-full border border-gray-200">
+            <button
+              onClick={() => setBillingInterval('monthly')}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                billingInterval === 'monthly'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingInterval('yearly')}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                billingInterval === 'yearly'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Yearly <span className="text-xs text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded-full">-20%</span>
+            </button>
+          </div>
         </div>
-      </nav>
-      
-      <div className="max-w-7xl mx-auto px-6 pt-32 pb-16">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-apple-text mb-4">Choose Your Plan</h1>
-          <p className="text-xl text-apple-gray">Unlock powerful business intelligence features</p>
-        </div>
-        
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 -mt-8">
+        {/* Usage Stats (Mini Dashboard) */}
         {usage && (
-          <Card className="bg-gradient-to-r from-primary-50 to-blue-50 border-2 border-primary-200 mb-12">
-            <CardBody className="p-6">
-              <h3 className="text-xl font-semibold text-apple-text mb-4">Your Current Usage</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-sm text-apple-gray mb-2">This Month</p>
-                  <p className="text-3xl font-bold text-apple-text">
-                    {usage.analyses_used || 0}
-                    <span className="text-lg font-normal text-apple-gray">
-                      /{usage.analyses_limit === -1 ? '∞' : usage.analyses_limit}
-                    </span>
-                  </p>
-                  <p className="text-sm text-apple-gray">Analyses</p>
-                </div>
-                <div>
-                  <p className="text-sm text-apple-gray mb-2">Saved Ideas</p>
-                  <p className="text-3xl font-bold text-apple-text">
-                    {usage.ideas_used || 0}
-                    <span className="text-lg font-normal text-apple-gray">
-                      /{usage.ideas_limit === -1 ? '∞' : usage.ideas_limit}
-                    </span>
-                  </p>
-                  <p className="text-sm text-apple-gray">Ideas</p>
-                </div>
-                <div>
-                  <p className="text-sm text-apple-gray mb-2">Current Plan</p>
-                  <p className="text-3xl font-bold text-apple-text capitalize">{currentTier}</p>
-                  <Button
-                    color="default"
-                    variant="bordered"
-                    size="sm"
-                    onClick={handleManageSubscription}
-                    className="mt-2"
-                  >
-                    Manage
-                  </Button>
-                </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 max-w-4xl mx-auto transform -translate-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                <FireIcon className="w-5 h-5 text-blue-600" />
               </div>
-              
-              {currentTier === 'free' && (usage.analyses_used || 0) >= (usage.analyses_limit || 1) && (
-                <div className="mt-4">
-                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-                    <p className="text-sm font-medium text-orange-700 mb-2">
-                      You've reached your monthly limit
-                    </p>
-                    <p className="text-xs text-orange-600">
-                      Upgrade to Premium or Expert to continue generating analyses
-                    </p>
-                  </div>
-                </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider">Current Usage</p>
+                <p className="text-gray-900 font-medium">
+                  <span className="font-bold">{usage.analyses_used || 0}</span> / {usage.analyses_limit === -1 ? '∞' : usage.analyses_limit} Analyses
+                </p>
+              </div>
+            </div>
+            
+            <div className="h-8 w-px bg-gray-200 hidden md:block"></div>
+            
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">Current Plan: <span className="font-bold capitalize text-gray-900">{currentTier}</span></span>
+              {currentTier !== 'free' && (
+                <Button 
+                  size="sm" 
+                  variant="bordered" 
+                  onClick={handleManageSubscription}
+                  className="border-gray-200"
+                >
+                  Manage Billing
+                </Button>
               )}
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+
+        {/* Pricing Cards */}
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mt-12">
           {subscriptionPlans.map((plan) => {
             const isCurrent = plan.name.toLowerCase() === currentTier;
+            const isPopular = plan.is_popular;
             
-            if (plan.name === 'Premium') {
-              return (
-                <div key={plan.id} className="md:col-span-1">
-                  <PlanCard
-                    plan={plan}
-                    isCurrent={isCurrent}
-                    onSelect={handleSubscribePremiumMonthly}
-                  />
-                  <PlanCard
-                    plan={plan}
-                    isCurrent={isCurrent}
-                    onSelect={handleSubscribePremiumYearly}
-                  />
+            // Calculate price based on interval
+            const price = billingInterval === 'monthly' ? plan.price_monthly : Math.round(plan.price_yearly / 12);
+            
+            return (
+              <div 
+                key={plan.id} 
+                className={`relative flex flex-col bg-white rounded-2xl transition-all duration-300 ${
+                  isPopular 
+                    ? 'border-2 border-blue-600 shadow-xl scale-105 z-10' 
+                    : 'border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300'
+                }`}
+              >
+                {isPopular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
+                    MOST POPULAR
+                  </div>
+                )}
+
+                <div className="p-8 flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <p className="text-gray-500 text-sm mb-6">{plan.description}</p>
+                  
+                  <div className="flex items-baseline mb-8">
+                    <span className="text-4xl font-bold text-gray-900">${price}</span>
+                    <span className="text-gray-500 ml-2">/mo</span>
+                    {billingInterval === 'yearly' && plan.price_monthly > 0 && (
+                      <span className="ml-auto text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                        Billed ${plan.price_yearly}/yr
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-4 mb-8">
+                    {plan.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <CheckIcon className="w-3 h-3 text-green-600" />
+                        </div>
+                        <span className="text-sm text-gray-600 leading-tight">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              );
-            }
-            
-            if (plan.name === 'Expert') {
-              return (
-                <div key={plan.id} className="md:col-span-2">
-                  <PlanCard
-                    plan={plan}
-                    isCurrent={isCurrent}
-                    onSelect={handleSubscribeExpertMonthly}
-                  />
-                  <PlanCard
-                    plan={plan}
-                    isCurrent={isCurrent}
-                    onSelect={handleSubscribeExpertYearly}
-                  />
+
+                <div className="p-8 pt-0 mt-auto">
+                  {isCurrent ? (
+                    <button
+                      disabled
+                      className="w-full py-3 px-4 rounded-xl border border-green-200 bg-green-50 text-green-700 font-semibold flex items-center justify-center gap-2 cursor-default"
+                    >
+                      <CheckIcon className="w-5 h-5" />
+                      Current Plan
+                    </button>
+                  ) : plan.price_monthly === 0 ? (
+                    <button
+                      disabled
+                      className="w-full py-3 px-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 font-semibold cursor-not-allowed"
+                    >
+                      Basic Access
+                    </button>
+                  ) : (
+                    <Button
+                      className={`w-full py-6 font-semibold text-base rounded-xl shadow-lg hover:shadow-xl transition-all transform active:scale-[0.98] ${
+                        isPopular 
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-200' 
+                          : 'bg-white border-2 border-gray-900 text-gray-900 hover:bg-gray-50'
+                      }`}
+                      isLoading={processingPlanId === plan.id}
+                      onClick={() => handleSubscribe(plan.name.toLowerCase() as "premium" | "expert")}
+                    >
+                      {processingPlanId === plan.id ? 'Processing...' : `Upgrade to ${plan.name}`}
+                    </Button>
+                  )}
                 </div>
-              );
-            }
-            
-            return null;
+              </div>
+            );
           })}
         </div>
-        
-        <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-8 mb-8">
-          <h3 className="text-xl font-semibold text-apple-text mb-4">Payment Methods</h3>
-          <p className="text-sm text-apple-gray mb-6">We accept multiple payment options</p>
-          
-          <div className="grid grid-cols-2 gap-6 items-center">
-            <div className="text-center">
-              <div className="bg-gray-100 rounded-xl p-6 mb-3">
-                <CreditCardIcon className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <h4 className="font-semibold text-gray-700 mb-2">Credit Card</h4>
-                <p className="text-sm text-gray-600">
-                  Visa, Mastercard, Amex
-                  <br />
-                  Secure processing
-                </p>
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-orange-100 rounded-xl p-6 mb-3">
-                <CreditCardIcon className="w-12 h-12 text-orange-600 mx-auto mb-3" />
-                <h4 className="font-semibold text-gray-700 mb-2">Crypto</h4>
-                <p className="text-sm text-gray-600">
-                  USDC, USDT, ETH
-                  <br />
-                  Pay with crypto, save on fees
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-2xl p-8 mb-8">
-          <div className="text-center">
-            <h3 className="text-2xl font-semibold text-apple-text mb-4">Questions?</h3>
-            <p className="text-apple-gray mb-6">Compare features and find the right plan for your business needs</p>
-            <Link 
-              to="/help"
-              className="inline-flex items-center gap-2 bg-white text-primary-600 font-medium px-8 py-4 rounded-xl hover:bg-primary-50 transition-colors shadow-lg"
-            >
-              Get Help Choosing
-            </Link>
-          </div>
-        </div>
-        
-        <div className="text-center">
-          <Link 
-            to="/dashboard"
-            className="inline-flex items-center gap-2 text-apple-gray hover:text-apple-text transition-colors"
-          >
-            ← Back to Dashboard
-          </Link>
-        </div>
+
+        <p className="text-center text-gray-400 text-sm mt-12">
+          Secure payment via Stripe. Cancel anytime from your billing settings.
+        </p>
       </div>
     </div>
   );
