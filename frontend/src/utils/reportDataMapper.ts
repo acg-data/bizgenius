@@ -23,6 +23,8 @@ const colorSchemes: Array<'blue' | 'purple' | 'green' | 'orange'> = ['blue', 'pu
 
 // Competitor colors
 const competitorColors = ['#0071e3', '#9333ea', '#22c55e', '#f97316', '#ef4444', '#06b6d4'];
+const COMPETITOR_DISPLAY_LIMIT = 5;
+
 
 /**
  * Maps an Idea from the database to the ReportData format for display
@@ -175,7 +177,7 @@ function mapCompetitorLandscape(idea: Idea): CompetitorLandscapeData {
   const competitorList = competitors.competitors || competitors.direct_competitors || [];
 
   return {
-    competitors: competitorList.map((comp: any, index: number) => ({
+    competitors: competitorList.slice(0, COMPETITOR_DISPLAY_LIMIT).map((comp: any, index: number) => ({
       name: comp.name || `Competitor ${index + 1}`,
       initial: (comp.name || 'C')[0].toUpperCase(),
       type: comp.type || comp.category || 'Direct',
@@ -183,6 +185,7 @@ function mapCompetitorLandscape(idea: Idea): CompetitorLandscapeData {
       color: competitorColors[index % competitorColors.length],
       position: comp.position || { x: 30 + (index * 15) % 40, y: 30 + (index * 20) % 40 },
     })),
+
     yourPosition: competitors.your_position || { x: 75, y: 75 },
     strengths: competitors.strengths || competitors.competitive_advantages || [],
     weaknesses: competitors.weaknesses || [],
