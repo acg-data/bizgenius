@@ -119,7 +119,6 @@ export const runGeneration = internalAction({
           section.id,
           section.maxTokens,
           context,
-          args.sessionId,
           3
         );
 
@@ -182,14 +181,13 @@ async function generateSectionWithRetry(
   sectionId: SectionId,
   maxTokens: number,
   context: GenerationContext,
-  sessionId: string,
   maxRetries: number
 ): Promise<{ content: any; costInfo: any; provider: string; model: string; duration: number; inputTokens: number; outputTokens: number }> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      return await generateSection(sectionId, maxTokens, context, sessionId);
+      return         await generateSection(sectionId, maxTokens, context);
     } catch (error: any) {
       lastError = error;
 
@@ -216,19 +214,13 @@ async function generateSectionWithRetry(
   throw lastError || new Error(`Failed to generate ${sectionId} after ${maxRetries} attempts`);
 }
 
-// Get active provider (first check settings, otherwise use default)
-async function _getActiveProvider(): Promise<Provider> {
-  // For now, return first provider in failover order
-  // In the future, this will check the providerSettings table
-  return PROVIDER_FAILOVER_ORDER[0];
-}
+
 
 // Enhanced generation function with provider abstraction and failover
 async function generateSection(
   sectionId: SectionId,
   maxTokens: number,
   context: GenerationContext,
-  sessionId: string,
 ): Promise<{ content: any; costInfo: any; provider: string; model: string; duration: number; inputTokens: number; outputTokens: number }> {
   const systemPrompt = getSystemPrompt(sectionId);
   const userPrompt = buildUserPrompt(sectionId, context);
@@ -1017,7 +1009,7 @@ export const generateSmartQuestions = action({
     companyContext: v.optional(v.any()),
     mode: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     const { businessIdea, existingCategories = [], count = 4 } = args;
     void args.companyContext;
     void args.mode;
@@ -1204,7 +1196,6 @@ export const runFullGeneration = action({
           section.id,
           section.maxTokens,
           context,
-          args.sessionId,
           RATE_LIMIT_CONFIG.maxRetries
         );
 
@@ -1279,7 +1270,7 @@ export const generateInsight = action({
     currentQuestion: v.string(),
     partialAnswers: v.optional(v.any()),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     const { businessIdea, currentQuestion, partialAnswers = {} } = args;
 
     const prompt = `Business idea: "${businessIdea}"

@@ -3,8 +3,6 @@ import {
   LockClosedIcon,
   CheckIcon,
   SparklesIcon,
-  CurrencyDollarIcon,
-  PresentationChartLineIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
@@ -27,7 +25,7 @@ const features = [
 ];
 
 export default function PaywallModal({ isOpen, onClose, sessionId }: PaywallModalProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const createCheckoutSession = useAction(api.stripe.createCheckoutSession);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [loading, setLoading] = useState(false);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { SparklesIcon, ArrowRightIcon, CommandLineIcon, CheckIcon, ChartBarIcon, DocumentTextIcon, RocketLaunchIcon, UserCircleIcon, LightBulbIcon, BuildingOfficeIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ArrowRightIcon, CommandLineIcon, CheckIcon, ChartBarIcon, DocumentTextIcon, RocketLaunchIcon, UserCircleIcon, LightBulbIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 type BusinessMode = "idea" | "existing";
 import { useAuth } from '../hooks/useAuth';

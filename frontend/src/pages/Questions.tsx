@@ -98,7 +98,7 @@ export default function Questions() {
   const [mode, setMode] = useState<BusinessMode>('idea');
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [scrapedData, setScrapedData] = useState<any>(null);
-  const [isScraping, setIsScraping] = useState(false);
+
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Initialize answers for canned questions immediately - no loading spinner!
@@ -146,7 +146,7 @@ export default function Questions() {
     
     // If existing company mode, scrape the website
     if (modeFromState === 'existing' && websiteUrlFromState) {
-      setIsScraping(true);
+
       scrapeWebsite({ url: websiteUrlFromState })
         .then(result => {
           if (result.success) {
@@ -154,7 +154,7 @@ export default function Questions() {
           }
         })
         .catch(err => console.error('Scrape failed:', err))
-        .finally(() => setIsScraping(false));
+
     }
   }, [location.state, navigate, scrapeWebsite]);
 

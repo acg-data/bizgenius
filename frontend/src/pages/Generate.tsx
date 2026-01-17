@@ -113,7 +113,7 @@ export default function Generate() {
   
   const steps: GenerationStep[] = useMemo(() => {
     if (!session?.currentStep) {
-      return STEP_ORDER.map((id, idx) => ({
+      return STEP_ORDER.map((id) => ({
         id,
         label: getStepLabel(id),
         status: 'pending'

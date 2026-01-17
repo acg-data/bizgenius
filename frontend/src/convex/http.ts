@@ -251,7 +251,7 @@ async function handlePaymentFailed(ctx: any, invoice: any) {
 }
 
 // Handle successful payment (for logging/analytics)
-async function handlePaymentSucceeded(ctx: any, invoice: any) {
+async function handlePaymentSucceeded(_ctx: any, invoice: any) {
   console.log(`Payment succeeded for invoice: ${invoice.id}`);
   // Could store payment record here if needed
 }

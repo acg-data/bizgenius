@@ -22,7 +22,7 @@ const GenerationContext = createContext<GenerationContextType | undefined>(undef
 export function GenerationProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
 
   const providerSettings = useConvexQuery(
     api.admin.getProviderSettings,
@@ -54,13 +54,11 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const startGeneration = (sessionId: string) => {
-    setActiveSessionId(sessionId);
+  const startGeneration = (_sessionId: string) => {
     setIsGenerating(true);
   };
 
   const endGeneration = () => {
-    setActiveSessionId(null);
     setIsGenerating(false);
   };
 

@@ -140,7 +140,6 @@ export abstract class BaseProvider {
     body: any,
     headers: Record<string, string>
   ): Promise<GenerationResult> {
-    const startTime = Date.now();
 
     try {
       const url = `${this.config.baseUrl}${endpoint}`;

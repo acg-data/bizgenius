@@ -20,7 +20,7 @@ interface ReportSidebarProps {
   sections: ReportSectionConfig[];
   activeSection: string;
   onSectionChange: (sectionId: string) => void;
-  ideaTitle: string;
+
   generatedAt: string;
   onDownload: () => void;
   onBack?: () => void;
@@ -44,7 +44,7 @@ export default function ReportSidebar({
   sections,
   activeSection,
   onSectionChange,
-  ideaTitle,
+
   generatedAt,
   onDownload,
   onBack,
@@ -58,9 +58,9 @@ export default function ReportSidebar({
       </div>
 
       <div className="monitor-company">
-        <div className="monitor-avatar">{ideaTitle.charAt(0).toUpperCase()}</div>
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-apple-text truncate">{ideaTitle}</span>
+        <div className="monitor-avatar">B</div>
+        <div className="monitor-info">
+          <span className="text-sm font-medium text-apple-text truncate">BizGenius Report</span>
           <span className="text-xs text-apple-gray">Generated {generatedAt}</span>
         </div>
         <ChevronDownIcon className="w-4 h-4 text-apple-gray ml-auto" />

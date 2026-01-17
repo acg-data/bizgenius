@@ -1,8 +1,7 @@
-import React from 'react';
-import { TrendingUp, Users, Target, Rocket, DollarSign, Presentation, UserCheck } from 'lucide-react';
+import { TrendingUp, Target } from 'lucide-react';
 
 // Market Section Component
-const MarketSection = ({ data, tier }) => {
+const MarketSection = ({ data }) => {
   return (
     <div className="space-y-6">
       {/* TAM/SAM/SOM Visualization */}
@@ -92,7 +91,7 @@ const MarketSection = ({ data, tier }) => {
 };
 
 // Customer Section Component
-const CustomerSection = ({ data, tier }) => {
+const CustomerSection = ({ data }) => {
   return (
     <div className="space-y-6">
       {/* Customer Segments */}
@@ -169,7 +168,7 @@ const CustomerSection = ({ data, tier }) => {
 };
 
 // Business Plan Section Component
-const BusinessPlanSection = ({ data, tier }) => {
+const BusinessPlanSection = ({ data }) => {
   return (
     <div className="space-y-6">
       {/* Mission & Vision */}
@@ -300,7 +299,7 @@ const BusinessPlanSection = ({ data, tier }) => {
 };
 
 // Go-to-Market Section Component
-const GoToMarketSection = ({ data, tier }) => {
+const GoToMarketSection = ({ data }) => {
   return (
     <div className="space-y-6">
       {/* Customer Acquisition Metrics */}
@@ -393,7 +392,7 @@ const GoToMarketSection = ({ data, tier }) => {
 };
 
 // Financial Section Component
-const FinancialSection = ({ data, tier }) => {
+const FinancialSection = ({ data }) => {
   return (
     <div className="space-y-6">
       {/* Key Financial Metrics */}
@@ -503,7 +502,7 @@ const FinancialSection = ({ data, tier }) => {
 };
 
 // Pitch Deck Section Component
-const PitchDeckSection = ({ data, tier }) => {
+const PitchDeckSection = ({ data }) => {
   return (
     <div className="space-y-6">
       {/* Pitch Deck Overview */}
@@ -580,7 +579,7 @@ const PitchDeckSection = ({ data, tier }) => {
 };
 
 // Team Section Component
-const TeamSection = ({ data, tier }) => {
+const TeamSection = ({ data }) => {
   return (
     <div className="space-y-6">
       {/* Founders */}
@@ -700,25 +699,25 @@ const TeamSection = ({ data, tier }) => {
 };
 
 // Section Renderer Component
-const SectionRenderer = ({ sectionId, data, tier }) => {
+const SectionRenderer = ({ sectionId, data }) => {
   switch (sectionId) {
     case 'market':
-      return <MarketSection data={data} tier={tier} />;
+      return <MarketSection data={data} />;
     case 'customers':
-      return <CustomerSection data={data} tier={tier} />;
+      return <CustomerSection data={data} />;
     case 'competitors':
       // User already created this component
       return <div>Competitor analysis component goes here</div>;
     case 'businessPlan':
-      return <BusinessPlanSection data={data} tier={tier} />;
+      return <BusinessPlanSection data={data} />;
     case 'goToMarket':
-      return <GoToMarketSection data={data} tier={tier} />;
+      return <GoToMarketSection data={data} />;
     case 'financial':
-      return <FinancialSection data={data} tier={tier} />;
+      return <FinancialSection data={data} />;
     case 'pitchDeck':
-      return <PitchDeckSection data={data} tier={tier} />;
+      return <PitchDeckSection data={data} />;
     case 'team':
-      return <TeamSection data={data} tier={tier} />;
+      return <TeamSection data={data} />;
     default:
       return (
         <div className="flex items-center justify-center h-64">

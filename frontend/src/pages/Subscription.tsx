@@ -5,7 +5,7 @@ import { CheckIcon, SparklesIcon, CreditCardIcon } from '@heroicons/react/24/out
 import { useAuth } from '../hooks/useAuth';
 import { useQuery, useAction } from '../lib/convex';
 import { api } from '../convex/_generated/api';
-import { getLimitsForUser } from '../convex/lib/limits';
+
 import { subscriptionPlans } from '../store';
 
 export default function Subscription() {

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { canAccessSection, redactPremiumSections } from "./lib/limits";
+import { canAccessSection } from "./lib/limits";
 
 // List all ideas for the current user
 export const listIdeas = query({

@@ -36,7 +36,7 @@ export default function Settings() {
     currency: 'USD',
   });
 
-  const costTrends = useQuery(api.admin.getCostTrends, { days: 7 });
+
   const recentGenerations = useQuery(api.admin.getRecentGenerations, { limit: 10 });
   const costsByProvider = useQuery(api.admin.getCostsByProvider, {
     startDate: Date.now() - 30 * 24 * 60 * 60 * 1000,

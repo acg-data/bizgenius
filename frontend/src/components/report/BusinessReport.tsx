@@ -50,7 +50,7 @@ export default function BusinessReport({ data, onBack }: BusinessReportProps) {
   const renderSection = () => {
     switch (activeSection) {
       case 'executive-summary':
-        return <ExecutiveSummary data={data.executiveSummary} ideaTitle={data.ideaTitle} />;
+        return <ExecutiveSummary data={data.executiveSummary} />;
       case 'market':
         return <MarketResearch data={data.marketResearch} />;
       case 'customer':
@@ -80,7 +80,7 @@ export default function BusinessReport({ data, onBack }: BusinessReportProps) {
       case 'team':
         return <TeamOps data={data.teamOps} />;
       default:
-        return <ExecutiveSummary data={data.executiveSummary} ideaTitle={data.ideaTitle} />;
+        return <ExecutiveSummary data={data.executiveSummary}  />;
     }
   };
 
@@ -94,7 +94,7 @@ export default function BusinessReport({ data, onBack }: BusinessReportProps) {
             sections={REPORT_SECTIONS}
             activeSection={activeSection}
             onSectionChange={setActiveSection}
-            ideaTitle={data.ideaTitle}
+
             generatedAt={data.generatedAt}
             onDownload={handleDownloadPDF}
             onBack={onBack}

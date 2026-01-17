@@ -118,7 +118,7 @@ function mapMarketResearch(idea: Idea): MarketResearchData {
       value: market.som?.value || market.serviceable_obtainable_market || '$100M',
       description: market.som?.description,
     },
-    trends: (market.trends || market.market_trends || []).map((trend: any, index: number) => ({
+    trends: (market.trends || market.market_trends || []).map((trend: any) => ({
       label: typeof trend === 'string' ? trend : trend.label || trend.name,
       value: typeof trend === 'string' ? '' : trend.value || trend.growth || '',
       positive: typeof trend === 'string' ? true : trend.positive !== false,
@@ -177,13 +177,13 @@ function mapCompetitorLandscape(idea: Idea): CompetitorLandscapeData {
   const competitorList = competitors.competitors || competitors.direct_competitors || [];
 
   return {
-    competitors: competitorList.slice(0, COMPETITOR_DISPLAY_LIMIT).map((comp: any, index: number) => ({
-      name: comp.name || `Competitor ${index + 1}`,
+    competitors: competitorList.slice(0, COMPETITOR_DISPLAY_LIMIT).map((comp: any, i: number) => ({
+      name: comp.name || `Competitor ${i + 1}`,
       initial: (comp.name || 'C')[0].toUpperCase(),
       type: comp.type || comp.category || 'Direct',
       avgPrice: comp.price_range || comp.avg_price,
-      color: competitorColors[index % competitorColors.length],
-      position: comp.position || { x: 30 + (index * 15) % 40, y: 30 + (index * 20) % 40 },
+      color: competitorColors[i % competitorColors.length],
+      position: comp.position || { x: 30 + (i * 15) % 40, y: 30 + (i * 20) % 40 },
     })),
 
     yourPosition: competitors.your_position || { x: 75, y: 75 },

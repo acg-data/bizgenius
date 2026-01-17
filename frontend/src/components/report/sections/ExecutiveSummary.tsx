@@ -3,10 +3,9 @@ import { ExecutiveSummaryData } from '../../../types/report';
 
 interface ExecutiveSummaryProps {
   data: ExecutiveSummaryData;
-  ideaTitle: string;
 }
 
-export default function ExecutiveSummary({ data, ideaTitle }: ExecutiveSummaryProps) {
+export default function ExecutiveSummary({ data }: ExecutiveSummaryProps) {
   return (
     <div className="space-y-8">
       {/* Quick Stats */}
