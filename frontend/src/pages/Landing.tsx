@@ -126,13 +126,13 @@ export default function Landing() {
                 {user.profile_image_url ? (
                   <img 
                     src={user.profile_image_url} 
-                    alt={user.first_name || 'User'} 
+                    alt={user.full_name || 'User'} 
                     className="w-8 h-8 rounded-full object-cover border border-gray-200"
                   />
                 ) : (
                   <UserCircleIcon className="w-8 h-8 text-gray-400" />
                 )}
-                <span className="text-apple-text hidden md:block">{user.first_name || user.email}</span>
+                <span className="text-apple-text hidden md:block">{user.full_name || user.email}</span>
                 <button 
                   onClick={logout}
                   className="text-apple-text/70 hover:text-apple-text transition"

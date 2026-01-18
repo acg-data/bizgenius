@@ -26,7 +26,7 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
 
   const providerSettings = useConvexQuery(
     api.admin.getProviderSettings,
-    isAuthenticated ? undefined : 'skip'
+    isAuthenticated ? {} : 'skip'
   );
   const isLoadingSettings = providerSettings === undefined;
 

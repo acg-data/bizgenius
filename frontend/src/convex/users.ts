@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, action } from "./_generated/server";
+import { api } from "./_generated/api";
 
 // Get current user profile
 export const getUser = query({
@@ -196,6 +197,35 @@ export const checkUsageLimits = query({
       can_create: canCreate,
       can_save: canSave,
     };
+  },
+});
+
+// Ensure a user document exists for the current authenticated identity
+export const ensureUser = action({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.email) {
+      return { created: false };
+    }
+
+    // Reuse existing query to see if the user already exists
+    const existing = await ctx.runQuery(api.users.getUser, {});
+    if (existing) {
+      return { created: false };
+    }
+
+    // Create the user using identity fields
+    await ctx.runMutation(api.users.upsertUser, {
+      email: identity.email,
+      name:
+        (identity.name as string | undefined) ||
+        (identity.givenName as string | undefined) ||
+        (identity.familyName as string | undefined),
+      profileImageUrl: (identity.picture as string | undefined) || undefined,
+    });
+
+    return { created: true };
   },
 });
 
