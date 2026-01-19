@@ -1,95 +1,68 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import type { KeyboardEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CommandLineIcon, ArrowRightIcon, ArrowLeftIcon, CheckIcon, LightBulbIcon } from '@heroicons/react/24/outline';
-import { useAction } from '../lib/convex';
+
 import { api } from '../convex/_generated/api';
-
-type BusinessMode = 'idea' | 'existing';
-
-interface QuestionOption {
-  value: string;
-  label: string;
-}
-
-interface Question {
-  id: string;
-  question: string;
-  why_important: string;
-  category: string;
-  mece_dimension?: string;
-  options?: QuestionOption[];
-  allow_custom_input?: boolean;
-  example_answer?: string;
-  isCompanyName?: boolean;
-}
+import { CANNED_QUESTIONS, type BusinessMode, type Question } from '../data/cannedQuestions';
+import { useAction } from '../lib/convex';
 
 interface AnswerState {
   selectedOption: string;
   customText: string;
 }
 
-
-// 5 essential questions - focused on what the AI actually needs
-const CANNED_QUESTIONS: Question[] = [
-  {
-    id: 'target_market',
-    question: 'Who will pay for this?',
-    why_important: 'Shapes market research, personas, and go-to-market strategy.',
-    category: 'target_customer',
-    options: [
-      { value: 'b2c', label: 'Individual consumers (B2C)' },
-      { value: 'b2b_smb', label: 'Small/medium businesses' },
-      { value: 'b2b_enterprise', label: 'Large enterprises' },
-      { value: 'both', label: 'Both consumers and businesses' }
-    ]
-  },
-  {
-    id: 'problem',
-    question: "What's the #1 pain point you solve?",
-    why_important: 'Your problem statement drives the entire value proposition and pitch.',
-    category: 'differentiation',
-    allow_custom_input: true,
-    example_answer: 'e.g., "Small restaurants lose 30% of revenue to delivery app fees"'
-  },
-  {
-    id: 'geography',
-    question: 'Where will you operate first?',
-    why_important: 'Geography determines market size calculations and regulatory considerations.',
-    category: 'location',
-    options: [
-      { value: 'local', label: 'Single city or region' },
-      { value: 'national', label: 'One country (national)' },
-      { value: 'global', label: 'Online / Global' }
-    ]
-  },
-  {
-    id: 'revenue_model',
-    question: 'How will customers pay you?',
-    why_important: 'Revenue model shapes your financial projections and business strategy.',
-    category: 'business_model',
-    options: [
-      { value: 'subscription', label: 'Subscription (recurring)' },
-      { value: 'transaction', label: 'Per-transaction or one-time' },
-      { value: 'marketplace', label: 'Marketplace fees' },
-      { value: 'services', label: 'Services / consulting' },
-      { value: 'freemium', label: 'Free + premium / ads' }
-    ]
-  },
-  {
-    id: 'stage',
-    question: 'Where are you at today?',
-    why_important: "We'll tailor projections and recommendations to your current reality.",
-    category: 'timeline',
-    options: [
-      { value: 'idea', label: 'Just an idea' },
-      { value: 'building', label: 'Building product/MVP' },
-      { value: 'launched', label: 'Launched with customers' },
-      { value: 'growing', label: 'Growing with revenue' }
-    ]
-  }
-];
-
 const TOTAL_CANNED_QUESTIONS = CANNED_QUESTIONS.length;
+
+const CATEGORY_ICONS: Record<string, string> = {
+  target_customer: 'ðŸ‘¥',
+  pricing: 'ðŸ’°',
+  competition: 'ðŸŽ¯',
+  location: 'ðŸ“',
+  local_needs: 'ðŸ ',
+  business_model: 'ðŸ“Š',
+  go_to_market: 'ðŸš€',
+  team: 'ðŸ‘¤',
+  funding: 'ðŸ’µ',
+  investment: 'ðŸ’Ž',
+  timeline: 'ðŸ“…',
+  expertise: 'ðŸŽ“',
+  differentiation: 'âš¡'
+};
+
+const MECE_LABELS: Record<string, string> = {
+  financial: 'Financial',
+  geographic: 'Geographic',
+  human: 'Human',
+  market: 'Market'
+};
+
+const getCategoryIcon = (category: string) => CATEGORY_ICONS[category] || 'â“';
+
+const getMeceDimensionLabel = (dimension?: string) => (
+  dimension ? MECE_LABELS[dimension] || dimension : ''
+);
+
+const initAnswers = (questions: Question[]): Record<string, AnswerState> => (
+  Object.fromEntries(
+    questions.map((question) => [question.id, { selectedOption: '', customText: '' }])
+  ) as Record<string, AnswerState>
+);
+
+const isTextQuestion = (question: Question) => !question.options || question.options.length === 0;
+
+const isAnswerComplete = (question: Question | undefined, answer?: AnswerState) => {
+  if (!question) return false;
+  if (isTextQuestion(question)) return !!answer?.customText?.trim();
+  if (!answer?.selectedOption) return false;
+  return answer.selectedOption !== 'other' || !!answer.customText?.trim();
+};
+
+const isAnsweredForProgress = (question: Question | undefined, answer?: AnswerState) => {
+  if (!question) return false;
+  if (question.allow_custom_input && !question.options) return !!answer?.customText?.trim();
+  return !!answer?.selectedOption && (answer.selectedOption !== 'other' || !!answer.customText?.trim());
+};
 
 export default function Questions() {
   const navigate = useNavigate();
@@ -97,19 +70,11 @@ export default function Questions() {
   const [businessIdea, setBusinessIdea] = useState('');
   const [mode, setMode] = useState<BusinessMode>('idea');
   const [websiteUrl, setWebsiteUrl] = useState('');
-  const [scrapedData, setScrapedData] = useState<any>(null);
-
+  const [scrapedData, setScrapedData] = useState<unknown>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Initialize answers for canned questions immediately - no loading spinner!
-  const [answers, setAnswers] = useState<Record<string, AnswerState>>(() => {
-    // Pre-initialize answers for all canned questions
-    const initial: Record<string, AnswerState> = {};
-    CANNED_QUESTIONS.forEach(q => {
-      initial[q.id] = { selectedOption: '', customText: '' };
-    });
-    return initial;
-  });
+  const [answers, setAnswers] = useState<Record<string, AnswerState>>(() => initAnswers(CANNED_QUESTIONS));
 
   // AI-generated questions (fetched in background)
   const [aiQuestions, setAiQuestions] = useState<Question[]>([]);
@@ -147,13 +112,18 @@ export default function Questions() {
     
     // If existing company mode, scrape the website
     if (modeFromState === 'existing' && websiteUrlFromState) {
-      scrapeWebsite({ url: websiteUrlFromState })
-        .then(result => {
+      const runScrape = async () => {
+        try {
+          const result = await scrapeWebsite({ url: websiteUrlFromState });
           if (result.success) {
             setScrapedData(result.data);
           }
-        })
-        .catch(err => console.error('Scrape failed:', err))
+        } catch (err) {
+          console.error('Scrape failed:', err);
+        }
+      };
+
+      void runScrape();
     }
   }, [location.state, location.search, navigate, scrapeWebsite]);
 
@@ -167,24 +137,20 @@ export default function Questions() {
       try {
         const result = await generateSmartQuestions({
           businessIdea,
-          existingCategories: mode === 'existing' ? [] : CANNED_QUESTIONS.map(q => q.category),
+          existingCategories: mode === 'existing' ? [] : CANNED_QUESTIONS.map((q) => q.category),
           count: 5,
           mode,
           companyContext: scrapedData
         });
 
         const newQuestions = result.questions?.filter(
-          (q: Question) => !CANNED_QUESTIONS.some(canned => canned.id === q.id)
+          (q: Question) => !CANNED_QUESTIONS.some((canned) => canned.id === q.id)
         ) || [];
 
         if (newQuestions.length > 0) {
           setAiQuestions(newQuestions);
           // Add answer states for AI questions
-          const newAnswerStates: Record<string, AnswerState> = {};
-          newQuestions.forEach((q: Question) => {
-            newAnswerStates[q.id] = { selectedOption: '', customText: '' };
-          });
-          setAnswers(prev => ({ ...prev, ...newAnswerStates }));
+          setAnswers((prev) => ({ ...prev, ...initAnswers(newQuestions) }));
         }
       } catch (err) {
         console.error('Background AI question fetch failed (non-blocking):', err);
@@ -195,7 +161,7 @@ export default function Questions() {
     };
 
     // Start fetching immediately in background
-    fetchAiQuestions();
+    void fetchAiQuestions();
   }, [businessIdea, generateSmartQuestions]);
 
 
@@ -204,18 +170,21 @@ export default function Questions() {
   const allQuestions = [...CANNED_QUESTIONS, ...aiQuestions];
 
   const handleOptionSelect = (questionId: string, optionValue: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: { 
-        ...prev[questionId],
-        selectedOption: optionValue,
-        customText: optionValue === 'other' ? prev[questionId]?.customText || '' : ''
-      }
-    }));
+    setAnswers((prev) => {
+      const current = prev[questionId] || { selectedOption: '', customText: '' };
+      return {
+        ...prev,
+        [questionId]: { 
+          ...current,
+          selectedOption: optionValue,
+          customText: optionValue === 'other' ? current.customText : ''
+        }
+      };
+    });
   };
 
   const handleCustomTextChange = (questionId: string, text: string) => {
-    setAnswers(prev => ({
+    setAnswers((prev) => ({
       ...prev,
       [questionId]: { 
         ...prev[questionId],
@@ -237,12 +206,12 @@ export default function Questions() {
       return answer.customText || answer.selectedOption;
     }
     
-    const option = question.options?.find(o => o.value === answer.selectedOption);
+    const option = question.options?.find((o) => o.value === answer.selectedOption);
     return option?.label || answer.selectedOption;
   };
 
   const currentQuestion = allQuestions[currentIndex];
-  const currentAnswer = answers[currentQuestion?.id];
+  const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
 
   // Fetch AI insight when question changes (debounced)
   useEffect(() => {
@@ -278,12 +247,7 @@ export default function Questions() {
     return () => clearTimeout(timeout);
   }, [currentQuestion?.id, currentIndex, businessIdea, answers, generateInsight]);
 
-  const hasValidAnswer = currentQuestion && (
-    (!currentQuestion.options || currentQuestion.options.length === 0)
-      ? currentAnswer?.customText?.trim()
-      : currentAnswer?.selectedOption &&
-        (currentAnswer.selectedOption !== 'other' || currentAnswer.customText?.trim())
-  );
+  const hasValidAnswer = isAnswerComplete(currentQuestion, currentAnswer);
 
   // Total questions = 5 canned + AI questions (0-2, loading in background)
   const totalDisplayQuestions = aiQuestionsLoading
@@ -292,12 +256,21 @@ export default function Questions() {
 
   // Last question: at end of combined list and AI fetch is done
   const isLastQuestion = currentIndex >= allQuestions.length - 1 && !aiQuestionsLoading;
+  const isLoadingNext = currentIndex >= allQuestions.length - 1 && aiQuestionsLoading;
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey && hasValidAnswer) {
-      e.preventDefault();
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey && hasValidAnswer) {
+      event.preventDefault();
       handleNext();
     }
+  };
+
+  const runTransition = (updateIndex: () => void) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      updateIndex();
+      setIsTransitioning(false);
+    }, 150);
   };
 
   const handleNext = () => {
@@ -308,40 +281,28 @@ export default function Questions() {
       return;
     }
 
-    setIsTransitioning(true);
-    setTimeout(() => {
+    runTransition(() => {
       if (currentIndex < allQuestions.length - 1) {
-        setCurrentIndex(prev => prev + 1);
+        setCurrentIndex((prev) => prev + 1);
       }
-      setIsTransitioning(false);
-    }, 150);
+    });
   };
 
   const handleBack = () => {
-    if (currentIndex > 0) {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setCurrentIndex(prev => prev - 1);
-        setIsTransitioning(false);
-      }, 150);
-    }
+    if (currentIndex === 0) return;
+    runTransition(() => setCurrentIndex((prev) => prev - 1));
   };
 
-  const handleSubmit = () => {
-    const answersWithContext: Record<string, { question: string; answer: string }> = {};
+  const buildAnswersWithContext = (): Record<string, { question: string; answer: string }> => (
+    Object.fromEntries(
+      allQuestions.flatMap((q) => {
+        const answerText = getAnswerText(q.id, q).trim();
+        return answerText ? [[q.id, { question: q.question, answer: answerText }]] : [];
+      })
+    ) as Record<string, { question: string; answer: string }>
+  );
 
-    allQuestions.forEach((q: Question) => {
-      const answerText = getAnswerText(q.id, q);
-      if (answerText.trim()) {
-        answersWithContext[q.id] = {
-          question: q.question,
-          answer: answerText.trim()
-        };
-      }
-    });
-
-    localStorage.setItem('myceo_answers', JSON.stringify(answersWithContext));
-
+  const goToGenerate = (answersWithContext: Record<string, { question: string; answer: string }>) => {
     navigate('/generate', {
       state: {
         businessIdea,
@@ -353,45 +314,14 @@ export default function Questions() {
     });
   };
 
+  const handleSubmit = () => {
+    const answersWithContext = buildAnswersWithContext();
+    localStorage.setItem('myceo_answers', JSON.stringify(answersWithContext));
+    goToGenerate(answersWithContext);
+  };
+
   const handleSkip = () => {
-    navigate('/generate', {
-      state: {
-        businessIdea,
-        mode,
-        websiteUrl: mode === 'existing' ? websiteUrl : undefined,
-        scrapedData: mode === 'existing' ? scrapedData : undefined,
-        answers: {}
-      }
-    });
-  };
-
-  const getCategoryIcon = (category: string) => {
-    const icons: Record<string, string> = {
-      target_customer: '👥',
-      pricing: '💰',
-      competition: '🎯',
-      location: '📍',
-      local_needs: '🏠',
-      business_model: '📊',
-      go_to_market: '🚀',
-      team: '👤',
-      funding: '💵',
-      investment: '💎',
-      timeline: '📅',
-      expertise: '🎓',
-      differentiation: '⚡'
-    };
-    return icons[category] || '❓';
-  };
-
-  const getMeceDimensionLabel = (dimension?: string) => {
-    const labels: Record<string, string> = {
-      financial: 'Financial',
-      geographic: 'Geographic', 
-      human: 'Human',
-      market: 'Market'
-    };
-    return dimension ? labels[dimension] || dimension : '';
+    goToGenerate({});
   };
 
   // No loadingFirst spinner needed - canned questions appear instantly!
@@ -438,11 +368,8 @@ export default function Questions() {
           <div className="flex gap-1.5">
             {Array.from({ length: totalDisplayQuestions }).map((_, idx) => {
               const question = allQuestions[idx];
-              const answer = question ? answers[question.id] : null;
-              const isAnswered = question?.allow_custom_input && !question?.options
-                ? answer?.customText?.trim()
-                : answer?.selectedOption &&
-                  (answer.selectedOption !== 'other' || answer.customText?.trim());
+              const answer = question ? answers[question.id] : undefined;
+              const isAnswered = isAnsweredForProgress(question, answer);
               const isCurrent = idx === currentIndex;
               const isPlaceholder = idx >= allQuestions.length; // AI questions not loaded yet
 
@@ -536,7 +463,7 @@ export default function Questions() {
                       <input
                         type="text"
                         value={currentAnswer?.customText || ''}
-                        onChange={(e) => handleCustomTextChange(currentQuestion.id, e.target.value)}
+                        onChange={(event) => handleCustomTextChange(currentQuestion.id, event.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Please specify..."
                         className="w-full p-4 bg-white border-2 border-violet-500 focus:ring-4 focus:ring-violet-500/10 text-apple-text font-medium focus:outline-none transition-all rounded-xl text-lg"
@@ -548,7 +475,7 @@ export default function Questions() {
               ) : (
                 <textarea
                   value={currentAnswer?.customText || ''}
-                  onChange={(e) => handleCustomTextChange(currentQuestion.id, e.target.value)}
+                  onChange={(event) => handleCustomTextChange(currentQuestion.id, event.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={currentQuestion.example_answer || 'Enter your answer...'}
                   className="w-full h-32 p-4 bg-gray-50 border-2 border-transparent focus:border-violet-500 focus:bg-white text-apple-text font-medium resize-none focus:outline-none transition-all rounded-xl text-lg"
@@ -573,9 +500,9 @@ export default function Questions() {
             
             <button
               onClick={handleNext}
-              disabled={!hasValidAnswer || (currentIndex >= allQuestions.length - 1 && aiQuestionsLoading)}
+              disabled={!hasValidAnswer || isLoadingNext}
               className={`flex items-center gap-2 px-8 py-4 rounded-full font-semibold transition-all ${
-                hasValidAnswer && !(currentIndex >= allQuestions.length - 1 && aiQuestionsLoading)
+                hasValidAnswer && !isLoadingNext
                   ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 shadow-lg hover:shadow-xl hover:scale-[1.02]'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
@@ -585,7 +512,7 @@ export default function Questions() {
                   Generate Plan
                   <ArrowRightIcon className="w-5 h-5" />
                 </>
-              ) : currentIndex >= allQuestions.length - 1 && aiQuestionsLoading ? (
+              ) : isLoadingNext ? (
                 <>
                   Loading...
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

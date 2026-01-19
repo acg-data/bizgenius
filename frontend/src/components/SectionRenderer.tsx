@@ -1,65 +1,253 @@
+import type { ReactNode } from 'react';
 import { TrendingUp, Target } from 'lucide-react';
 
+type MarketSize = {
+  value?: string;
+  label?: string;
+};
+
+type MarketTrend = {
+  name?: string;
+  direction?: 'up' | 'down';
+  yoy?: string;
+  description?: string;
+};
+
+type MarketData = {
+  tam?: MarketSize;
+  sam?: MarketSize;
+  som?: MarketSize;
+  trends?: MarketTrend[];
+  aiInsight?: string;
+};
+
+type CustomerProfile = {
+  avatar?: string;
+  name?: string;
+  tagline?: string;
+  demographics?: {
+    age?: string;
+    income?: string;
+    location?: string;
+  };
+  psychographics?: {
+    buyingTriggers?: string[];
+  };
+  dayInLife?: string;
+};
+
+type CustomerData = {
+  segmentSplit?: Record<string, string | number>;
+  profiles?: CustomerProfile[];
+};
+
+type BusinessPlanData = {
+  mission?: string;
+  vision?: string;
+  operations?: {
+    model?: string;
+    staffing?: string;
+    hours?: string;
+    locations?: string[];
+  };
+  roadmap?: Array<{
+    focus?: string;
+    quarter?: string;
+    milestones?: string[];
+    goals?: string[];
+  }>;
+  supplyChain?: Array<{
+    category?: string;
+    strategy?: string;
+    vendors?: string[];
+  }>;
+};
+
+type GoToMarketData = {
+  cac?: {
+    value?: string;
+    breakdown?: string;
+  };
+  ltv?: {
+    value?: string;
+    basis?: string;
+  };
+  ltvCacRatio?: string;
+  launchPhases?: Array<{
+    phase?: string;
+    duration?: string;
+    activities?: string[];
+    goals?: string[];
+  }>;
+  viralMechanics?: {
+    communityBuilding?: string;
+    referralProgram?: string;
+  };
+};
+
+type FinancialData = {
+  summary?: {
+    breakEvenMonths?: string;
+    monthlyBurnRate?: string;
+    startupCost?: string;
+    yearOneRevenue?: string;
+  };
+  capex?: Array<{
+    item?: string;
+    depreciation?: string;
+    cost?: number;
+  }>;
+  projections?: Array<{
+    period?: string;
+    revenue?: number;
+    cogs?: number;
+    grossProfit?: number;
+    netProfit?: number;
+    margin?: string;
+  }>;
+  fundingNeeds?: {
+    amount?: string;
+    runway?: string;
+    use?: string[];
+  };
+};
+
+type PitchDeckData = {
+  slides?: Array<{
+    number?: string | number;
+    title?: string;
+    content?: string;
+    speakerNotes?: string;
+    visualSuggestion?: string;
+  }>;
+  askAmount?: string;
+  narrativeArc?: string;
+  useOfFunds?: string[];
+};
+
+type TeamData = {
+  founders?: Array<{
+    role?: string;
+    background?: string;
+    responsibilities?: string[];
+    skills?: string[];
+  }>;
+  hires?: Array<{
+    role?: string;
+    salary?: string;
+    priority?: string;
+    timeline?: string;
+  }>;
+  advisors?: string[];
+  partners?: Array<{
+    name?: string;
+    service?: string;
+    type?: string;
+  }>;
+};
+
+const CARD = 'bg-white rounded-xl border border-gray-100 shadow-sm p-6';
+
+const Card = ({ children, className = '' }: { children: ReactNode; className?: string }) => (
+  <div className={`${CARD} ${className}`}>{children}</div>
+);
+
+const CardTitle = ({ children, className = 'mb-6' }: { children: ReactNode; className?: string }) => (
+  <h2 className={`text-lg font-semibold text-gray-900 ${className}`}>{children}</h2>
+);
+
+const DotList = ({
+  items = [],
+  dotClassName = 'bg-blue-500',
+  className = 'text-gray-700',
+}: {
+  items?: string[];
+  dotClassName?: string;
+  className?: string;
+}) => (
+  <ul className={`text-sm space-y-1 ${className}`}>
+    {items.map((item, idx) => (
+      <li key={idx} className="flex items-start gap-2">
+        <span className={`w-1.5 h-1.5 ${dotClassName} rounded-full mt-2 flex-shrink-0`} />
+        {item}
+      </li>
+    ))}
+  </ul>
+);
+
 // Market Section Component
-const MarketSection = ({ data }) => {
+const MarketSection = ({ data }: { data: MarketData }) => {
+  const sizeCards = [
+    {
+      key: 'tam',
+      label: 'TAM',
+      value: data.tam?.value || '5.2B',
+      size: 'w-32 h-32',
+      circleClass: 'bg-blue-100 border-blue-200',
+      valueClass: 'text-2xl font-bold text-blue-900',
+      labelClass: 'text-xs text-blue-700 font-medium',
+      title: 'Total Addressable Market',
+      description: data.tam?.label || 'Global market for AI-powered cost tools',
+    },
+    {
+      key: 'sam',
+      label: 'SAM',
+      value: data.sam?.value || '1.8B',
+      size: 'w-24 h-24',
+      circleClass: 'bg-green-100 border-green-200',
+      valueClass: 'text-xl font-bold text-green-900',
+      labelClass: 'text-xs text-green-700 font-medium',
+      title: 'Serviceable Addressable Market',
+      description: data.sam?.label || 'North American freelancers and SMBs',
+    },
+    {
+      key: 'som',
+      label: 'SOM',
+      value: data.som?.value || '18M',
+      size: 'w-16 h-16',
+      circleClass: 'bg-purple-100 border-purple-200',
+      valueClass: 'text-lg font-bold text-purple-900',
+      labelClass: 'text-xs text-purple-700 font-medium',
+      title: 'Serviceable Obtainable Market',
+      description: data.som?.label || 'Year 1 achievable market capture',
+    },
+  ];
+
+  const trends = data.trends?.slice(0, 4) || [];
+
   return (
     <div className="space-y-6">
       {/* TAM/SAM/SOM Visualization */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Market Size Analysis</h2>
+      <Card>
+        <CardTitle>Market Size Analysis</CardTitle>
 
         <div className="flex justify-center items-center space-x-8">
-          {/* TAM Circle */}
-          <div className="relative">
-            <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center border-4 border-blue-200">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-900">${data.tam?.value || '5.2B'}</div>
-                <div className="text-xs text-blue-700 font-medium">TAM</div>
+          {sizeCards.map((size) => (
+            <div key={size.key} className="relative">
+              <div className={`${size.size} ${size.circleClass} rounded-full flex items-center justify-center border-4`}>
+                <div className="text-center">
+                  <div className={size.valueClass}>${size.value}</div>
+                  <div className={size.labelClass}>{size.label}</div>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* SAM Circle */}
-          <div className="relative">
-            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center border-4 border-green-200">
-              <div className="text-center">
-                <div className="text-xl font-bold text-green-900">${data.sam?.value || '1.8B'}</div>
-                <div className="text-xs text-green-700 font-medium">SAM</div>
-              </div>
-            </div>
-          </div>
-
-          {/* SOM Circle */}
-          <div className="relative">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center border-4 border-purple-200">
-              <div className="text-center">
-                <div className="text-lg font-bold text-purple-900">${data.som?.value || '18M'}</div>
-                <div className="text-xs text-purple-700 font-medium">SOM</div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-          <div>
-            <h4 className="font-medium text-gray-900">Total Addressable Market</h4>
-            <p className="text-sm text-gray-600">{data.tam?.label || 'Global market for AI-powered cost tools'}</p>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900">Serviceable Addressable Market</h4>
-            <p className="text-sm text-gray-600">{data.sam?.label || 'North American freelancers and SMBs'}</p>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-900">Serviceable Obtainable Market</h4>
-            <p className="text-sm text-gray-600">{data.som?.label || 'Year 1 achievable market capture'}</p>
-          </div>
+          {sizeCards.map((size) => (
+            <div key={`${size.key}-desc`}>
+              <h4 className="font-medium text-gray-900">{size.title}</h4>
+              <p className="text-sm text-gray-600">{size.description}</p>
+            </div>
+          ))}
         </div>
-      </div>
+      </Card>
 
       {/* Market Trends */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {data.trends?.slice(0, 4).map((trend, idx) => (
-          <div key={idx} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+        {trends.map((trend, idx) => (
+          <Card key={idx}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-medium text-gray-900">{trend.name}</h3>
               <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
@@ -70,12 +258,12 @@ const MarketSection = ({ data }) => {
               </span>
             </div>
             <p className="text-sm text-gray-600">{trend.description || 'Market trend analysis'}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* AI Insights */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <TrendingUp size={16} className="text-white" />
@@ -85,21 +273,24 @@ const MarketSection = ({ data }) => {
             <p className="text-blue-800 leading-relaxed">{data.aiInsight}</p>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
 
 // Customer Section Component
-const CustomerSection = ({ data }) => {
+const CustomerSection = ({ data }: { data: CustomerData }) => {
+  const segments = Object.entries(data.segmentSplit || {});
+  const profiles = data.profiles || [];
+
   return (
     <div className="space-y-6">
       {/* Customer Segments */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Customer Segments</h2>
+      <Card>
+        <CardTitle>Customer Segments</CardTitle>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {Object.entries(data.segmentSplit || {}).map(([segment, percentage]) => (
+          {segments.map(([segment, percentage]) => (
             <div key={segment} className="text-center">
               <div className="relative w-24 h-24 mx-auto mb-3">
                 <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
@@ -110,17 +301,17 @@ const CustomerSection = ({ data }) => {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Customer Personas */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Customer Personas</h2>
 
-        {data.profiles?.map((profile, idx) => (
-          <div key={idx} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+        {profiles.map((profile, idx) => (
+          <Card key={idx}>
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                {profile.avatar || '👤'}
+                {profile.avatar || 'ðŸ‘¤'}
               </div>
 
               <div className="flex-1">
@@ -143,14 +334,10 @@ const CustomerSection = ({ data }) => {
 
                   <div>
                     <h4 className="font-medium text-gray-900 mb-2">Buying Triggers</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {profile.psychographics?.buyingTriggers?.slice(0, 3).map((trigger, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
-                          {trigger}
-                        </li>
-                      ))}
-                    </ul>
+                    <DotList
+                      items={profile.psychographics?.buyingTriggers?.slice(0, 3)}
+                      className="text-gray-600"
+                    />
                   </div>
                 </div>
 
@@ -160,7 +347,7 @@ const CustomerSection = ({ data }) => {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>
@@ -168,46 +355,58 @@ const CustomerSection = ({ data }) => {
 };
 
 // Business Plan Section Component
-const BusinessPlanSection = ({ data }) => {
+const BusinessPlanSection = ({ data }: { data: BusinessPlanData }) => {
+  const operations = data.operations || {};
+  const roadmap = data.roadmap || [];
+  const supplyChain = data.supplyChain || [];
+  const missionVision = [
+    {
+      title: 'Mission',
+      icon: Target,
+      iconClass: 'text-green-600',
+      iconBg: 'bg-green-100',
+      text: data.mission,
+    },
+    {
+      title: 'Vision',
+      icon: TrendingUp,
+      iconClass: 'text-purple-600',
+      iconBg: 'bg-purple-100',
+      text: data.vision,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Mission & Vision */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-              <Target size={16} className="text-green-600" />
+        {missionVision.map((item) => (
+          <Card key={item.title}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-8 h-8 ${item.iconBg} rounded-lg flex items-center justify-center`}>
+                <item.icon size={16} className={item.iconClass} />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">{item.title}</h2>
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Mission</h2>
-          </div>
-          <p className="text-gray-700 leading-relaxed">{data.mission}</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-              <TrendingUp size={16} className="text-purple-600" />
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900">Vision</h2>
-          </div>
-          <p className="text-gray-700 leading-relaxed">{data.vision}</p>
-        </div>
+            <p className="text-gray-700 leading-relaxed">{item.text}</p>
+          </Card>
+        ))}
       </div>
 
       {/* Operations */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Operations</h2>
+      <Card>
+        <CardTitle>Operations</CardTitle>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="font-medium text-gray-900 mb-3">Business Model</h3>
-            <p className="text-gray-700 text-sm leading-relaxed">{data.operations?.model}</p>
-          </div>
-
-          <div>
-            <h3 className="font-medium text-gray-900 mb-3">Staffing</h3>
-            <p className="text-gray-700 text-sm leading-relaxed">{data.operations?.staffing}</p>
-          </div>
+          {[
+            { title: 'Business Model', text: operations.model },
+            { title: 'Staffing', text: operations.staffing },
+          ].map((item) => (
+            <div key={item.title}>
+              <h3 className="font-medium text-gray-900 mb-3">{item.title}</h3>
+              <p className="text-gray-700 text-sm leading-relaxed">{item.text}</p>
+            </div>
+          ))}
         </div>
 
         <div className="mt-6">
@@ -215,26 +414,26 @@ const BusinessPlanSection = ({ data }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="font-medium text-gray-900 text-sm mb-1">Operating Hours</p>
-              <p className="text-gray-700 text-sm">{data.operations?.hours}</p>
+              <p className="text-gray-700 text-sm">{operations.hours}</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="font-medium text-gray-900 text-sm mb-1">Key Locations</p>
               <ul className="text-gray-700 text-sm space-y-1">
-                {data.operations?.locations?.map((location, idx) => (
-                  <li key={idx}>• {location}</li>
+                {operations.locations?.map((location, idx) => (
+                  <li key={idx}>â€¢ {location}</li>
                 ))}
               </ul>
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Strategic Roadmap */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Strategic Roadmap</h2>
+      <Card>
+        <CardTitle>Strategic Roadmap</CardTitle>
 
         <div className="space-y-4">
-          {data.roadmap?.map((phase, idx) => (
+          {roadmap.map((phase, idx) => (
             <div key={idx} className="border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-gray-900">{phase.focus}</h3>
@@ -246,35 +445,28 @@ const BusinessPlanSection = ({ data }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium text-gray-900 text-sm mb-2">Milestones</h4>
-                  <ul className="text-sm text-gray-700 space-y-1">
-                    {phase.milestones?.map((milestone, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
-                        {milestone}
-                      </li>
-                    ))}
-                  </ul>
+                  <DotList items={phase.milestones} />
                 </div>
 
                 <div>
                   <h4 className="font-medium text-gray-900 text-sm mb-2">Key Metrics</h4>
                   <div className="text-sm text-gray-700">
-                    <p>• Goals: {phase.goals?.[0] || 'Achieve key milestones'}</p>
-                    <p>• Timeline: {phase.quarter}</p>
+                    <p>â€¢ Goals: {phase.goals?.[0] || 'Achieve key milestones'}</p>
+                    <p>â€¢ Timeline: {phase.quarter}</p>
                   </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Supply Chain */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Supply Chain Strategy</h2>
+      <Card>
+        <CardTitle>Supply Chain Strategy</CardTitle>
 
         <div className="space-y-6">
-          {data.supplyChain?.map((category, idx) => (
+          {supplyChain.map((category, idx) => (
             <div key={idx} className="border border-gray-200 rounded-lg p-4">
               <h3 className="font-medium text-gray-900 mb-2">{category.category}</h3>
               <p className="text-gray-700 text-sm mb-3">{category.strategy}</p>
@@ -293,39 +485,50 @@ const BusinessPlanSection = ({ data }) => {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
 
 // Go-to-Market Section Component
-const GoToMarketSection = ({ data }) => {
+const GoToMarketSection = ({ data }: { data: GoToMarketData }) => {
+  const metrics = [
+    {
+      title: 'Customer Acquisition Cost',
+      value: data.cac?.value || '$65',
+      subtitle: data.cac?.breakdown || 'Digital ads + content',
+      valueClass: 'text-blue-600',
+    },
+    {
+      title: 'Customer Lifetime Value',
+      value: data.ltv?.value || '$216',
+      subtitle: data.ltv?.basis || '12-month subscription',
+      valueClass: 'text-green-600',
+    },
+    {
+      title: 'LTV:CAC Ratio',
+      value: data.ltvCacRatio || '3.3:1',
+      subtitle: 'Healthy unit economics',
+      valueClass: 'text-purple-600',
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Customer Acquisition Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
-          <h3 className="font-semibold text-gray-900 mb-2">Customer Acquisition Cost</h3>
-          <div className="text-3xl font-bold text-blue-600 mb-1">{data.cac?.value || '$65'}</div>
-          <p className="text-sm text-gray-600">{data.cac?.breakdown || 'Digital ads + content'}</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
-          <h3 className="font-semibold text-gray-900 mb-2">Customer Lifetime Value</h3>
-          <div className="text-3xl font-bold text-green-600 mb-1">{data.ltv?.value || '$216'}</div>
-          <p className="text-sm text-gray-600">{data.ltv?.basis || '12-month subscription'}</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
-          <h3 className="font-semibold text-gray-900 mb-2">LTV:CAC Ratio</h3>
-          <div className="text-3xl font-bold text-purple-600 mb-1">{data.ltvCacRatio || '3.3:1'}</div>
-          <p className="text-sm text-gray-600">Healthy unit economics</p>
-        </div>
+        {metrics.map((metric) => (
+          <Card key={metric.title} className="text-center">
+            <h3 className="font-semibold text-gray-900 mb-2">{metric.title}</h3>
+            <div className={`text-3xl font-bold ${metric.valueClass} mb-1`}>{metric.value}</div>
+            <p className="text-sm text-gray-600">{metric.subtitle}</p>
+          </Card>
+        ))}
       </div>
 
       {/* Launch Phases */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Launch Strategy</h2>
+      <Card>
+        <CardTitle>Launch Strategy</CardTitle>
 
         <div className="space-y-6">
           {data.launchPhases?.map((phase, idx) => (
@@ -340,36 +543,22 @@ const GoToMarketSection = ({ data }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="font-medium text-gray-900 text-sm mb-2">Key Activities</h4>
-                  <ul className="text-sm text-gray-700 space-y-1">
-                    {phase.activities?.map((activity, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
-                        {activity}
-                      </li>
-                    ))}
-                  </ul>
+                  <DotList items={phase.activities} />
                 </div>
 
                 <div>
                   <h4 className="font-medium text-gray-900 text-sm mb-2">Success Metrics</h4>
-                  <ul className="text-sm text-gray-700 space-y-1">
-                    {phase.goals?.map((goal, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 flex-shrink-0"></span>
-                        {goal}
-                      </li>
-                    ))}
-                  </ul>
+                  <DotList items={phase.goals} dotClassName="bg-green-500" />
                 </div>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Viral Mechanics */}
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-purple-900 mb-4">Viral Mechanics</h2>
+      <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200">
+        <CardTitle className="text-purple-900 mb-4">Viral Mechanics</CardTitle>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {data.viralMechanics && (
@@ -386,45 +575,37 @@ const GoToMarketSection = ({ data }) => {
             </>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
 
 // Financial Section Component
-const FinancialSection = ({ data }) => {
+const FinancialSection = ({ data }: { data: FinancialData }) => {
+  const summary = data.summary || {};
+  const summaryCards = [
+    { title: 'Break-even', value: `${summary.breakEvenMonths || '22'} months`, color: 'text-green-600', subtitle: 'Time to profitability' },
+    { title: 'Monthly Burn', value: summary.monthlyBurnRate || '$18,500', color: 'text-red-600', subtitle: 'Operating expenses' },
+    { title: 'Startup Cost', value: summary.startupCost || '$125,000', color: 'text-blue-600', subtitle: 'Initial investment' },
+    { title: 'Year 1 Revenue', value: summary.yearOneRevenue || '$165,000', color: 'text-purple-600', subtitle: 'First year target' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Key Financial Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
-          <h3 className="font-semibold text-gray-900 mb-2">Break-even</h3>
-          <div className="text-2xl font-bold text-green-600 mb-1">{data.summary?.breakEvenMonths || '22'} months</div>
-          <p className="text-sm text-gray-600">Time to profitability</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
-          <h3 className="font-semibold text-gray-900 mb-2">Monthly Burn</h3>
-          <div className="text-2xl font-bold text-red-600 mb-1">{data.summary?.monthlyBurnRate || '$18,500'}</div>
-          <p className="text-sm text-gray-600">Operating expenses</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
-          <h3 className="font-semibold text-gray-900 mb-2">Startup Cost</h3>
-          <div className="text-2xl font-bold text-blue-600 mb-1">{data.summary?.startupCost || '$125,000'}</div>
-          <p className="text-sm text-gray-600">Initial investment</p>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
-          <h3 className="font-semibold text-gray-900 mb-2">Year 1 Revenue</h3>
-          <div className="text-2xl font-bold text-purple-600 mb-1">{data.summary?.yearOneRevenue || '$165,000'}</div>
-          <p className="text-sm text-gray-600">First year target</p>
-        </div>
+        {summaryCards.map((card) => (
+          <Card key={card.title} className="text-center">
+            <h3 className="font-semibold text-gray-900 mb-2">{card.title}</h3>
+            <div className={`text-2xl font-bold ${card.color} mb-1`}>{card.value}</div>
+            <p className="text-sm text-gray-600">{card.subtitle}</p>
+          </Card>
+        ))}
       </div>
 
       {/* CapEx Breakdown */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Capital Expenditures</h2>
+      <Card>
+        <CardTitle>Capital Expenditures</CardTitle>
 
         <div className="space-y-4">
           {data.capex?.map((item, idx) => (
@@ -439,11 +620,11 @@ const FinancialSection = ({ data }) => {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* 5-Year Projections */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">5-Year Financial Projections</h2>
+      <Card>
+        <CardTitle>5-Year Financial Projections</CardTitle>
 
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -473,11 +654,11 @@ const FinancialSection = ({ data }) => {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
       {/* Funding Requirements */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-green-900 mb-4">Funding Requirements</h2>
+      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+        <CardTitle className="text-green-900 mb-4">Funding Requirements</CardTitle>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg p-4 border border-green-200">
@@ -496,17 +677,19 @@ const FinancialSection = ({ data }) => {
             ))}
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
 
 // Pitch Deck Section Component
-const PitchDeckSection = ({ data }) => {
+const PitchDeckSection = ({ data }: { data: PitchDeckData }) => {
+  const slides = data.slides || [];
+
   return (
     <div className="space-y-6">
       {/* Pitch Deck Overview */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+      <Card>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Investor Pitch Deck</h2>
@@ -514,7 +697,7 @@ const PitchDeckSection = ({ data }) => {
           </div>
           <div className="flex gap-3">
             <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-              {data.slides?.length || 10} slides
+              {slides.length || 10} slides
             </span>
             <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
               Ask: {data.askAmount || '$450,000'}
@@ -537,14 +720,14 @@ const PitchDeckSection = ({ data }) => {
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Slide Breakdown */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Slide-by-Slide Breakdown</h2>
 
-        {data.slides?.map((slide, idx) => (
-          <div key={idx} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+        {slides.map((slide, idx) => (
+          <Card key={idx}>
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0">
                 {slide.number}
@@ -571,7 +754,7 @@ const PitchDeckSection = ({ data }) => {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>
@@ -579,18 +762,23 @@ const PitchDeckSection = ({ data }) => {
 };
 
 // Team Section Component
-const TeamSection = ({ data }) => {
+const TeamSection = ({ data }: { data: TeamData }) => {
+  const founders = data.founders || [];
+  const hires = data.hires || [];
+  const advisors = data.advisors || [];
+  const partners = data.partners || [];
+
   return (
     <div className="space-y-6">
       {/* Founders */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Founding Team</h2>
+      <Card>
+        <CardTitle>Founding Team</CardTitle>
 
-        {data.founders?.map((founder, idx) => (
+        {founders.map((founder, idx) => (
           <div key={idx} className="mb-6 last:mb-0">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-                {founder.role?.split(' ').map(word => word[0]).join('') || 'FT'}
+                {founder.role?.split(' ').map((word) => word[0]).join('') || 'FT'}
               </div>
 
               <div className="flex-1">
@@ -606,14 +794,7 @@ const TeamSection = ({ data }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-medium text-gray-900 text-sm mb-2">Responsibilities</h4>
-                    <ul className="text-sm text-gray-700 space-y-1">
-                      {founder.responsibilities?.map((resp, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
-                          {resp}
-                        </li>
-                      ))}
-                    </ul>
+                    <DotList items={founder.responsibilities} />
                   </div>
 
                   <div>
@@ -630,19 +811,19 @@ const TeamSection = ({ data }) => {
               </div>
             </div>
 
-            {idx < (data.founders?.length || 0) - 1 && (
+            {idx < founders.length - 1 && (
               <div className="border-b border-gray-200 my-6"></div>
             )}
           </div>
         ))}
-      </div>
+      </Card>
 
       {/* Hiring Plan */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Hiring Plan</h2>
+      <Card>
+        <CardTitle>Hiring Plan</CardTitle>
 
         <div className="space-y-4">
-          {data.hires?.map((role, idx) => (
+          {hires.map((role, idx) => (
             <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex-1">
                 <h3 className="font-medium text-gray-900">{role.role}</h3>
@@ -659,30 +840,30 @@ const TeamSection = ({ data }) => {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Advisors & Partners */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Advisors */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Advisors</h2>
+        <Card>
+          <CardTitle>Advisors</CardTitle>
 
           <div className="space-y-4">
-            {data.advisors?.map((advisor, idx) => (
+            {advisors.map((advisor, idx) => (
               <div key={idx} className="p-4 bg-purple-50 rounded-lg border border-purple-200">
                 <h3 className="font-medium text-purple-900">{advisor}</h3>
                 <p className="text-sm text-purple-700 mt-1">Strategic guidance and network</p>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Partners */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Strategic Partners</h2>
+        <Card>
+          <CardTitle>Strategic Partners</CardTitle>
 
           <div className="space-y-4">
-            {data.partners?.map((partner, idx) => (
+            {partners.map((partner, idx) => (
               <div key={idx} className="p-4 bg-green-50 rounded-lg border border-green-200">
                 <h3 className="font-medium text-green-900">{partner.name}</h3>
                 <p className="text-sm text-green-700">{partner.service}</p>
@@ -692,42 +873,40 @@ const TeamSection = ({ data }) => {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
 };
 
+const EmptySection = () => (
+  <div className="flex items-center justify-center h-64">
+    <div className="text-center">
+      <h3 className="text-lg font-medium text-gray-900 mb-2">Section Coming Soon</h3>
+      <p className="text-gray-600">This section is under development.</p>
+    </div>
+  </div>
+);
+
+const sectionMap: Record<string, (props: { data: unknown }) => JSX.Element> = {
+  market: ({ data }) => <MarketSection data={data as MarketData} />,
+  customers: ({ data }) => <CustomerSection data={data as CustomerData} />,
+  businessPlan: ({ data }) => <BusinessPlanSection data={data as BusinessPlanData} />,
+  goToMarket: ({ data }) => <GoToMarketSection data={data as GoToMarketData} />,
+  financial: ({ data }) => <FinancialSection data={data as FinancialData} />,
+  pitchDeck: ({ data }) => <PitchDeckSection data={data as PitchDeckData} />,
+  team: ({ data }) => <TeamSection data={data as TeamData} />,
+};
+
 // Section Renderer Component
-const SectionRenderer = ({ sectionId, data }) => {
-  switch (sectionId) {
-    case 'market':
-      return <MarketSection data={data} />;
-    case 'customers':
-      return <CustomerSection data={data} />;
-    case 'competitors':
-      // User already created this component
-      return <div>Competitor analysis component goes here</div>;
-    case 'businessPlan':
-      return <BusinessPlanSection data={data} />;
-    case 'goToMarket':
-      return <GoToMarketSection data={data} />;
-    case 'financial':
-      return <FinancialSection data={data} />;
-    case 'pitchDeck':
-      return <PitchDeckSection data={data} />;
-    case 'team':
-      return <TeamSection data={data} />;
-    default:
-      return (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Section Coming Soon</h3>
-            <p className="text-gray-600">This section is under development.</p>
-          </div>
-        </div>
-      );
+const SectionRenderer = ({ sectionId, data }: { sectionId: string; data: unknown }) => {
+  if (sectionId === 'competitors') {
+    // User already created this component
+    return <div>Competitor analysis component goes here</div>;
   }
+
+  const Section = sectionMap[sectionId];
+  return Section ? <Section data={data} /> : <EmptySection />;
 };
 
 export default SectionRenderer;
