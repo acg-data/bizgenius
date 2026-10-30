@@ -2,6 +2,7 @@ ci:frontend-test:
   stage: checks
   image: node:20-bookworm
   rules:
+  - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "auto"
   - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "ci"
   - if: $CI_PIPELINE_SOURCE == "push" && $RECOVERED_WORKFLOW == "auto" && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH
       == "develop")
@@ -25,6 +26,7 @@ ci:build:
   stage: checks
   image: node:20-bookworm
   rules:
+  - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "auto"
   - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "ci"
   - if: $CI_PIPELINE_SOURCE == "push" && $RECOVERED_WORKFLOW == "auto" && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH
       == "develop")
@@ -52,6 +54,7 @@ ci:security:
   stage: checks
   image: node:20-bookworm
   rules:
+  - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "auto"
   - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "ci"
   - if: $CI_PIPELINE_SOURCE == "push" && $RECOVERED_WORKFLOW == "auto" && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH
       == "develop")
