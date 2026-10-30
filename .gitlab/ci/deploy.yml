@@ -3,8 +3,14 @@ deploy:build-images:
   image: docker:27.5.1-cli
   rules:
   - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "auto"
+    when: manual
+    allow_failure: true
   - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "deploy"
+    when: manual
+    allow_failure: true
   - if: $CI_PIPELINE_SOURCE == "push" && $RECOVERED_WORKFLOW == "auto" && ($CI_COMMIT_BRANCH == "main")
+    when: manual
+    allow_failure: true
   - when: never
   script:
   - bash .gitlab/scripts/build-images.sh
